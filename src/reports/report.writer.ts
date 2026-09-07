@@ -1,13 +1,8 @@
-    import {
-    createEmailReport
-    } from './email.report';   
-
-
     import fs
     from 'node:fs';
 
     import {
-    Report
+    PositionReport
     } from '../types/report.types';
 
     import {
@@ -18,37 +13,32 @@
     createHtmlReport
     } from './html.report';
 
+    import {
+    createEmailReport
+    } from './email.report';
+
 
     export function writeReports(
-    reports: Report[]
+    positions: PositionReport[]
     ): void {
 
     fs.mkdirSync(
         'output',
         {
-        recursive: true
+        recursive:
+            true
         }
     );
 
 
-
-
-    /*
-    * JSON
-    */
-
-    fs.writeFileSync(
-    'output/email.html',
-    createEmailReport(reports),
-    'utf-8'
-    );
+    /* JSON */
 
     fs.writeFileSync(
 
         'output/report.json',
 
         JSON.stringify(
-        reports,
+        positions,
         null,
         2
         ),
@@ -58,16 +48,14 @@
     );
 
 
-    /*
-    * TXT
-    */
+    /* TXT */
 
     fs.writeFileSync(
 
         'output/report.txt',
 
         createTxtReport(
-        reports
+        positions
         ),
 
         'utf-8'
@@ -75,16 +63,29 @@
     );
 
 
-    /*
-    * HTML
-    */
+    /* HTML */
 
     fs.writeFileSync(
 
         'output/report.html',
 
         createHtmlReport(
-        reports
+        positions
+        ),
+
+        'utf-8'
+
+    );
+
+
+    /* EMAIL */
+
+    fs.writeFileSync(
+
+        'output/email.html',
+
+        createEmailReport(
+        positions
         ),
 
         'utf-8'
@@ -98,6 +99,7 @@
         '✅ Relatórios gerados:'
     );
 
+
     console.log(
         'output/report.json'
     );
@@ -109,4 +111,9 @@
     console.log(
         'output/report.html'
     );
+
+    console.log(
+        'output/email.html'
+    );
+
     }

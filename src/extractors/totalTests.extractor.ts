@@ -30,11 +30,13 @@
         );
 
         return null;
+
     }
 
 
     const text =
-        await locator.innerText();
+        await locator
+        .innerText();
 
 
     const match =
@@ -44,11 +46,14 @@
 
 
     if (!match) {
+
         return null;
+
     }
 
 
     return Number(
         match[1]
     );
+
     }

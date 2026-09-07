@@ -1,101 +1,120 @@
     import {
-    Report
+    PositionReport
     } from '../types/report.types';
 
 
     export function createTxtReport(
-    reports: Report[]
+    positions: PositionReport[]
     ): string {
 
     let txt = '';
 
 
     for (
-        const report
-        of reports
+        const position
+        of positions
     ) {
 
         txt +=
         '==================================================\n';
 
         txt +=
-        `${report.prit}\n`;
-
-        txt +=
-        `${report.title}\n`;
+        `${position.position}\n`;
 
         txt +=
         '==================================================\n\n';
 
 
-        txt +=
-        `Total Tests: ${report.totalTests ?? '-'}\n\n`;
-
-
-        txt +=
-        'Execution Status:\n';
-
-
         for (
-        const item
-        of report.executionStatuses
+        const report
+        of position.reports
         ) {
 
         txt +=
+            `--------------------------------------------------\n`;
+
+        txt +=
+            `${report.prit}\n`;
+
+        txt +=
+            `${report.title}\n`;
+
+        txt +=
+            `--------------------------------------------------\n`;
+
+
+        txt +=
+            `Total Tests: ${report.totalTests ?? '-'}\n\n`;
+
+
+        txt +=
+            'Execution Status:\n';
+
+
+        for (
+            const item
+            of report.executionStatuses
+        ) {
+
+            txt +=
             `${item.status}: ${item.quantidade}\n`;
 
         }
 
 
         txt +=
-        '\nIssue Links:\n';
+            '\nIssue Links:\n';
 
 
         const relations =
-        [
+            [
             ...new Set(
-            report.issueLinks.map(
+                report.issueLinks.map(
                 issue =>
-                issue.relation
+                    issue.relation
+                )
             )
-            )
-        ];
+            ];
 
 
         for (
-        const relation
-        of relations
-        ) {
-
-        txt +=
-            `\n${relation}\n`;
-
-
-        const issues =
-            report.issueLinks.filter(
-            issue =>
-                issue.relation === relation
-            );
-
-
-        for (
-            const issue
-            of issues
+            const relation
+            of relations
         ) {
 
             txt +=
-            `${issue.prit} | ${issue.titulo} | ${issue.status}\n`;
+            `\n${relation}\n`;
 
-        }
+
+            const issues =
+            report.issueLinks.filter(
+                issue =>
+                issue.relation ===
+                relation
+            );
+
+
+            for (
+            const issue
+            of issues
+            ) {
+
+            txt +=
+                `${issue.prit} | ${issue.titulo} | ${issue.status}\n`;
+
+            }
 
         }
 
 
         txt +=
-        '\n\n';
+            '\n\n';
+
+        }
 
     }
 
 
     return txt;
+
     }

@@ -1,82 +1,132 @@
     <!DOCTYPE html>
 
-    <html>
+    <html lang="pt">
 
     <head>
+
     <meta charset="UTF-8">
 
-    <title>Relatório Jira / Xray</title>
+    <title>
+        Jira / Xray Report
+    </title>
+
+
+    <style>
+
+        body {
+
+        margin:0;
+
+        padding:30px;
+
+        font-family:
+            Arial,
+            Helvetica,
+            sans-serif;
+
+        color:#172b4d;
+
+        background:#ffffff;
+
+        font-size:14px;
+
+        }
+
+
+        .email-container {
+
+        max-width:1200px;
+
+        margin:auto;
+
+        }
+
+
+        .observation-title {
+
+        font-weight:bold;
+
+        margin-bottom:8px;
+
+        }
+
+
+        #observations {
+
+        min-height:80px;
+
+        padding:12px;
+
+        border:
+            1px solid #c1c7d0;
+
+        border-radius:6px;
+
+        margin-bottom:30px;
+
+        line-height:1.5;
+
+        }
+
+
+        #observations:empty::before {
+
+        content:
+            attr(data-placeholder);
+
+        color:#8993a4;
+
+        }
+
+    </style>
+
     </head>
 
-    <body
-    style="
-        margin:0;
-        padding:30px;
-        font-family:Arial, Helvetica, sans-serif;
-        color:#172b4d;
-        background:#ffffff;
-    "
-    >
+
+    <body>
+
+
+    <div class="email-container">
+
 
     <p>
         Bom dia,
     </p>
+
 
     <p>
         Segue abaixo o relatório atualizado das execuções.
     </p>
 
 
-    <!-- ÁREA EDITÁVEL -->
+    <div class="observation-title">
 
-    <div
-        style="
-        margin-top:20px;
-        margin-bottom:25px;
-        "
-    >
-
-        <div
-        style="
-            font-weight:bold;
-            margin-bottom:8px;
-        "
-        >
         Observações:
-        </div>
-
-
-        <div
-        id="observations"
-        contenteditable="true"
-        style="
-            min-height:80px;
-            padding:12px;
-            border:1px solid #c1c7d0;
-            border-radius:6px;
-            background:#ffffff;
-            font-family:Arial, Helvetica, sans-serif;
-            font-size:14px;
-            line-height:1.5;
-        "
-        >
-        Clique aqui para escrever comentários ou observações...
-        </div>
 
     </div>
 
 
-    <!-- A AUTOMAÇÃO INSERE OS PRITS AQUI -->
+    <div
+        id="observations"
+        contenteditable="true"
+        data-placeholder="Clique aqui para adicionar comentários ou observações..."
+    ></div>
+
 
     <!-- REPORTS -->
 
 
     <br>
 
+
     <p>
         Cumprimentos,<br>
         QA Team
     </p>
+
+
+    </div>
+
 
     </body>
 

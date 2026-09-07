@@ -1,6 +1,6 @@
     import {
     PRITS
-    } from './config/jira.config';
+    } from './config/prits.config';
 
     import {
     Report
@@ -15,15 +15,15 @@
     } from './extractors/prit.extractor';
 
     import {
+    groupReportsByPosition
+    } from './utils/groupReports.utils';
+
+    import {
     writeReports
     } from './reports/report.writer';
 
 
     async function main() {
-
-    /*
-    * Validação simples.
-    */
 
     if (
         PRITS.length === 0
@@ -36,10 +36,6 @@
     }
 
 
-    /*
-    * Browser / Login
-    */
-
     const {
         browser,
         page
@@ -49,65 +45,82 @@
         );
 
 
-    const reports:
+    try {
+
+        const reports:
         Report[] = [];
 
 
-    /*
-    * Processa os PRITs
-    */
+        /*
+        * Percorre todos os PRITs.
+        */
 
-    for (
+        for (
         const prit
         of PRITS
-    ) {
+        ) {
 
         try {
 
-        const report =
+            const report =
             await extractPrit(
-            page,
-            prit
+                page,
+                prit
             );
 
 
-        reports.push(
+            reports.push(
             report
-        );
+            );
 
 
-        console.log(
-            `✅ ${prit} processado`
-        );
+            console.log(
+            `✅ ${prit} → ${report.position}`
+            );
 
         }
 
         catch (error) {
 
-        console.error(
+            console.error(
             `❌ Erro ao processar ${prit}`
-        );
+            );
 
-
-        console.error(
+            console.error(
             error
-        );
+            );
 
         }
 
+        }
+
+
+        /*
+        * Agrupa automaticamente
+        * pela posição encontrada nas Labels.
+        */
+
+        const positions =
+        groupReportsByPosition(
+            reports
+        );
+
+
+        /*
+        * Gera todos os arquivos.
+        */
+
+        writeReports(
+        positions
+        );
+
     }
 
+    finally {
 
-    /*
-    * Gera arquivos
-    */
+        await browser.close();
 
-    writeReports(
-        reports
-    );
-
-
-    await browser.close();
+    }
 
     }
 
@@ -119,7 +132,6 @@
         console.error(
             error
         );
-
 
         process.exit(
             1

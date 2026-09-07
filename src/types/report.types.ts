@@ -14,14 +14,23 @@
 
     export type Report = {
     prit: string;
+
     title: string;
 
-    totalTests:
-        number | null;
+    labels: string[];
 
-    executionStatuses:
-        ExecutionStatus[];
+    position: string;
 
-    issueLinks:
-        IssueLink[];
+    totalTests: number | null;
+
+    executionStatuses: ExecutionStatus[];
+
+    issueLinks: IssueLink[];
+    };
+
+
+    export type PositionReport = {
+    position: string;
+
+    reports: Report[];
     };

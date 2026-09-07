@@ -1,13 +1,41 @@
-export const SELECTORS = {
-    title: "#summary-val",
+    export const SELECTORS = {
 
-    executionStatusCount: "span.testexec-status-count",
+    title:
+        '#summary-val',
 
-    executionStatusName: "span.testexec-status-name",
+    executionStatusCount:
+        'span.testexec-status-count',
 
-    issueLinkKey: "a.issue-link.link-title",
+    executionStatusName:
+        'span.testexec-status-name',
 
-    issueLinkSummary: "span.link-summary",
+    issueLinkKey:
+        'a.issue-link.link-title',
 
-    issueLinkStatus: "span.jira-issue-status-lozenge",
-};
+    issueLinkSummary:
+        'span.link-summary',
+
+    issueLinkStatus:
+        'span.jira-issue-status-lozenge',
+
+    /*
+    * Possíveis seletores para Labels.
+    *
+    * Depois vamos confirmar qual deles
+    * funciona no seu Jira.
+    */
+    labelCandidates: [
+
+        '#labels-wrap a',
+
+        '#labels-wrap .value',
+
+        '#labels-wrap span',
+
+        '[data-field-id="labels"] a',
+
+        '[data-field-id="labels"] span'
+
+    ]
+
+    };

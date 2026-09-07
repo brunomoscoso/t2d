@@ -34,8 +34,13 @@
     const found =
         await overallStatus
         .waitFor({
-            state: 'visible',
-            timeout: 20000
+
+            state:
+            'visible',
+
+            timeout:
+            20000
+
         })
         .then(
             () => true
@@ -52,6 +57,7 @@
         );
 
         return [];
+
     }
 
 
@@ -64,9 +70,9 @@
     );
 
 
-    /*
-    * Estratégia principal
-    */
+    /* =====================================================
+        ESTRATÉGIA PRINCIPAL
+        ===================================================== */
 
     const countsLocator =
         page.locator(
@@ -82,6 +88,7 @@
 
     const totalCounts =
         await countsLocator.count();
+
 
     const totalNames =
         await namesLocator.count();
@@ -121,12 +128,14 @@
 
         const quantidade =
             Number(
-            counts[i].trim()
+            counts[i]
+                .trim()
             );
 
 
         const status =
-            names[i].trim();
+            names[i]
+            .trim();
 
 
         if (
@@ -136,8 +145,11 @@
         ) {
 
             statuses.push({
+
             status,
+
             quantidade
+
             });
 
         }
@@ -146,15 +158,13 @@
 
 
         return statuses;
+
     }
 
 
-    /*
-    * FALLBACK
-    *
-    * Para páginas que tenham
-    * uma estrutura HTML diferente.
-    */
+    /* =====================================================
+        FALLBACK
+        ===================================================== */
 
     console.log(
         'ℹ️ Utilizando fallback de texto.'
@@ -187,10 +197,12 @@
 
             parent =
                 parent.parentElement;
+
             }
 
 
             return '';
+
         }
         );
 
@@ -223,7 +235,7 @@
 
 
     const regex =
-        /(\d+)\s+([A-Za-z][A-Za-z ]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
+        /(\d+)\s+([A-Za-z][A-Za-z _-]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
 
 
     let match:
@@ -242,7 +254,9 @@
         statuses.push({
 
         quantidade:
-            Number(match[1]),
+            Number(
+            match[1]
+            ),
 
         status:
             match[2]
@@ -255,4 +269,5 @@
 
 
     return statuses;
+
     }

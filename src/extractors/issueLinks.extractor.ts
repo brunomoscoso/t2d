@@ -1,4 +1,5 @@
     import {
+    Locator,
     Page
     } from 'playwright';
 
@@ -15,8 +16,42 @@
     page: Page
     ): Promise<IssueLink[]> {
 
-    const keys =
+    /*
+    * Se existir o módulo padrão
+    * Issue Links, limitamos a busca a ele.
+    */
+
+    let section:
+        Locator;
+
+
+    const linkingModule =
         page.locator(
+        '#linkingmodule'
+        );
+
+
+    if (
+        await linkingModule.count() > 0
+    ) {
+
+        section =
+        linkingModule;
+
+    }
+
+    else {
+
+        section =
+        page.locator(
+            'body'
+        );
+
+    }
+
+
+    const keys =
+        section.locator(
         SELECTORS.issueLinkKey
         );
 
@@ -53,20 +88,32 @@
 
 
         /*
-        * Encontra o container da linha
-        * correspondente ao PRIT.
+        * Tenta primeiro encontrar
+        * o DD correspondente.
         */
 
-        const row =
+        let row =
         keyElement.locator(
+            'xpath=ancestor::dd[1]'
+        );
+
+
+        if (
+        await row.count() === 0
+        ) {
+
+        row =
+            keyElement.locator(
 
             `xpath=ancestor::*[
-            .//span[contains(@class,"link-summary")]
-            and
-            .//span[contains(@class,"jira-issue-status-lozenge")]
+                .//span[contains(@class,"link-summary")]
+                and
+                .//span[contains(@class,"jira-issue-status-lozenge")]
             ][1]`
 
-        );
+            );
+
+        }
 
 
         const titulo =
@@ -103,13 +150,11 @@
         'unknown';
 
 
-        /*
-        * Primeira estratégia.
-        */
-
         const relationDt =
         keyElement.locator(
+
             'xpath=ancestor::dd[1]/preceding-sibling::dt[1]'
+
         );
 
 
@@ -130,66 +175,6 @@
         }
 
 
-        /*
-        * Fallback para created / blocked.
-        */
-
-        if (
-        !relation ||
-        relation === 'unknown'
-        ) {
-
-        const createdBefore =
-            keyElement.locator(
-
-            `xpath=preceding::*[
-                normalize-space(text())="created"
-            ][1]`
-
-            );
-
-
-        const blockedBefore =
-            keyElement.locator(
-
-            `xpath=preceding::*[
-                normalize-space(text())="is blocked by"
-            ][1]`
-
-            );
-
-
-        const createdCount =
-            await createdBefore.count();
-
-
-        const blockedCount =
-            await blockedBefore.count();
-
-
-        if (
-            createdCount > 0 &&
-            blockedCount === 0
-        ) {
-
-            relation =
-            'created';
-
-        }
-
-
-        if (
-            blockedCount > 0
-        ) {
-
-            relation =
-            'is blocked by';
-
-        }
-
-        }
-
-
         results.push({
 
         relation,
@@ -206,4 +191,5 @@
 
 
     return results;
+
     }

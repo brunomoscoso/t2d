@@ -20,11 +20,19 @@
 
     import {
     extractExecutionStatuses
-    } from './executionStatus.extractor';
+    } from './execution-status.extractor';
 
     import {
     extractIssueLinks
     } from './issueLinks.extractor';
+
+    import {
+    extractLabels
+    } from './labels.extractor';
+
+    import {
+    getPosition
+    } from '../utils/position.utils';
 
 
     export async function extractPrit(
@@ -33,134 +41,85 @@
     ): Promise<Report> {
 
     console.log('\n');
-
-    console.log(
-        '========================================'
-    );
-
-    console.log(
-        `Abrindo ${prit}`
-    );
-
-    console.log(
-        '========================================'
-    );
-
+    console.log('========================================');
+    console.log(`Abrindo ${prit}`);
+    console.log('========================================');
 
     await page.goto(
-
         `${JIRA_URL}/browse/${prit}`,
-
         {
-        waitUntil:
-            'domcontentloaded'
+        waitUntil: 'domcontentloaded'
         }
-
     );
 
-
-    /*
-    * Espera o Jira principal carregar.
-    */
-
     await page
-        .locator(
-        SELECTORS.title
-        )
+        .locator(SELECTORS.title)
         .waitFor({
-
-        state:
-            'visible',
-
-        timeout:
-            60000
-
+        state: 'visible',
+        timeout: 60000
         });
 
-
-    /*
-    * TÍTULO
-    */
+    /* =====================================================
+        TÍTULO
+        ===================================================== */
 
     const title =
         (
         await page
-            .locator(
-            SELECTORS.title
-            )
+            .locator(SELECTORS.title)
             .innerText()
-        )
-        .trim();
+        ).trim();
 
+    console.log(`Título: ${title}`);
 
-    console.log(
-        `Título: ${title}`
-    );
+    /* =====================================================
+        LABELS / POSIÇÃO
+        ===================================================== */
 
+    const labels =
+        await extractLabels(page);
 
-    /*
-    * EXECUTION STATUS
-    */
+    console.log('Labels encontradas:', labels);
+
+    const position =
+        getPosition(labels, title);
+
+    console.log(`Posição: ${position}`);
+
+    /* =====================================================
+        EXECUTION STATUS
+        ===================================================== */
 
     const executionStatuses =
-        await extractExecutionStatuses(
-        page
-        );
+        await extractExecutionStatuses(page);
 
-
-    /*
-    * TOTAL TESTS
-    */
+    /* =====================================================
+        TOTAL TESTS
+        ===================================================== */
 
     const totalTests =
-        await extractTotalTests(
-        page
-        );
+        await extractTotalTests(page);
 
+    /* =====================================================
+        ISSUE LINKS
+        ===================================================== */
 
-    /*
-    * Scroll para Issue Links.
-    */
+    await page.evaluate(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+    });
 
-    await page.evaluate(
-        () => {
-
-        window.scrollTo(
-            0,
-            document.body.scrollHeight
-        );
-
-        }
-    );
-
-
-    await page.waitForTimeout(
-        1000
-    );
-
-
-    /*
-    * ISSUE LINKS
-    */
+    await page.waitForTimeout(1000);
 
     const issueLinks =
-        await extractIssueLinks(
-        page
-        );
-
+        await extractIssueLinks(page);
 
     return {
-
         prit,
-
         title,
-
+        labels,
+        position,
         totalTests,
-
         executionStatuses,
-
         issueLinks
-
     };
-
     }
