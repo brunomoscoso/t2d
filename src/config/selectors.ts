@@ -1,13 +1,27 @@
     export const SELECTORS = {
 
+    /* =====================================================
+        PRIT
+        ===================================================== */
+
     title:
         '#summary-val',
+
+
+    /* =====================================================
+        XRAY EXECUTION STATUS
+        ===================================================== */
 
     executionStatusCount:
         'span.testexec-status-count',
 
     executionStatusName:
         'span.testexec-status-name',
+
+
+    /* =====================================================
+        ISSUE LINKS
+        ===================================================== */
 
     issueLinkKey:
         'a.issue-link.link-title',
@@ -18,12 +32,42 @@
     issueLinkStatus:
         'span.jira-issue-status-lozenge',
 
+
     /*
-    * Possíveis seletores para Labels.
+    * A prioridade do Jira costuma aparecer
+    * principalmente através de:
     *
-    * Depois vamos confirmar qual deles
-    * funciona no seu Jira.
+    * alt="High"
+    * title="High"
+    *
+    * Mas tentamos várias possibilidades
+    * para ficar mais resistente.
     */
+    issueLinkPriorityCandidates: [
+
+        '.priority img',
+
+        '[class*="priority"] img',
+
+        '[class*="priority"]',
+
+        'img[alt]',
+
+        'img[title]',
+
+        '[data-priority]',
+
+        '[title]',
+
+        '[aria-label]'
+
+    ],
+
+
+    /* =====================================================
+        LABELS
+        ===================================================== */
+
     labelCandidates: [
 
         '#labels-wrap a',

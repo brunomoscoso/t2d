@@ -9,6 +9,15 @@
     prit: string;
     titulo: string;
     status: string;
+
+    /*
+    * Highest
+    * High
+    * Medium
+    * Low
+    * Lowest
+    */
+    priority: string;
     };
 
 
@@ -23,9 +32,11 @@
 
     totalTests: number | null;
 
-    executionStatuses: ExecutionStatus[];
+    executionStatuses:
+        ExecutionStatus[];
 
-    issueLinks: IssueLink[];
+    issueLinks:
+        IssueLink[];
     };
 
 

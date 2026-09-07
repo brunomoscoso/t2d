@@ -1,3 +1,7 @@
+    /* =========================================================
+    ESCAPE HTML
+    ========================================================= */
+
     export function escapeHtml(
     value: string
     ): string {
@@ -27,14 +31,47 @@
     }
 
 
+    /* =========================================================
+    NORMALIZA STATUS
+    ========================================================= */
+
+    function normalizeStatus(
+    status: string
+    ): string {
+
+    return status
+        .trim()
+        .toUpperCase()
+
+        /*
+        * FOR TESTING
+        * FOR-TESTING
+        * FOR_TESTING
+        *
+        * ficam todos:
+        *
+        * FOR_TESTING
+        */
+        .replace(
+        /[\s-]+/g,
+        '_'
+        );
+
+    }
+
+
+    /* =========================================================
+    CSS CLASS DO EXECUTION STATUS
+    ========================================================= */
+
     export function getStatusClass(
     status: string
     ): string {
 
     const normalized =
+        normalizeStatus(
         status
-        .trim()
-        .toUpperCase();
+        );
 
 
     if (
@@ -56,6 +93,52 @@
 
 
     if (
+        normalized === 'EXECUTING'
+    ) {
+
+        return 'status-executing';
+
+    }
+
+
+    if (
+        normalized === 'TO_DO' ||
+        normalized === 'TODO'
+    ) {
+
+        return 'status-todo';
+
+    }
+
+
+    if (
+        normalized === 'ABORTED'
+    ) {
+
+        return 'status-aborted';
+
+    }
+
+
+    if (
+        normalized === 'FOR_TESTING'
+    ) {
+
+        return 'status-for-testing';
+
+    }
+
+
+    if (
+        normalized === 'PENDING_3RD'
+    ) {
+
+        return 'status-pending-3rd';
+
+    }
+
+
+    if (
         normalized === 'BLOCKED'
     ) {
 
@@ -65,19 +148,24 @@
 
 
     return 'status-other';
-
     }
 
+
+    /* =========================================================
+    CORES DO EMAIL
+    ========================================================= */
 
     export function getStatusColors(
     status: string
     ) {
 
     const normalized =
+        normalizeStatus(
         status
-        .trim()
-        .toUpperCase();
+        );
 
+
+    /* PASS - VERDE */
 
     if (
         normalized === 'PASS'
@@ -99,6 +187,8 @@
     }
 
 
+    /* FAIL - VERMELHO */
+
     if (
         normalized === 'FAIL'
     ) {
@@ -118,6 +208,119 @@
 
     }
 
+
+    /* EXECUTING - AMARELO */
+
+    if (
+        normalized === 'EXECUTING'
+    ) {
+
+        return {
+
+        background:
+            '#fff4cc',
+
+        color:
+            '#806600',
+
+        border:
+            '#e5c84a'
+
+        };
+
+    }
+
+
+    /* TO DO - CINZA */
+
+    if (
+        normalized === 'TO_DO' ||
+        normalized === 'TODO'
+    ) {
+
+        return {
+
+        background:
+            '#eeeeee',
+
+        color:
+            '#555555',
+
+        border:
+            '#aaaaaa'
+
+        };
+
+    }
+
+
+    /* ABORTED - PRETO */
+
+    if (
+        normalized === 'ABORTED'
+    ) {
+
+        return {
+
+        background:
+            '#222222',
+
+        color:
+            '#ffffff',
+
+        border:
+            '#000000'
+
+        };
+
+    }
+
+
+    /* FOR_TESTING - ROXO */
+
+    if (
+        normalized === 'FOR_TESTING'
+    ) {
+
+        return {
+
+        background:
+            '#efe4ff',
+
+        color:
+            '#6f42c1',
+
+        border:
+            '#a77be8'
+
+        };
+
+    }
+
+
+    /* PENDING_3RD - AZUL */
+
+    if (
+        normalized === 'PENDING_3RD'
+    ) {
+
+        return {
+
+        background:
+            '#e9f2ff',
+
+        color:
+            '#0747a6',
+
+        border:
+            '#6b9ee8'
+
+        };
+
+    }
+
+
+    /* BLOCKED - ROSA */
 
     if (
         normalized === 'BLOCKED'
@@ -142,13 +345,257 @@
     return {
 
         background:
-        '#e9f2ff',
+        '#f4f5f7',
 
         color:
-        '#0747a6',
+        '#5e6c84',
 
         border:
-        '#6b9ee8'
+        '#c1c7d0'
+
+    };
+    }
+
+
+    /* =========================================================
+    PRIORIDADE
+    ========================================================= */
+
+    export function getPriorityMeta(
+    priority: string
+    ) {
+
+    const normalized =
+        priority
+        .trim()
+        .toLowerCase();
+
+
+    /*
+    * Jira:
+    *
+    * Highest = duplo para cima
+    */
+
+    if (
+        normalized === 'highest'
+    ) {
+
+        return {
+
+        symbol:
+            '⇈',
+
+        color:
+            '#d04437',
+
+        label:
+            'Highest'
+
+        };
+
+    }
+
+
+    /*
+    * High
+    */
+
+    if (
+        normalized === 'high'
+    ) {
+
+        return {
+
+        symbol:
+            '↑',
+
+        color:
+            '#d04437',
+
+        label:
+            'High'
+
+        };
+
+    }
+
+
+    /*
+    * Medium
+    */
+
+    if (
+        normalized === 'medium'
+    ) {
+
+        return {
+
+        symbol:
+            '=',
+
+        color:
+            '#f39c12',
+
+        label:
+            'Medium'
+
+        };
+
+    }
+
+
+    /*
+    * Low
+    */
+
+    if (
+        normalized === 'low'
+    ) {
+
+        return {
+
+        symbol:
+            '↓',
+
+        color:
+            '#0065ff',
+
+        label:
+            'Low'
+
+        };
+
+    }
+
+
+    /*
+    * Lowest
+    */
+
+    if (
+        normalized === 'lowest'
+    ) {
+
+        return {
+
+        symbol:
+            '⇊',
+
+        color:
+            '#0065ff',
+
+        label:
+            'Lowest'
+
+        };
+
+    }
+
+
+    return {
+
+        symbol:
+        '•',
+
+        color:
+        '#6b778c',
+
+        label:
+        'Unknown'
+
+    };
+
+    }
+
+
+    /* =========================================================
+    STATUS DO DEFECT
+    ========================================================= */
+
+    export function getIssueStatusColors(
+    status: string
+    ) {
+
+    const normalized =
+        normalizeStatus(
+        status
+        );
+
+
+    /*
+    * DONE
+    */
+
+    if (
+        normalized === 'DONE' ||
+        normalized === 'CLOSED' ||
+        normalized === 'RESOLVED'
+    ) {
+
+        return {
+
+        background:
+            '#e3fcef',
+
+        color:
+            '#006644'
+
+        };
+
+    }
+
+
+    /*
+    * IN PROGRESS
+    */
+
+    if (
+        normalized === 'IN_PROGRESS'
+    ) {
+
+        return {
+
+        background:
+            '#deebff',
+
+        color:
+            '#0747a6'
+
+        };
+
+    }
+
+
+    /*
+    * TO DO
+    */
+
+    if (
+        normalized === 'TO_DO' ||
+        normalized === 'OPEN'
+    ) {
+
+        return {
+
+        background:
+            '#dfe1e6',
+
+        color:
+            '#42526e'
+
+        };
+
+    }
+
+
+    return {
+
+        background:
+        '#deebff',
+
+        color:
+        '#0747a6'
 
     };
 
