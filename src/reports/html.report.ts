@@ -16,12 +16,22 @@
 
 
     /* =========================================================
-    REPORT / PRIT
+    BLOCO DE UM PRIT
     ========================================================= */
 
     function createReportBlock(
     report: Report
     ): string {
+
+    /* =====================================================
+        STATUS PRINCIPAL
+        ===================================================== */
+
+    const mainStatusColors =
+        getIssueStatusColors(
+        report.mainStatus
+        );
+
 
     /* =====================================================
         EXECUTION STATUS
@@ -60,7 +70,7 @@
 
 
     /* =====================================================
-        RELAÇÕES
+        ISSUE LINKS
         ===================================================== */
 
     const relations =
@@ -74,10 +84,6 @@
         ];
 
 
-    /* =====================================================
-        ISSUE LINKS
-        ===================================================== */
-
     const issueLinks =
         relations
         .map(
@@ -86,8 +92,7 @@
             const issues =
                 report.issueLinks.filter(
                 issue =>
-                    issue.relation ===
-                    relation
+                    issue.relation === relation
                 );
 
 
@@ -102,7 +107,7 @@
                         );
 
 
-                    const issueStatus =
+                    const statusColors =
                         getIssueStatusColors(
                         issue.status
                         );
@@ -113,21 +118,16 @@
                         <tr class="jira-issue-row">
 
 
-                        <!-- ISSUE TYPE -->
-
                         <td class="issue-type-cell">
 
                             <span
                             class="defect-icon"
-                            title="Defect"
                             >
                             &lt;&gt;
                             </span>
 
                         </td>
 
-
-                        <!-- PRIT -->
 
                         <td class="issue-key-cell">
 
@@ -142,8 +142,6 @@
                         </td>
 
 
-                        <!-- SUMMARY -->
-
                         <td class="issue-summary-cell">
 
                             ${escapeHtml(issue.titulo)}
@@ -151,34 +149,32 @@
                         </td>
 
 
-                        <!-- PRIORIDADE -->
-
                         <td
                             class="priority-cell"
                             title="${escapeHtml(priority.label)}"
                         >
 
                             <span
-                            class="priority-icon"
                             style="
                                 color:${priority.color};
                             "
                             >
+
                             ${priority.symbol}
+
                             </span>
 
                         </td>
 
-
-                        <!-- STATUS -->
 
                         <td class="issue-state-cell">
 
                             <span
                             class="issue-status"
                             style="
-                                background:${issueStatus.background};
-                                color:${issueStatus.color};
+                                background:${statusColors.background};
+                                color:${statusColors.color};
+                                border:1px solid ${statusColors.border};
                             "
                             >
 
@@ -210,9 +206,7 @@
                 </div>
 
 
-                <table
-                    class="jira-issues-table"
-                >
+                <table class="jira-issues-table">
 
                     <tbody>
 
@@ -233,12 +227,45 @@
 
 
     /* =====================================================
-        OPERAÇÃO
+        BLOCO
         ===================================================== */
 
     return `
 
         <div class="operation-card">
+
+
+        <!-- STATUS PRINCIPAL DA TAREFA -->
+
+
+        <div class="task-status-line">
+
+
+            <span class="task-name">
+
+            ${escapeHtml(report.title)}:
+
+            </span>
+
+
+            <span
+            class="main-status-badge"
+            style="
+                background:${mainStatusColors.background};
+                color:${mainStatusColors.color};
+                border:1px solid ${mainStatusColors.border};
+            "
+            >
+
+            ${escapeHtml(report.mainStatus)}
+
+            </span>
+
+
+        </div>
+
+
+        <!-- CABEÇALHO -->
 
 
         <div class="operation-header">
@@ -258,13 +285,6 @@
                 </a>
 
             </div>
-
-
-            <h3>
-
-                ${escapeHtml(report.title)}
-
-            </h3>
 
 
             </div>
@@ -293,6 +313,9 @@
         </div>
 
 
+        <!-- EXECUTION STATUS -->
+
+
         <h4>
 
             Overall Execution Status
@@ -305,6 +328,9 @@
             ${statuses}
 
         </div>
+
+
+        <!-- DEFECTS -->
 
 
         <h4>
@@ -335,7 +361,7 @@
 
 
     /* =========================================================
-    HTML COMPLETO
+    HTML
     ========================================================= */
 
     export function createHtmlReport(
@@ -365,9 +391,7 @@
 
                 <div class="position-title">
 
-                    ${escapeHtml(
-                    position.position
-                    )}
+                    ${escapeHtml(position.position)}
 
                 </div>
 
@@ -393,6 +417,7 @@
     <!DOCTYPE html>
 
     <html lang="pt">
+
 
     <head>
 
@@ -440,38 +465,20 @@
     }
 
 
-    .page-title {
-
-    font-size:28px;
-
-    font-weight:bold;
-
-    margin-bottom:25px;
-
-    }
-
-
-    /* =========================================================
-    POSIÇÃO
-    ========================================================= */
+    /* POSITION */
 
     .position-block {
 
     background:#ffffff;
 
     border:
-        2px solid
-        #dfe1e6;
+        2px solid #dfe1e6;
 
     border-radius:10px;
 
     margin-bottom:32px;
 
     overflow:hidden;
-
-    box-shadow:
-        0 2px 10px
-        rgba(0,0,0,.06);
 
     }
 
@@ -489,8 +496,7 @@
     padding:15px 20px;
 
     border-bottom:
-        2px solid
-        #9adf6d;
+        2px solid #9adf6d;
 
     }
 
@@ -502,15 +508,12 @@
     }
 
 
-    /* =========================================================
-    OPERAÇÕES
-    ========================================================= */
+    /* TASK */
 
     .operation-card {
 
     border:
-        1px solid
-        #dfe1e6;
+        1px solid #dfe1e6;
 
     border-radius:8px;
 
@@ -523,12 +526,48 @@
     }
 
 
-    .operation-card:last-child {
+    .task-status-line {
 
-    margin-bottom:0;
+    display:flex;
+
+    align-items:center;
+
+    gap:9px;
+
+    margin-bottom:14px;
 
     }
 
+
+    .task-name {
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    text-decoration:underline;
+
+    }
+
+
+    .main-status-badge {
+
+    display:inline-block;
+
+    padding:3px 9px;
+
+    font-size:10px;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+
+    border-radius:3px;
+
+    }
+
+
+    /* HEADER */
 
     .operation-header {
 
@@ -537,10 +576,10 @@
     justify-content:
         space-between;
 
-    gap:24px;
-
     align-items:
         flex-start;
+
+    gap:20px;
 
     }
 
@@ -558,8 +597,6 @@
 
     font-weight:bold;
 
-    margin-bottom:4px;
-
     }
 
 
@@ -572,44 +609,13 @@
     }
 
 
-    a:hover {
-
-    text-decoration:underline;
-
-    }
-
-
-    h3 {
-
-    margin:0;
-
-    font-size:18px;
-
-    font-weight:bold;
-
-    }
-
-
-    h4 {
-
-    margin-top:21px;
-
-    margin-bottom:9px;
-
-    font-size:13px;
-
-    font-weight:bold;
-
-    }
-
-
     .total {
 
-    min-width:120px;
+    min-width:110px;
 
     background:#f4f5f7;
 
-    padding:9px 15px;
+    padding:8px 14px;
 
     text-align:center;
 
@@ -620,7 +626,7 @@
 
     display:block;
 
-    font-size:11px;
+    font-size:10px;
 
     color:#5e6c84;
 
@@ -631,43 +637,53 @@
 
     display:block;
 
-    font-size:22px;
+    font-size:21px;
 
     }
 
 
-    /* =========================================================
-    EXECUTION STATUS
-    ========================================================= */
+    /* TITLES */
+
+    h4 {
+
+    margin-top:20px;
+
+    margin-bottom:8px;
+
+    font-size:12px;
+
+    }
+
+
+    /* EXECUTION STATUS */
 
     .statuses {
 
     display:flex;
 
-    flex-wrap:wrap;
-
     gap:9px;
+
+    flex-wrap:wrap;
 
     }
 
 
     .status-card {
 
-    min-width:100px;
-
-    padding:11px 16px;
-
-    border:
-        1px solid;
+    min-width:95px;
 
     text-align:center;
+
+    padding:10px 14px;
+
+    border:1px solid;
 
     }
 
 
     .status-number {
 
-    font-size:27px;
+    font-size:26px;
 
     font-weight:bold;
 
@@ -676,133 +692,77 @@
 
     .status-name {
 
-    font-size:10px;
+    font-size:9px;
 
     font-weight:bold;
 
     }
 
 
-    /* PASS */
-
     .status-pass {
-
     background:#e8f5d6;
-
     color:#4f7f1f;
-
     border-color:#95c160;
-
     }
 
-
-    /* FAIL */
 
     .status-fail {
-
     background:#fde8e7;
-
     color:#c0392b;
-
     border-color:#d85b53;
-
     }
 
-
-    /* EXECUTING */
 
     .status-executing {
-
     background:#fff4cc;
-
     color:#806600;
-
     border-color:#e5c84a;
-
     }
 
-
-    /* TO DO */
 
     .status-todo {
-
     background:#eeeeee;
-
     color:#555555;
-
     border-color:#aaaaaa;
-
     }
 
-
-    /* ABORTED */
 
     .status-aborted {
-
     background:#222222;
-
     color:#ffffff;
-
     border-color:#000000;
-
     }
 
-
-    /* FOR TESTING */
 
     .status-for-testing {
-
     background:#efe4ff;
-
     color:#6f42c1;
-
     border-color:#a77be8;
-
     }
 
-
-    /* PENDING 3RD */
 
     .status-pending-3rd {
-
     background:#e9f2ff;
-
     color:#0747a6;
-
     border-color:#6b9ee8;
-
     }
 
-
-    /* BLOCKED */
 
     .status-blocked {
-
     background:#ffe5fa;
-
     color:#cc009f;
-
     border-color:#ff00cc;
-
     }
 
-
-    /* OUTROS */
 
     .status-other {
-
     background:#f4f5f7;
-
     color:#5e6c84;
-
     border-color:#c1c7d0;
-
     }
 
 
-    /* =========================================================
-    ISSUE LINKS - JIRA STYLE
-    ========================================================= */
+    /* DEFECTS */
 
     .relation {
 
@@ -819,8 +779,6 @@
 
     margin-bottom:4px;
 
-    color:#172b4d;
-
     }
 
 
@@ -829,8 +787,6 @@
     width:100%;
 
     border-collapse:collapse;
-
-    table-layout:auto;
 
     }
 
@@ -843,34 +799,18 @@
     }
 
 
-    .jira-issue-row:hover {
-
-    background:#f4f5f7;
-
-    }
-
-
     .jira-issues-table td {
 
-    padding:
-        5px 6px;
+    padding:5px;
 
-    vertical-align:
-        middle;
-
-    font-size:
-        11px;
+    font-size:11px;
 
     }
 
-
-    /* TYPE ICON */
 
     .issue-type-cell {
 
     width:22px;
-
-    padding-right:2px !important;
 
     }
 
@@ -889,49 +829,28 @@
 
     background:#ff5630;
 
-    color:#ffffff;
+    color:white;
 
     font-size:7px;
 
     font-weight:bold;
 
-    border-radius:2px;
-
     }
 
-
-    /* PRIT */
 
     .issue-key-cell {
 
     width:95px;
 
-    white-space:nowrap;
-
     }
 
-
-    .issue-key-cell a {
-
-    color:#0052cc;
-
-    font-size:11px;
-
-    }
-
-
-    /* SUMMARY */
 
     .issue-summary-cell {
 
     color:#172b4d;
 
-    line-height:1.25;
-
     }
 
-
-    /* PRIORITY */
 
     .priority-cell {
 
@@ -939,29 +858,16 @@
 
     text-align:center;
 
-    }
-
-
-    .priority-icon {
-
-    font-size:18px;
+    font-size:17px;
 
     font-weight:bold;
 
-    line-height:1;
-
     }
 
 
-    /* STATUS */
-
     .issue-state-cell {
 
-    width:110px;
-
-    text-align:left;
-
-    white-space:nowrap;
+    width:115px;
 
     }
 
@@ -970,27 +876,22 @@
 
     display:inline-block;
 
-    padding:
-        2px 6px;
+    padding:2px 6px;
 
     font-size:9px;
 
     font-weight:bold;
-
-    line-height:1.2;
 
     text-transform:uppercase;
 
     }
 
 
-    /* EMPTY */
-
     .empty {
 
     color:#6b778c;
 
-    font-size:12px;
+    font-size:11px;
 
     }
 
@@ -1006,21 +907,13 @@
 
     <div class="page">
 
-
-    <div class="page-title">
-
-        Jira / Xray Execution Report
-
-    </div>
-
-
     ${positionsHtml}
-
 
     </div>
 
 
     </body>
+
 
     </html>
 

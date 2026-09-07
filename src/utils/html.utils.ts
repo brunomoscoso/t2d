@@ -42,16 +42,6 @@
     return status
         .trim()
         .toUpperCase()
-
-        /*
-        * FOR TESTING
-        * FOR-TESTING
-        * FOR_TESTING
-        *
-        * ficam todos:
-        *
-        * FOR_TESTING
-        */
         .replace(
         /[\s-]+/g,
         '_'
@@ -61,7 +51,7 @@
 
 
     /* =========================================================
-    CSS CLASS DO EXECUTION STATUS
+    EXECUTION STATUS CLASS
     ========================================================= */
 
     export function getStatusClass(
@@ -74,76 +64,39 @@
         );
 
 
-    if (
-        normalized === 'PASS'
-    ) {
-
+    if (normalized === 'PASS') {
         return 'status-pass';
-
     }
 
-
-    if (
-        normalized === 'FAIL'
-    ) {
-
+    if (normalized === 'FAIL') {
         return 'status-fail';
-
     }
 
-
-    if (
-        normalized === 'EXECUTING'
-    ) {
-
+    if (normalized === 'EXECUTING') {
         return 'status-executing';
-
     }
-
 
     if (
         normalized === 'TO_DO' ||
         normalized === 'TODO'
     ) {
-
         return 'status-todo';
-
     }
 
-
-    if (
-        normalized === 'ABORTED'
-    ) {
-
+    if (normalized === 'ABORTED') {
         return 'status-aborted';
-
     }
 
-
-    if (
-        normalized === 'FOR_TESTING'
-    ) {
-
+    if (normalized === 'FOR_TESTING') {
         return 'status-for-testing';
-
     }
 
-
-    if (
-        normalized === 'PENDING_3RD'
-    ) {
-
+    if (normalized === 'PENDING_3RD') {
         return 'status-pending-3rd';
-
     }
 
-
-    if (
-        normalized === 'BLOCKED'
-    ) {
-
+    if (normalized === 'BLOCKED') {
         return 'status-blocked';
-
     }
 
 
@@ -152,7 +105,7 @@
 
 
     /* =========================================================
-    CORES DO EMAIL
+    CORES EXECUTION STATUS
     ========================================================= */
 
     export function getStatusColors(
@@ -165,73 +118,38 @@
         );
 
 
-    /* PASS - VERDE */
-
-    if (
-        normalized === 'PASS'
-    ) {
+    if (normalized === 'PASS') {
 
         return {
-
-        background:
-            '#e8f5d6',
-
-        color:
-            '#4f7f1f',
-
-        border:
-            '#95c160'
-
+        background: '#e8f5d6',
+        color: '#4f7f1f',
+        border: '#95c160'
         };
 
     }
 
 
-    /* FAIL - VERMELHO */
-
-    if (
-        normalized === 'FAIL'
-    ) {
+    if (normalized === 'FAIL') {
 
         return {
-
-        background:
-            '#fde8e7',
-
-        color:
-            '#c0392b',
-
-        border:
-            '#d85b53'
-
+        background: '#fde8e7',
+        color: '#c0392b',
+        border: '#d85b53'
         };
 
     }
 
 
-    /* EXECUTING - AMARELO */
-
-    if (
-        normalized === 'EXECUTING'
-    ) {
+    if (normalized === 'EXECUTING') {
 
         return {
-
-        background:
-            '#fff4cc',
-
-        color:
-            '#806600',
-
-        border:
-            '#e5c84a'
-
+        background: '#fff4cc',
+        color: '#806600',
+        border: '#e5c84a'
         };
 
     }
 
-
-    /* TO DO - CINZA */
 
     if (
         normalized === 'TO_DO' ||
@@ -239,121 +157,210 @@
     ) {
 
         return {
-
-        background:
-            '#eeeeee',
-
-        color:
-            '#555555',
-
-        border:
-            '#aaaaaa'
-
+        background: '#eeeeee',
+        color: '#555555',
+        border: '#aaaaaa'
         };
 
     }
 
 
-    /* ABORTED - PRETO */
-
-    if (
-        normalized === 'ABORTED'
-    ) {
+    if (normalized === 'ABORTED') {
 
         return {
-
-        background:
-            '#222222',
-
-        color:
-            '#ffffff',
-
-        border:
-            '#000000'
-
+        background: '#222222',
+        color: '#ffffff',
+        border: '#000000'
         };
 
     }
 
 
-    /* FOR_TESTING - ROXO */
-
-    if (
-        normalized === 'FOR_TESTING'
-    ) {
+    if (normalized === 'FOR_TESTING') {
 
         return {
-
-        background:
-            '#efe4ff',
-
-        color:
-            '#6f42c1',
-
-        border:
-            '#a77be8'
-
+        background: '#efe4ff',
+        color: '#6f42c1',
+        border: '#a77be8'
         };
 
     }
 
 
-    /* PENDING_3RD - AZUL */
-
-    if (
-        normalized === 'PENDING_3RD'
-    ) {
+    if (normalized === 'PENDING_3RD') {
 
         return {
-
-        background:
-            '#e9f2ff',
-
-        color:
-            '#0747a6',
-
-        border:
-            '#6b9ee8'
-
+        background: '#e9f2ff',
+        color: '#0747a6',
+        border: '#6b9ee8'
         };
 
     }
 
 
-    /* BLOCKED - ROSA */
-
-    if (
-        normalized === 'BLOCKED'
-    ) {
+    if (normalized === 'BLOCKED') {
 
         return {
-
-        background:
-            '#ffe5fa',
-
-        color:
-            '#cc009f',
-
-        border:
-            '#ff00cc'
-
+        background: '#ffe5fa',
+        color: '#cc009f',
+        border: '#ff00cc'
         };
 
     }
 
 
     return {
-
-        background:
-        '#f4f5f7',
-
-        color:
-        '#5e6c84',
-
-        border:
-        '#c1c7d0'
-
+        background: '#f4f5f7',
+        color: '#5e6c84',
+        border: '#c1c7d0'
     };
+    }
+
+
+    /* =========================================================
+    STATUS PRINCIPAL DO PRIT
+    ========================================================= */
+
+    export function getIssueStatusColors(
+    status: string
+    ) {
+
+    const normalized =
+        normalizeStatus(
+        status
+        );
+
+
+    /* DONE */
+
+    if (
+        normalized === 'DONE' ||
+        normalized === 'CLOSED' ||
+        normalized === 'RESOLVED'
+    ) {
+
+        return {
+        background: '#e3fcef',
+        color: '#006644',
+        border: '#79f2c0'
+        };
+
+    }
+
+
+    /* IN PROGRESS */
+
+    if (
+        normalized === 'IN_PROGRESS'
+    ) {
+
+        return {
+        background: '#deebff',
+        color: '#0747a6',
+        border: '#4c9aff'
+        };
+
+    }
+
+
+    /* TO DO */
+
+    if (
+        normalized === 'TO_DO' ||
+        normalized === 'TODO' ||
+        normalized === 'OPEN'
+    ) {
+
+        return {
+        background: '#dfe1e6',
+        color: '#42526e',
+        border: '#a5adba'
+        };
+
+    }
+
+
+    /* BLOCKED */
+
+    if (
+        normalized === 'BLOCKED'
+    ) {
+
+        return {
+        background: '#ffe5fa',
+        color: '#cc009f',
+        border: '#ff8fda'
+        };
+
+    }
+
+
+    /* EXECUTING */
+
+    if (
+        normalized === 'EXECUTING'
+    ) {
+
+        return {
+        background: '#fff4cc',
+        color: '#806600',
+        border: '#e5c84a'
+        };
+
+    }
+
+
+    /* ABORTED */
+
+    if (
+        normalized === 'ABORTED'
+    ) {
+
+        return {
+        background: '#222222',
+        color: '#ffffff',
+        border: '#000000'
+        };
+
+    }
+
+
+    /* FOR TESTING */
+
+    if (
+        normalized === 'FOR_TESTING'
+    ) {
+
+        return {
+        background: '#efe4ff',
+        color: '#6f42c1',
+        border: '#a77be8'
+        };
+
+    }
+
+
+    /* PENDING 3RD */
+
+    if (
+        normalized === 'PENDING_3RD'
+    ) {
+
+        return {
+        background: '#e9f2ff',
+        color: '#0747a6',
+        border: '#6b9ee8'
+        };
+
+    }
+
+
+    return {
+        background: '#f4f5f7',
+        color: '#5e6c84',
+        border: '#c1c7d0'
+    };
+
     }
 
 
@@ -371,232 +378,65 @@
         .toLowerCase();
 
 
-    /*
-    * Jira:
-    *
-    * Highest = duplo para cima
-    */
-
-    if (
-        normalized === 'highest'
-    ) {
+    if (normalized === 'highest') {
 
         return {
-
-        symbol:
-            '⇈',
-
-        color:
-            '#d04437',
-
-        label:
-            'Highest'
-
+        symbol: '⇈',
+        color: '#d04437',
+        label: 'Highest'
         };
 
     }
 
 
-    /*
-    * High
-    */
-
-    if (
-        normalized === 'high'
-    ) {
+    if (normalized === 'high') {
 
         return {
-
-        symbol:
-            '↑',
-
-        color:
-            '#d04437',
-
-        label:
-            'High'
-
+        symbol: '↑',
+        color: '#d04437',
+        label: 'High'
         };
 
     }
 
 
-    /*
-    * Medium
-    */
-
-    if (
-        normalized === 'medium'
-    ) {
+    if (normalized === 'medium') {
 
         return {
-
-        symbol:
-            '=',
-
-        color:
-            '#f39c12',
-
-        label:
-            'Medium'
-
+        symbol: '=',
+        color: '#f39c12',
+        label: 'Medium'
         };
 
     }
 
 
-    /*
-    * Low
-    */
-
-    if (
-        normalized === 'low'
-    ) {
+    if (normalized === 'low') {
 
         return {
-
-        symbol:
-            '↓',
-
-        color:
-            '#0065ff',
-
-        label:
-            'Low'
-
+        symbol: '↓',
+        color: '#0065ff',
+        label: 'Low'
         };
 
     }
 
 
-    /*
-    * Lowest
-    */
-
-    if (
-        normalized === 'lowest'
-    ) {
+    if (normalized === 'lowest') {
 
         return {
-
-        symbol:
-            '⇊',
-
-        color:
-            '#0065ff',
-
-        label:
-            'Lowest'
-
+        symbol: '⇊',
+        color: '#0065ff',
+        label: 'Lowest'
         };
 
     }
 
 
     return {
-
-        symbol:
-        '•',
-
-        color:
-        '#6b778c',
-
-        label:
-        'Unknown'
-
-    };
-
-    }
-
-
-    /* =========================================================
-    STATUS DO DEFECT
-    ========================================================= */
-
-    export function getIssueStatusColors(
-    status: string
-    ) {
-
-    const normalized =
-        normalizeStatus(
-        status
-        );
-
-
-    /*
-    * DONE
-    */
-
-    if (
-        normalized === 'DONE' ||
-        normalized === 'CLOSED' ||
-        normalized === 'RESOLVED'
-    ) {
-
-        return {
-
-        background:
-            '#e3fcef',
-
-        color:
-            '#006644'
-
-        };
-
-    }
-
-
-    /*
-    * IN PROGRESS
-    */
-
-    if (
-        normalized === 'IN_PROGRESS'
-    ) {
-
-        return {
-
-        background:
-            '#deebff',
-
-        color:
-            '#0747a6'
-
-        };
-
-    }
-
-
-    /*
-    * TO DO
-    */
-
-    if (
-        normalized === 'TO_DO' ||
-        normalized === 'OPEN'
-    ) {
-
-        return {
-
-        background:
-            '#dfe1e6',
-
-        color:
-            '#42526e'
-
-        };
-
-    }
-
-
-    return {
-
-        background:
-        '#deebff',
-
-        color:
-        '#0747a6'
-
+        symbol: '•',
+        color: '#6b778c',
+        label: 'Unknown'
     };
 
     }

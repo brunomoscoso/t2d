@@ -19,16 +19,22 @@
 
 
     /* =========================================================
-    UM REPORT
+    PRIT
     ========================================================= */
 
     function createReportBlock(
     report: Report
     ): string {
 
-    /* =====================================================
-        STATUS
-        ===================================================== */
+    /* STATUS PRINCIPAL */
+
+    const mainStatusColors =
+        getIssueStatusColors(
+        report.mainStatus
+        );
+
+
+    /* EXECUTION STATUS */
 
     const statuses =
         report.executionStatuses
@@ -48,30 +54,32 @@
                     background:${colors.background};
                     color:${colors.color};
                     border:1px solid ${colors.border};
-                    padding:11px 16px;
+                    padding:10px 15px;
                     text-align:center;
-                    font-family:Arial,sans-serif;
-                    min-width:90px;
                 "
                 >
 
                 <div
                     style="
-                    font-size:26px;
+                    font-size:25px;
                     font-weight:bold;
                     "
                 >
+
                     ${item.quantidade}
+
                 </div>
 
 
                 <div
                     style="
-                    font-size:10px;
+                    font-size:9px;
                     font-weight:bold;
                     "
                 >
+
                     ${escapeHtml(item.status)}
+
                 </div>
 
 
@@ -82,15 +90,11 @@
             }
         )
         .join(
-
             '<td style="width:8px;"></td>'
-
         );
 
 
-    /* =====================================================
-        RELAÇÕES
-        ===================================================== */
+    /* ISSUE LINKS */
 
     const relations =
         [
@@ -103,10 +107,6 @@
         ];
 
 
-    /* =====================================================
-        ISSUE LINKS
-        ===================================================== */
-
     const issueLinks =
         relations
         .map(
@@ -115,8 +115,7 @@
             const issues =
                 report.issueLinks.filter(
                 issue =>
-                    issue.relation ===
-                    relation
+                    issue.relation === relation
                 );
 
 
@@ -131,7 +130,7 @@
                         );
 
 
-                    const issueStatus =
+                    const statusColors =
                         getIssueStatusColors(
                         issue.status
                         );
@@ -141,46 +140,40 @@
 
                         <tr>
 
-
-                        <!-- DEFECT ICON -->
-
                         <td
                             width="22"
                             style="
                             padding:5px 3px;
                             border-bottom:1px solid #dfe1e6;
-                            vertical-align:middle;
                             "
                         >
 
                             <span
                             style="
                                 display:inline-block;
-                                background:#ff5630;
-                                color:#ffffff;
                                 width:13px;
                                 height:13px;
                                 line-height:13px;
                                 text-align:center;
+                                background:#ff5630;
+                                color:#ffffff;
                                 font-size:7px;
                                 font-weight:bold;
                             "
                             >
+
                             &lt;&gt;
+
                             </span>
 
                         </td>
 
 
-                        <!-- KEY -->
-
                         <td
                             width="95"
                             style="
-                            padding:5px 5px;
+                            padding:5px;
                             border-bottom:1px solid #dfe1e6;
-                            vertical-align:middle;
-                            white-space:nowrap;
                             "
                         >
 
@@ -200,15 +193,11 @@
                         </td>
 
 
-                        <!-- TITLE -->
-
                         <td
                             style="
-                            padding:5px 5px;
+                            padding:5px;
                             border-bottom:1px solid #dfe1e6;
                             font-size:11px;
-                            color:#172b4d;
-                            vertical-align:middle;
                             "
                         >
 
@@ -217,18 +206,13 @@
                         </td>
 
 
-                        <!-- PRIORITY -->
-
                         <td
                             width="35"
                             align="center"
-                            title="${escapeHtml(priority.label)}"
                             style="
-                            padding:5px;
                             border-bottom:1px solid #dfe1e6;
-                            vertical-align:middle;
                             color:${priority.color};
-                            font-size:18px;
+                            font-size:17px;
                             font-weight:bold;
                             "
                         >
@@ -238,23 +222,18 @@
                         </td>
 
 
-                        <!-- STATUS -->
-
                         <td
-                            width="110"
+                            width="115"
                             style="
-                            padding:5px;
                             border-bottom:1px solid #dfe1e6;
-                            vertical-align:middle;
-                            white-space:nowrap;
                             "
                         >
 
                             <span
                             style="
-                                display:inline-block;
-                                background:${issueStatus.background};
-                                color:${issueStatus.color};
+                                background:${statusColors.background};
+                                color:${statusColors.color};
+                                border:1px solid ${statusColors.border};
                                 padding:2px 6px;
                                 font-size:9px;
                                 font-weight:bold;
@@ -266,7 +245,6 @@
                             </span>
 
                         </td>
-
 
                         </tr>
 
@@ -281,17 +259,14 @@
 
                 <div
                 style="
-                    margin-top:14px;
-                    font-family:Arial,sans-serif;
+                    margin-top:13px;
                 "
                 >
-
 
                 <div
                     style="
                     font-size:12px;
                     font-weight:bold;
-                    color:#172b4d;
                     margin-bottom:4px;
                     "
                 >
@@ -306,16 +281,13 @@
                     cellpadding="0"
                     cellspacing="0"
                     style="
-                    width:100%;
                     border-collapse:collapse;
-                    font-family:Arial,sans-serif;
                     "
                 >
 
                     ${rows}
 
                 </table>
-
 
                 </div>
 
@@ -327,7 +299,7 @@
 
 
     /* =====================================================
-        OPERAÇÃO
+        BLOCO
         ===================================================== */
 
     return `
@@ -337,10 +309,53 @@
             border:1px solid #dfe1e6;
             padding:18px;
             margin-bottom:18px;
-            background:#ffffff;
             font-family:Arial,sans-serif;
         "
         >
+
+
+        <!-- STATUS PRINCIPAL -->
+
+
+        <div
+            style="
+            margin-bottom:14px;
+            "
+        >
+
+            <span
+            style="
+                font-size:15px;
+                font-weight:bold;
+                text-decoration:underline;
+            "
+            >
+
+            ${escapeHtml(report.title)}:
+
+            </span>
+
+
+            <span
+            style="
+                margin-left:8px;
+                background:${mainStatusColors.background};
+                color:${mainStatusColors.color};
+                border:1px solid ${mainStatusColors.border};
+                padding:3px 8px;
+                font-size:10px;
+                font-weight:bold;
+            "
+            >
+
+            ${escapeHtml(report.mainStatus)}
+
+            </span>
+
+        </div>
+
+
+        <!-- PRIT / TOTAL -->
 
 
         <table
@@ -349,62 +364,37 @@
             cellspacing="0"
         >
 
-
             <tr>
-
 
             <td>
 
-
-                <div
+                <a
+                href="${JIRA_URL}/browse/${encodeURIComponent(report.prit)}"
                 style="
+                    color:#0052cc;
                     font-size:12px;
                     font-weight:bold;
+                    text-decoration:none;
                 "
                 >
 
-                <a
-                    href="${JIRA_URL}/browse/${encodeURIComponent(report.prit)}"
-                    style="
-                    color:#0052cc;
-                    text-decoration:none;
-                    "
-                >
-
-                    ${escapeHtml(report.prit)}
+                ${escapeHtml(report.prit)}
 
                 </a>
-
-                </div>
-
-
-                <div
-                style="
-                    font-size:18px;
-                    font-weight:bold;
-                    color:#172b4d;
-                    margin-top:4px;
-                "
-                >
-
-                ${escapeHtml(report.title)}
-
-                </div>
-
 
             </td>
 
 
             <td
-                width="130"
                 align="right"
-                style="
-                font-size:11px;
-                vertical-align:top;
-                "
+                width="120"
             >
 
-                <strong>
+                <strong
+                style="
+                    font-size:11px;
+                "
+                >
 
                 Total Tests:
                 ${report.totalTests ?? '-'}
@@ -413,19 +403,20 @@
 
             </td>
 
-
             </tr>
-
 
         </table>
 
 
+        <!-- STATUS -->
+
+
         <div
             style="
-            font-size:12px;
-            font-weight:bold;
             margin-top:18px;
             margin-bottom:8px;
+            font-size:12px;
+            font-weight:bold;
             "
         >
 
@@ -448,12 +439,14 @@
         </table>
 
 
+        <!-- DEFECTS -->
+
+
         <div
             style="
+            margin-top:20px;
             font-size:12px;
             font-weight:bold;
-            margin-top:20px;
-            margin-bottom:5px;
             "
         >
 
@@ -468,9 +461,9 @@
             `
             <div
                 style="
+                margin-top:8px;
                 color:#6b778c;
                 font-size:11px;
-                margin-top:8px;
                 "
             >
 
@@ -489,7 +482,7 @@
 
 
     /* =========================================================
-    EMAIL COMPLETO
+    EMAIL
     ========================================================= */
 
     export function createEmailReport(
@@ -530,7 +523,6 @@
                     font-size:23px;
                     font-weight:bold;
                     padding:14px 18px;
-                    border-bottom:2px solid #9adf6d;
                     "
                 >
 
@@ -544,7 +536,6 @@
                 <div
                     style="
                     padding:17px;
-                    background:#ffffff;
                     "
                 >
 
@@ -562,21 +553,12 @@
         .join('');
 
 
-    /* =====================================================
-        TEMPLATE
-        ===================================================== */
-
     const templatePath =
         path.join(
-
         process.cwd(),
-
         'src',
-
         'templates',
-
         'email-body.html'
-
         );
 
 

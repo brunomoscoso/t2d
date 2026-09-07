@@ -9,6 +9,23 @@
 
 
     /* =====================================================
+        STATUS PRINCIPAL DO PRIT
+        ===================================================== */
+
+    mainStatusCandidates: [
+
+        '#status-val',
+
+        'span#status-val',
+
+        '.status-view span.dropdown-text',
+
+        'span.dropdown-text'
+
+    ],
+
+
+    /* =====================================================
         XRAY EXECUTION STATUS
         ===================================================== */
 
@@ -33,16 +50,6 @@
         'span.jira-issue-status-lozenge',
 
 
-    /*
-    * A prioridade do Jira costuma aparecer
-    * principalmente através de:
-    *
-    * alt="High"
-    * title="High"
-    *
-    * Mas tentamos várias possibilidades
-    * para ficar mais resistente.
-    */
     issueLinkPriorityCandidates: [
 
         '.priority img',
@@ -56,8 +63,6 @@
         'img[title]',
 
         '[data-priority]',
-
-        '[title]',
 
         '[aria-label]'
 
@@ -80,6 +85,40 @@
 
         '[data-field-id="labels"] span'
 
-    ]
+    ],
 
-    };
+
+    /* =====================================================
+        DASHBOARD
+        ===================================================== */
+
+    dashboard: {
+
+    /*
+    * Título do gadget.
+    */
+    gadgetTitle:
+        'h2.dashboard-item-title',
+
+    /*
+    * A tabela será procurada SOMENTE
+    * dentro do dashboard-item-content
+    * correspondente ao título encontrado.
+    */
+    table:
+        'table.issue-table',
+
+    /*
+    * Cada linha é uma issue Jira.
+    */
+    rows:
+        'tbody tr.issuerow',
+
+    /*
+    * Células da issue.
+    */
+    cells:
+        'td'
+
+    }
+}

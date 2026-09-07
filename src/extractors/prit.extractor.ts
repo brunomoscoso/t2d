@@ -31,9 +31,17 @@
     } from './labels.extractor';
 
     import {
+    extractMainStatus
+    } from './mainStatus.extractor';
+
+    import {
     getPosition
     } from '../utils/position.utils';
 
+
+    /* =========================================================
+    EXTRAI UM PRIT
+    ========================================================= */
 
     export async function extractPrit(
     page: Page,
@@ -41,23 +49,54 @@
     ): Promise<Report> {
 
     console.log('\n');
-    console.log('========================================');
-    console.log(`Abrindo ${prit}`);
-    console.log('========================================');
 
-    await page.goto(
-        `${JIRA_URL}/browse/${prit}`,
-        {
-        waitUntil: 'domcontentloaded'
-        }
+    console.log(
+        '========================================'
     );
 
+    console.log(
+        `Abrindo ${prit}`
+    );
+
+    console.log(
+        '========================================'
+    );
+
+
+    /* =====================================================
+        ABRE PRIT
+        ===================================================== */
+
+    await page.goto(
+
+        `${JIRA_URL}/browse/${prit}`,
+
+        {
+        waitUntil:
+            'domcontentloaded'
+        }
+
+    );
+
+
+    /* =====================================================
+        AGUARDA TÍTULO
+        ===================================================== */
+
     await page
-        .locator(SELECTORS.title)
+        .locator(
+        SELECTORS.title
+        )
         .waitFor({
-        state: 'visible',
-        timeout: 60000
+
+        state:
+            'visible',
+
+        timeout:
+            60000
+
         });
+
 
     /* =====================================================
         TÍTULO
@@ -66,60 +105,130 @@
     const title =
         (
         await page
-            .locator(SELECTORS.title)
+            .locator(
+            SELECTORS.title
+            )
             .innerText()
-        ).trim();
+        )
+        .trim();
 
-    console.log(`Título: ${title}`);
+
+    console.log(
+        `Título: ${title}`
+    );
+
 
     /* =====================================================
-        LABELS / POSIÇÃO
+        STATUS PRINCIPAL
+        ===================================================== */
+
+    const mainStatus =
+        await extractMainStatus(
+        page
+        );
+
+
+    /* =====================================================
+        LABELS
         ===================================================== */
 
     const labels =
-        await extractLabels(page);
+        await extractLabels(
+        page
+        );
 
-    console.log('Labels encontradas:', labels);
+
+    console.log(
+        'Labels:',
+        labels
+    );
+
+
+    /* =====================================================
+        POSIÇÃO
+        ===================================================== */
 
     const position =
-        getPosition(labels, title);
+        getPosition(
+        labels,
+        title
+        );
 
-    console.log(`Posição: ${position}`);
+
+    console.log(
+        `Posição: ${position}`
+    );
+
 
     /* =====================================================
         EXECUTION STATUS
         ===================================================== */
 
     const executionStatuses =
-        await extractExecutionStatuses(page);
+        await extractExecutionStatuses(
+        page
+        );
+
 
     /* =====================================================
         TOTAL TESTS
         ===================================================== */
 
     const totalTests =
-        await extractTotalTests(page);
+        await extractTotalTests(
+        page
+        );
+
 
     /* =====================================================
         ISSUE LINKS
         ===================================================== */
 
-    await page.evaluate(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-    });
+    await page.evaluate(
+        () => {
 
-    await page.waitForTimeout(1000);
+        window.scrollTo(
+            0,
+            document.body.scrollHeight
+        );
+
+        }
+    );
+
+
+    await page.waitForTimeout(
+        1000
+    );
+
 
     const issueLinks =
-        await extractIssueLinks(page);
+        await extractIssueLinks(
+        page
+        );
+
+
+    /* =====================================================
+        RESULTADO
+        ===================================================== */
 
     return {
+
         prit,
+
         title,
+
+        mainStatus,
+
         labels,
+
         position,
+
         totalTests,
+
         executionStatuses,
+
         issueLinks
+
     };
+
     }

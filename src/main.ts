@@ -1,8 +1,10 @@
     import {
-    PRITS
-    } from './config/prits.config';
+    PRITS,
+    DASHBOARD_PAGE_ID
+    } from './config/operations.config';
 
     import {
+    DashboardData,
     Report
     } from './types/report.types';
 
@@ -15,6 +17,10 @@
     } from './extractors/prit.extractor';
 
     import {
+    extractDashboard
+    } from './extractors/dashboard.extractor';
+
+    import {
     groupReportsByPosition
     } from './utils/groupReports.utils';
 
@@ -24,6 +30,10 @@
 
 
     async function main() {
+
+    /* =====================================================
+        VALIDATIONS
+        ===================================================== */
 
     if (
         PRITS.length === 0
@@ -35,6 +45,21 @@
 
     }
 
+
+    if (
+        !DASHBOARD_PAGE_ID
+    ) {
+
+        throw new Error(
+        'Nenhum Dashboard configurado.'
+        );
+
+    }
+
+
+    /* =====================================================
+        BROWSER
+        ===================================================== */
 
     const {
         browser,
@@ -51,9 +76,9 @@
         Report[] = [];
 
 
-        /*
-        * Percorre todos os PRITs.
-        */
+        /* ===================================================
+        PRITS
+        =================================================== */
 
         for (
         const prit
@@ -86,6 +111,7 @@
             `❌ Erro ao processar ${prit}`
             );
 
+
             console.error(
             error
             );
@@ -95,10 +121,9 @@
         }
 
 
-        /*
-        * Agrupa automaticamente
-        * pela posição encontrada nas Labels.
-        */
+        /* ===================================================
+        AGRUPAMENTO
+        =================================================== */
 
         const positions =
         groupReportsByPosition(
@@ -106,12 +131,68 @@
         );
 
 
-        /*
-        * Gera todos os arquivos.
+        /* ===================================================
+        DASHBOARD
+        ===================================================
+        *
+        * Dashboard é independente.
+        *
+        * Se falhar, os PRITs continuam
+        * gerando relatório normalmente.
         */
 
+        let dashboard:
+        DashboardData | undefined;
+
+
+        const dashboardPage =
+        await page
+            .context()
+            .newPage();
+
+
+        try {
+
+        dashboard =
+            await extractDashboard(
+            dashboardPage,
+            DASHBOARD_PAGE_ID
+            );
+
+
+        console.log(
+            `✅ Dashboard ${DASHBOARD_PAGE_ID} extraído`
+        );
+
+        }
+
+        catch (error) {
+
+        console.error(
+            '❌ Não foi possível extrair o Dashboard.'
+        );
+
+
+        console.error(
+            error
+        );
+
+        }
+
+        finally {
+
+        await dashboardPage.close();
+
+        }
+
+
+        /* ===================================================
+        REPORT
+        =================================================== */
+
         writeReports(
-        positions
+        positions,
+        dashboard
         );
 
     }
@@ -125,17 +206,25 @@
     }
 
 
+    /* =========================================================
+    START
+    ========================================================= */
+
     main()
     .catch(
         error => {
 
         console.error(
+            '❌ Erro fatal na execução:'
+        );
+
+
+        console.error(
             error
         );
 
-        process.exit(
-            1
-        );
+
+        process.exit(1);
 
         }
     );

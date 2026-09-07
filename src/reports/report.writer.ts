@@ -1,7 +1,8 @@
-    import fs
-    from 'node:fs';
+    import fs from 'node:fs';
+    import path from 'node:path';
 
     import {
+    DashboardData,
     PositionReport
     } from '../types/report.types';
 
@@ -17,13 +18,125 @@
     createEmailReport
     } from './email.report';
 
+    import {
+    createDashboardEmailHtml,
+    createDashboardHtml
+    } from './dashboard.report';
+
+
+    /* =========================================================
+    INJECT BEFORE BODY END
+    ========================================================= */
+
+    function injectBeforeBodyEnd(
+    html: string,
+    content: string
+    ): string {
+
+    const bodyEnd =
+        html
+        .toLowerCase()
+        .lastIndexOf(
+            '</body>'
+        );
+
+
+    if (
+        bodyEnd === -1
+    ) {
+
+        return (
+        html +
+        content
+        );
+
+    }
+
+
+    return (
+
+        html.slice(
+        0,
+        bodyEnd
+        ) +
+
+        content +
+
+        html.slice(
+        bodyEnd
+        )
+
+    );
+    }
+
+
+    /* =========================================================
+    DASHBOARD NO EMAIL
+    ========================================================= */
+
+    function injectDashboardIntoEmail(
+    emailHtml: string,
+    dashboardHtml: string
+    ): string {
+
+    /*
+    * Se existir o marcador no template,
+    * usamos exatamente aquela posição.
+    */
+
+    if (
+        emailHtml.includes(
+        '<!-- DASHBOARD -->'
+        )
+    ) {
+
+        return emailHtml.replace(
+        '<!-- DASHBOARD -->',
+        dashboardHtml
+        );
+
+    }
+
+
+    /*
+    * Fallback:
+    * adiciona antes do </body>.
+    */
+
+    return injectBeforeBodyEnd(
+        emailHtml,
+        dashboardHtml
+    );
+    }
+
+
+    /* =========================================================
+    WRITE REPORTS
+    =========================================================
+    *
+    * dashboard é opcional.
+    *
+    * Portanto:
+    *
+    * writeReports(positions)
+    *
+    * continua funcionando.
+    */
 
     export function writeReports(
-    positions: PositionReport[]
+    positions: PositionReport[],
+    dashboard?: DashboardData
     ): void {
 
+    const outputDirectory =
+        path.join(
+        process.cwd(),
+        'output'
+        );
+
+
     fs.mkdirSync(
-        'output',
+        outputDirectory,
         {
         recursive:
             true
@@ -31,11 +144,16 @@
     );
 
 
-    /* JSON */
+    /* =====================================================
+        REPORT JSON
+        ===================================================== */
 
     fs.writeFileSync(
 
-        'output/report.json',
+        path.join(
+        outputDirectory,
+        'report.json'
+        ),
 
         JSON.stringify(
         positions,
@@ -48,11 +166,16 @@
     );
 
 
-    /* TXT */
+    /* =====================================================
+        TXT
+        ===================================================== */
 
     fs.writeFileSync(
 
-        'output/report.txt',
+        path.join(
+        outputDirectory,
+        'report.txt'
+        ),
 
         createTxtReport(
         positions
@@ -63,37 +186,130 @@
     );
 
 
-    /* HTML */
+    /* =====================================================
+        HTML ORIGINAL
+        ===================================================== */
 
-    fs.writeFileSync(
-
-        'output/report.html',
-
+    let reportHtml =
         createHtmlReport(
         positions
+        );
+
+
+    /* =====================================================
+        EMAIL ORIGINAL
+        ===================================================== */
+
+    let emailHtml =
+        createEmailReport(
+        positions
+        );
+
+
+    /* =====================================================
+        DASHBOARD
+        ===================================================== */
+
+    if (dashboard) {
+
+        /*
+        * JSON separado para debug.
+        */
+
+        fs.writeFileSync(
+
+        path.join(
+            outputDirectory,
+            'dashboard.json'
+        ),
+
+        JSON.stringify(
+            dashboard,
+            null,
+            2
         ),
 
         'utf-8'
 
-    );
+        );
 
 
-    /* EMAIL */
+        /*
+        * Dashboard por último no report.html.
+        */
+
+        reportHtml =
+        injectBeforeBodyEnd(
+
+            reportHtml,
+
+            createDashboardHtml(
+            dashboard
+            )
+
+        );
+
+
+        /*
+        * Dashboard por último no email.
+        */
+
+        emailHtml =
+        injectDashboardIntoEmail(
+
+            emailHtml,
+
+            createDashboardEmailHtml(
+            dashboard
+            )
+
+        );
+
+    }
+
+
+    /* =====================================================
+        SALVA HTML
+        ===================================================== */
 
     fs.writeFileSync(
 
-        'output/email.html',
-
-        createEmailReport(
-        positions
+        path.join(
+        outputDirectory,
+        'report.html'
         ),
+
+        reportHtml,
 
         'utf-8'
 
     );
 
 
+    /* =====================================================
+        SALVA EMAIL
+        ===================================================== */
+
+    fs.writeFileSync(
+
+        path.join(
+        outputDirectory,
+        'email.html'
+        ),
+
+        emailHtml,
+
+        'utf-8'
+
+    );
+
+
+    /* =====================================================
+        LOG
+        ===================================================== */
+
     console.log('\n');
+
 
     console.log(
         '✅ Relatórios gerados:'
@@ -104,16 +320,27 @@
         'output/report.json'
     );
 
+
     console.log(
         'output/report.txt'
     );
+
 
     console.log(
         'output/report.html'
     );
 
+
     console.log(
         'output/email.html'
     );
 
+
+    if (dashboard) {
+
+        console.log(
+        'output/dashboard.json'
+        );
+
+    }
     }
