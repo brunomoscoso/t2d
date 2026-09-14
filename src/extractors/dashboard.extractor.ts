@@ -148,6 +148,142 @@
     }
 
 
+
+
+    /* =========================================================
+    SCROLL LENTO ATÉ O FINAL DO DASHBOARD
+    ========================================================= */
+
+    async function slowScrollToBottom(
+    page: Page
+    ): Promise<void> {
+
+    console.log(
+        'Scrollando Dashboard lentamente até o final...'
+    );
+
+
+    await page.evaluate(
+        async () => {
+
+        await new Promise<void>(
+            resolve => {
+
+            const distance =
+                250;
+
+            const interval =
+                500;
+
+            const maxSteps =
+                200;
+
+            let steps =
+                0;
+
+            let bottomChecks =
+                0;
+
+
+            const timer =
+                window.setInterval(
+                () => {
+
+                steps++;
+
+
+                const pageHeight =
+                    Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight
+                    );
+
+
+                const currentPosition =
+                    window.scrollY +
+                    window.innerHeight;
+
+
+                /*
+                * Precisamos confirmar o final algumas vezes,
+                * porque o Jira pode aumentar a altura da página
+                * depois de renderizar novos gadgets.
+                */
+
+                if (
+                    currentPosition >=
+                    pageHeight - 10
+                ) {
+
+                    bottomChecks++;
+
+                }
+
+                else {
+
+                    bottomChecks = 0;
+
+
+                    window.scrollBy({
+                    top:
+                        distance,
+
+                    left:
+                        0,
+
+                    behavior:
+                        'smooth'
+                    });
+
+                }
+
+
+                /*
+                * Três verificações seguidas no final:
+                * aproximadamente 1,5 segundo.
+                */
+
+                if (
+                    bottomChecks >= 3 ||
+                    steps >= maxSteps
+                ) {
+
+                    window.clearInterval(
+                    timer
+                    );
+
+
+                    resolve();
+
+                }
+
+                },
+                interval
+            );
+
+            }
+        );
+
+        }
+    );
+
+
+    /*
+    * Pequena espera final para o Jira
+    * terminar de renderizar o último gadget.
+    */
+
+    await page.waitForTimeout(
+        1500
+    );
+
+
+    console.log(
+        '✅ Scroll lento do Dashboard concluído.'
+    );
+
+    }
+
     /* =========================================================
     LOCALIZA O GADGET OPEN DEFECTS
     =========================================================
@@ -1374,6 +1510,15 @@
 
     await page.waitForTimeout(
         3000
+    );
+
+
+    /* =====================================================
+        SCROLL LENTO ATÉ O FINAL
+        ===================================================== */
+
+    await slowScrollToBottom(
+        page
     );
 
 

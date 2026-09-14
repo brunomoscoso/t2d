@@ -1,91 +1,250 @@
-    <!DOCTYPE html>
-    <html lang="pt">
-    <head>
-    <meta charset="UTF-8" />
-    <title>Jira / Xray Report</title>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<title>Jira / Xray Report</title>
 
-    <style>
-        body {
-        margin: 0;
-        padding: 30px;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #172b4d;
-        background: #ffffff;
-        font-size: 14px;
-        }
+<style>
+    body {
+    margin: 0;
+    padding: 30px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #172b4d;
+    background: #ffffff;
+    font-size: 14px;
+    }
 
-        .email-container {
-        width: 100%;
-        max-width: 1050px; /* meio termo */
-        margin: 0 auto;
-        }
+    .email-container {
+    width: 100%;
+    max-width: 1050px; /* meio termo */
+    margin: 0 auto;
+    }
 
-        .intro-text {
-        margin-bottom: 14px;
-        line-height: 1.5;
-        }
+    .intro-text {
+    margin-bottom: 14px;
+    line-height: 1.5;
+    }
 
-        .observation-title {
-        font-weight: bold;
-        margin-bottom: 8px;
-        }
+    .observation-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    }
 
-        #observations {
-        min-height: 80px;
-        padding: 12px;
-        border: 1px solid #c1c7d0;
-        border-radius: 6px;
-        margin-bottom: 30px;
-        line-height: 1.5;
-        }
+    #observations {
+    min-height: 80px;
+    padding: 12px;
+    border: 1px solid #c1c7d0;
+    border-radius: 6px;
+    margin-bottom: 30px;
+    line-height: 1.5;
+    }
 
-        #observations:empty::before {
-        content: attr(data-placeholder);
-        color: #8993a4;
-        }
+    #observations:empty::before {
+    content: attr(data-placeholder);
+    color: #8993a4;
+    }
 
-        .section-wrapper {
-        width: 100%;
-        max-width: 1050px;
-        margin: 0 auto 24px auto;
-        }
+    .section-wrapper {
+    width: 100%;
+    max-width: 1050px;
+    margin: 0 auto 24px auto;
+    }
 
-        .signature {
-        margin-top: 30px;
-        line-height: 1.5;
-        }
-    </style>
-    </head>
+    .signature {
+    margin-top: 30px;
+    line-height: 1.5;
+    }
+</style>
+</head>
 
-    <body>
-    <div class="email-container">
-        <p class="intro-text">Bom dia,</p>
+<body>
 
-        <p class="intro-text">
-        Segue o resumo da execução de testes:
-        </p>
+<!-- =========================================
+     BOTÃO DE CÓPIA
+     ========================================= -->
 
-        <div class="observation-title">Observações:</div>
+<div
+    style="
+        width:100%;
+        margin-bottom:20px;
+        text-align:center;
+    "
+>
+    <button
+        id="copy-email-button"
+        type="button"
+        onclick="copyEmailReport()"
+        style="
+            background:#0052cc;
+            color:#ffffff;
+            border:none;
+            border-radius:5px;
+            padding:12px 22px;
+            font-size:14px;
+            font-weight:bold;
+            cursor:pointer;
+        "
+    >
+        Copiar relatório para o e-mail
+    </button>
 
-        <div
-        id="observations"
-        contenteditable="true"
-        data-placeholder="Clique aqui para adicionar comentários ou observações..."
-        ></div>
+    <div
+        id="copy-email-status"
+        style="
+            margin-top:8px;
+            min-height:18px;
+            font-size:12px;
+            font-weight:bold;
+            color:#006644;
+        "
+    ></div>
+</div>
 
-        <!-- REPORTS -->
-        
 
-        <!-- DASHBOARD -->
-        
+<div class="email-container">
+    <p class="intro-text">Bom dia,</p>
 
-        <!-- SIGNATURE -->
-        <div class="signature">
-        <p>
-            Cumprimentos,<br />
-            QA Team
-        </p>
-        </div>
+    <p class="intro-text">
+    Segue o resumo da execução de testes:
+    </p>
+
+    <div class="observation-title">Observações:</div>
+
+    <div
+    id="observations"
+    contenteditable="true"
+    data-placeholder="Clique aqui para adicionar comentários ou observações..."
+    ></div>
+
+    <!-- REPORTS -->
+
+
+    <!-- DASHBOARD -->
+
+
+    <!-- SIGNATURE -->
+    <div class="signature">
+    <p>
+        Cumprimentos,<br />
+        QA Team
+    </p>
     </div>
-    </body>
-    </html>
+</div>
+
+
+<!-- =========================================
+     SCRIPT DE CÓPIA
+     ========================================= -->
+
+<script>
+
+    function copyEmailReport() {
+
+        const report =
+            document.querySelector(
+                '.email-container'
+            );
+
+        const status =
+            document.getElementById(
+                'copy-email-status'
+            );
+
+
+        if (!report) {
+
+            status.textContent =
+                'Não foi possível encontrar o relatório.';
+
+            return;
+        }
+
+
+        const range =
+            document.createRange();
+
+
+        range.selectNodeContents(
+            report
+        );
+
+
+        const selection =
+            window.getSelection();
+
+
+        if (!selection) {
+
+            status.textContent =
+                'Não foi possível selecionar o relatório.';
+
+            return;
+        }
+
+
+        selection.removeAllRanges();
+
+        selection.addRange(
+            range
+        );
+
+
+        try {
+
+            const copied =
+                document.execCommand(
+                    'copy'
+                );
+
+
+            selection.removeAllRanges();
+
+
+            if (copied) {
+
+                status.textContent =
+                    '✓ Relatório copiado. Agora cole no Outlook com Ctrl + V.';
+
+            }
+
+            else {
+
+                status.textContent =
+                    'Não foi possível copiar o relatório.';
+
+            }
+
+        }
+
+        catch (error) {
+
+            selection.removeAllRanges();
+
+            console.error(
+                'Erro ao copiar:',
+                error
+            );
+
+
+            status.textContent =
+                'Não foi possível copiar o relatório.';
+
+        }
+
+
+        setTimeout(
+            () => {
+
+                status.textContent =
+                    '';
+
+            },
+            5000
+        );
+
+    }
+
+</script>
+
+</body>
+</html>
