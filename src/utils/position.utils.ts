@@ -1,69 +1,4 @@
-    /* =========================================================
-    POSIÇÕES CONHECIDAS
-    =========================================================
-    *
-    * name:
-    * nome oficial que aparecerá no relatório.
-    *
-    * aliases:
-    * maneiras diferentes pelas quais essa posição
-    * pode aparecer no título.
-    *
-    * Sempre que encontrar qualquer alias,
-    * retornamos o mesmo "name".
-    */
-
-    type PositionDefinition = {
-    name: string;
-    aliases: string[];
-    };
-
-
-    const POSITIONS: PositionDefinition[] = [
-
-    {
-        name: 'Arco do Cego',
-        aliases: [
-        'Arco do Cego',
-        'Arco-do-Cego',
-        'Arco_do_Cego',
-        'ARCO DO CEGO'
-        ]
-    },
-
-    {
-        name: 'Olivais',
-        aliases: [
-        'Olivais',
-        'OLIVAIS'
-        ]
-    },
-
-    {
-        name: 'Badajoz',
-        aliases: [
-        'Badajoz',
-        'BADAJOZ'
-        ]
-    },
-
-    {
-        name: 'Las Rozas',
-        aliases: [
-        'Las Rozas',
-        'Las-Rozas',
-        'Las_Rozas'
-        ]
-    },
-
-    {
-        name: 'Tangerina',
-        aliases: [
-        'Tangerina'
-        ]
-    }
-
-    ];
+    import { POSITIONS } from '../config/positions.config';
 
 
     /* =========================================================
@@ -121,7 +56,7 @@
         */
 
         .replace(
-        /[\[\]():=|/\\]+/g,
+        /[^a-z0-9\s]+/g,
         ' '
         )
 
@@ -154,38 +89,11 @@
 
 
     /*
-    * Ordenamos pelas posições mais específicas primeiro.
-    *
-    * Isso evita um nome curto ganhar de um nome maior.
+    * A cola define a prioridade: tipos explícitos vêm antes dos locais.
     */
 
     const definitions =
-        [...POSITIONS]
-        .sort(
-            (a, b) => {
-
-            const longestA =
-                Math.max(
-                ...a.aliases.map(
-                    alias =>
-                    normalizeText(alias).length
-                )
-                );
-
-
-            const longestB =
-                Math.max(
-                ...b.aliases.map(
-                    alias =>
-                    normalizeText(alias).length
-                )
-                );
-
-
-            return longestB - longestA;
-
-            }
-        );
+        POSITIONS;
 
 
     for (
@@ -195,7 +103,7 @@
 
         for (
         const alias
-        of position.aliases
+        of [position.name, ...position.aliases]
         ) {
 
         const normalizedAlias =
@@ -205,8 +113,9 @@
 
 
         if (
-            normalizedValue.includes(
-            normalizedAlias
+            normalizedAlias &&
+            ` ${normalizedValue} `.includes(
+            ` ${normalizedAlias} `
             )
         ) {
 

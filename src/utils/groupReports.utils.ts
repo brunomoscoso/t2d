@@ -1,12 +1,41 @@
+    import { POSITIONS } from '../config/positions.config';
+
     import {
     PositionReport,
     Report
     } from '../types/report.types';
 
+    // Prioridade de exibição dentro de cada posição, pelo título da execução.
+    const EXECUTION_ORDER = [
+        /\b(?:smokes?|somokes?)\b/i,
+        /\bcertification\b/i,
+        /\bregressions?\b|\bregressio\b/i
+    ];
+
+    function getExecutionOrder(title: string): number {
+        const normalizedTitle = title.replace(/[_-]+/g, ' ');
+        const order = EXECUTION_ORDER.findIndex(pattern => pattern.test(normalizedTitle));
+
+        return order === -1 ? EXECUTION_ORDER.length : order;
+    }
+
 
     export function groupReportsByPosition(
     reports: Report[]
     ): PositionReport[] {
+
+    const positionOrder = new Map(
+        POSITIONS.map((position, index) => [position.name, index])
+    );
+
+    const getOrder = (position: string): number => {
+        if (position === 'SEM POSIÇÃO') {
+            return POSITIONS.length + 1;
+        }
+
+        // Posições não cadastradas ficam depois da cola e antes de SEM POSIÇÃO.
+        return positionOrder.get(position) ?? POSITIONS.length;
+    };
 
     const groups =
         new Map<
@@ -52,9 +81,12 @@
             position,
 
             reports:
-            groupedReports
+            groupedReports.sort((a, b) =>
+                getExecutionOrder(a.title) - getExecutionOrder(b.title)
+            )
 
         })
-        );
+        )
+        .sort((a, b) => getOrder(a.position) - getOrder(b.position));
 
     }
