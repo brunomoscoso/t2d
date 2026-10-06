@@ -242,7 +242,8 @@
         style="
             margin-top:32px;
             margin-bottom:24px;
-            border:2px solid #dfe1e6;
+            border:1px solid #e4d5d3;
+            border-radius:14px;
             background:#ffffff;
             font-family:Arial,Helvetica,sans-serif;
             overflow:hidden;
@@ -255,10 +256,10 @@
 
         <div class="dashboard-header"
             style="
-            background:#de350b;
+            background:#c9372c;
             color:#ffffff;
-            padding:10px 14px;
-            font-size:16px;
+            padding:16px 20px;
+            font-size:20px;
             font-weight:bold;
             "
         >
@@ -269,6 +270,9 @@
             <span
             style="
                 float:right;
+                padding:5px 10px;
+                border-radius:6px;
+                background:#a7251d;
                 font-size:13px;
                 font-weight:normal;
             "
@@ -302,8 +306,8 @@
 
             <tr
                 style="
-                background:#f4f5f7;
-                color:#42526e;
+                background:#fff2ef;
+                color:#6e302b;
                 font-size:12px;
                 text-align:left;
                 "

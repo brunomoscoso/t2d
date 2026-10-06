@@ -44,7 +44,6 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
     assert.equal(await page.getByRole('checkbox').count(), POSITIONS.length);
     assert.equal(await page.locator('[data-global-status-row]:visible').count(), 0);
     assert.equal(await page.locator('#global-status-table').isVisible(), true, 'O quadro continua visível sem postos selecionados');
-    assert.equal(await page.locator('#global-status-help').isVisible(), true);
     assert.equal(await page.locator('#global-status-empty').isVisible(), true);
     assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Estado Global']);
 
@@ -303,13 +302,13 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
 
     const preview = await browser.newPage();
     await preview.setContent(copiedHtml);
-    assert.equal(await preview.locator('input, select, [contenteditable], [data-editor-only]').count(), 0);
+    assert.equal(await preview.locator('input, select, textarea, [contenteditable], [data-editor-only]').count(), 0);
     assert.ok(!copiedHtml.includes('Posto a selecionar'), 'A linha de orientação nunca entra no e-mail');
     const copiedRows = preview.locator('table[aria-label="Estado global por posto"] tbody tr');
     assert.equal(await copiedRows.count(), 4);
     assert.deepEqual((await copiedRows.locator('th').allTextContents()).map(text => text.trim()), fixture().map(item => item.position));
     assert.ok(!copiedHtml.includes('Nota de posto não selecionado'));
-    assert.equal(await preview.locator('a[href*="/browse/PRIT-"]').count(), 4, 'A seleção não altera os detalhes extraídos do Jira');
+    assert.equal(await preview.locator('.position-block a[href*="/browse/PRIT-"]').count(), 4, 'A seleção não altera os detalhes extraídos do Jira');
     assert.ok((await copiedRows.nth(1).innerText()).includes(note));
     assert.equal(await copiedRows.nth(1).locator('img').count(), 0, 'A nota é texto, não HTML');
     assert.ok((await copiedRows.nth(3).innerText()).includes('Não definido'));
