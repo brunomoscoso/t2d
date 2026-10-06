@@ -1,5 +1,6 @@
     import fs from 'node:fs';
     import path from 'node:path';
+    import { createGlobalStatusTable } from './global-status.report';
 
     import {
     JIRA_URL
@@ -61,7 +62,7 @@
 
                 <div
                     style="
-                    font-size:25px;
+                    font-size:27px;
                     font-weight:bold;
                     "
                 >
@@ -73,7 +74,7 @@
 
                 <div
                     style="
-                    font-size:9px;
+                    font-size:11px;
                     font-weight:bold;
                     "
                 >
@@ -181,7 +182,7 @@
                             href="${JIRA_URL}/browse/${encodeURIComponent(issue.prit)}"
                             style="
                                 color:#0052cc;
-                                font-size:11px;
+                                font-size:13px;
                                 text-decoration:none;
                             "
                             >
@@ -197,7 +198,7 @@
                             style="
                             padding:5px;
                             border-bottom:1px solid #dfe1e6;
-                            font-size:11px;
+                            font-size:13px;
                             "
                         >
 
@@ -235,7 +236,7 @@
                                 color:${statusColors.color};
                                 border:1px solid ${statusColors.border};
                                 padding:2px 6px;
-                                font-size:9px;
+                                font-size:11px;
                                 font-weight:bold;
                             "
                             >
@@ -265,7 +266,7 @@
 
                 <div
                     style="
-                    font-size:12px;
+                    font-size:14px;
                     font-weight:bold;
                     margin-bottom:4px;
                     "
@@ -276,7 +277,8 @@
                 </div>
 
 
-                <table
+                <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Defeitos relacionados">
+                <table class="jira-issues-table"
                     width="100%"
                     cellpadding="0"
                     cellspacing="0"
@@ -288,6 +290,8 @@
                     ${rows}
 
                 </table>
+
+                </div>
 
                 </div>
 
@@ -304,7 +308,7 @@
 
     return `
 
-        <div
+        <div class="operation-card"
         style="
             border:1px solid #dfe1e6;
             padding:18px;
@@ -325,7 +329,7 @@
 
             <span
             style="
-                font-size:15px;
+                font-size:17px;
                 font-weight:bold;
                 text-decoration:underline;
             "
@@ -343,7 +347,7 @@
                 color:${mainStatusColors.color};
                 border:1px solid ${mainStatusColors.border};
                 padding:3px 8px;
-                font-size:10px;
+                font-size:12px;
                 font-weight:bold;
             "
             >
@@ -372,7 +376,7 @@
                 href="${JIRA_URL}/browse/${encodeURIComponent(report.prit)}"
                 style="
                     color:#0052cc;
-                    font-size:12px;
+                    font-size:14px;
                     font-weight:bold;
                     text-decoration:none;
                 "
@@ -392,7 +396,7 @@
 
                 <strong
                 style="
-                    font-size:11px;
+                    font-size:13px;
                 "
                 >
 
@@ -415,7 +419,7 @@
             style="
             margin-top:18px;
             margin-bottom:8px;
-            font-size:12px;
+            font-size:14px;
             font-weight:bold;
             "
         >
@@ -425,7 +429,8 @@
         </div>
 
 
-        <table
+        <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Estados de execução dos testes">
+        <table class="execution-summary-table"
             cellpadding="0"
             cellspacing="0"
         >
@@ -438,6 +443,8 @@
 
         </table>
 
+        </div>
+
 
         <!-- DEFECTS -->
 
@@ -445,7 +452,7 @@
         <div
             style="
             margin-top:20px;
-            font-size:12px;
+            font-size:14px;
             font-weight:bold;
             "
         >
@@ -463,7 +470,7 @@
                 style="
                 margin-top:8px;
                 color:#6b778c;
-                font-size:11px;
+                font-size:13px;
                 "
             >
 
@@ -507,7 +514,7 @@
 
             return `
 
-                <div
+                <div class="position-block"
                 style="
                     border:2px solid #9adf6d;
                     margin-bottom:28px;
@@ -520,7 +527,7 @@
                     style="
                     background:#c9f7a8;
                     color:#163300;
-                    font-size:23px;
+                    font-size:25px;
                     font-weight:bold;
                     padding:14px 18px;
                     "
@@ -533,7 +540,7 @@
                 </div>
 
 
-                <div
+                <div class="position-content"
                     style="
                     padding:17px;
                     "
@@ -595,9 +602,8 @@
     }
 
 
-    return template.replace(
-        '<!-- REPORTS -->',
-        reportsHtml
-    );
+    return template
+        .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
+        .replace('<!-- REPORTS -->', () => reportsHtml);
 
     }

@@ -1,5 +1,5 @@
-    export const PRITS = [
-    "PRIT-8265",
+  export const PRITS = [
+  "PRIT-8265",
   "PRIT-8264",
   "PRIT-8243",
   "PRIT-8237",
@@ -24,8 +24,9 @@
   "PRIT-8162",
   "PRIT-8160",
   "PRIT-8159",
-  "PRIT-8158"
+  "PRIT-8158",
+  "PRIT-8268",
 ];
 
     export const DASHBOARD_PAGE_ID =
-    '24107';
+    '24419';

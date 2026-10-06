@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "tsx --test tests/position.test.ts",
+    "test": "tsx --test tests/*.test.ts",
     "report": "tsx src/main.ts"
   },
   "keywords": [],

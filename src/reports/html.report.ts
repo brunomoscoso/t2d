@@ -206,6 +206,7 @@
                 </div>
 
 
+                <div class="report-table-scroll" tabindex="0" role="region" aria-label="Defeitos relacionados">
                 <table class="jira-issues-table">
 
                     <tbody>
@@ -215,6 +216,8 @@
                     </tbody>
 
                 </table>
+
+                </div>
 
 
                 </div>
@@ -423,6 +426,7 @@
 
 
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
     <title>
@@ -441,8 +445,10 @@
     body {
 
     margin:0;
+    font-size:18px;
 
-    padding:24px;
+    padding:clamp(12px, 2vw, 30px);
+    overflow-wrap:anywhere;
 
     background:#f4f5f7;
 
@@ -458,7 +464,8 @@
 
     .page {
 
-    max-width:1350px;
+    width:100%;
+    min-width:0;
 
     margin:auto;
 
@@ -489,7 +496,7 @@
 
     color:#163300;
 
-    font-size:25px;
+    font-size:27px;
 
     font-weight:bold;
 
@@ -529,6 +536,7 @@
     .task-status-line {
 
     display:flex;
+    flex-wrap:wrap;
 
     align-items:center;
 
@@ -541,7 +549,7 @@
 
     .task-name {
 
-    font-size:16px;
+    font-size:18px;
 
     font-weight:bold;
 
@@ -556,7 +564,7 @@
 
     padding:3px 9px;
 
-    font-size:10px;
+    font-size:12px;
 
     font-weight:bold;
 
@@ -572,6 +580,7 @@
     .operation-header {
 
     display:flex;
+    flex-wrap:wrap;
 
     justify-content:
         space-between;
@@ -587,13 +596,14 @@
     .operation-left {
 
     flex:1;
+    min-width:0;
 
     }
 
 
     .prit-header {
 
-    font-size:12px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -626,7 +636,7 @@
 
     display:block;
 
-    font-size:10px;
+    font-size:12px;
 
     color:#5e6c84;
 
@@ -637,7 +647,7 @@
 
     display:block;
 
-    font-size:21px;
+    font-size:23px;
 
     }
 
@@ -650,7 +660,7 @@
 
     margin-bottom:8px;
 
-    font-size:12px;
+    font-size:14px;
 
     }
 
@@ -683,7 +693,7 @@
 
     .status-number {
 
-    font-size:26px;
+    font-size:28px;
 
     font-weight:bold;
 
@@ -692,7 +702,7 @@
 
     .status-name {
 
-    font-size:9px;
+    font-size:11px;
 
     font-weight:bold;
 
@@ -773,7 +783,7 @@
 
     .relation-title {
 
-    font-size:12px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -785,6 +795,7 @@
     .jira-issues-table {
 
     width:100%;
+    min-width:560px;
 
     border-collapse:collapse;
 
@@ -803,7 +814,7 @@
 
     padding:5px;
 
-    font-size:11px;
+    font-size:13px;
 
     }
 
@@ -878,7 +889,7 @@
 
     padding:2px 6px;
 
-    font-size:9px;
+    font-size:11px;
 
     font-weight:bold;
 
@@ -891,10 +902,34 @@
 
     color:#6b778c;
 
-    font-size:11px;
+    font-size:13px;
 
     }
 
+
+    .report-table-scroll {
+    max-width:100%;
+    overflow-x:auto;
+    }
+
+    .dashboard-table {
+    min-width:720px;
+    }
+
+    .dashboard-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px 16px;
+    flex-wrap:wrap;
+    }
+
+    @media (max-width:700px) {
+    .position-content,
+    .operation-card {
+    padding:10px;
+    }
+    }
 
     </style>
 

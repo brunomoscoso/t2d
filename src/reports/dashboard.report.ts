@@ -118,7 +118,7 @@
                     style="
                     color:#0052cc;
                     text-decoration:none;
-                    font-size:11px;
+                    font-size:13px;
                     "
                 >
 
@@ -138,7 +138,7 @@
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
                     color:#172b4d;
-                    font-size:11px;
+                    font-size:13px;
                 "
                 >
 
@@ -167,7 +167,7 @@
                     color:${status.color};
                     border:1px solid ${status.border};
                     padding:2px 6px;
-                    font-size:9px;
+                    font-size:11px;
                     font-weight:bold;
                     text-transform:uppercase;
                     border-radius:3px;
@@ -190,7 +190,7 @@
                     padding:6px;
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
-                    font-size:10px;
+                    font-size:12px;
                 "
                 >
 
@@ -209,7 +209,7 @@
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
                     white-space:nowrap;
-                    font-size:10px;
+                    font-size:12px;
                 "
                 >
 
@@ -238,7 +238,7 @@
 
     return `
 
-        <div
+        <div class="dashboard-block"
         style="
             margin-top:32px;
             margin-bottom:24px;
@@ -253,12 +253,12 @@
         <!-- HEADER -->
 
 
-        <div
+        <div class="dashboard-header"
             style="
             background:#de350b;
             color:#ffffff;
             padding:10px 14px;
-            font-size:14px;
+            font-size:16px;
             font-weight:bold;
             "
         >
@@ -269,7 +269,7 @@
             <span
             style="
                 float:right;
-                font-size:11px;
+                font-size:13px;
                 font-weight:normal;
             "
             >
@@ -285,7 +285,8 @@
         <!-- TABLE -->
 
 
-        <table
+        <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Defeitos do dashboard">
+        <table class="dashboard-table"
             width="100%"
             cellpadding="0"
             cellspacing="0"
@@ -303,7 +304,7 @@
                 style="
                 background:#f4f5f7;
                 color:#42526e;
-                font-size:10px;
+                font-size:12px;
                 text-align:left;
                 "
             >
@@ -391,6 +392,8 @@
 
 
         </table>
+
+        </div>
 
 
         </div>

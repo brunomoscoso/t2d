@@ -2,22 +2,34 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Jira / Xray Report</title>
 
 <style>
+    *, *::before, *::after {
+    box-sizing: border-box;
+    }
+
     body {
     margin: 0;
-    padding: 30px;
+    padding: clamp(12px, 2vw, 30px);
     font-family: Arial, Helvetica, sans-serif;
     color: #172b4d;
     background: #ffffff;
-    font-size: 14px;
+    font-size: 16px;
+    }
+
+    .report-workspace {
+    --picker-width: clamp(240px, 18vw, 300px);
+    --picker-gap: clamp(16px, 1.5vw, 24px);
+    width: 100%;
+    padding-right: calc(var(--picker-width) + var(--picker-gap));
     }
 
     .email-container {
     width: 100%;
-    max-width: 1050px; /* meio termo */
-    margin: 0 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
     }
 
     .intro-text {
@@ -46,13 +58,182 @@
 
     .section-wrapper {
     width: 100%;
-    max-width: 1050px;
     margin: 0 auto 24px auto;
     }
 
     .signature {
     margin-top: 30px;
     line-height: 1.5;
+    }
+
+    #global-status-section {
+    position: relative;
+    }
+
+    .global-position-picker {
+    position: absolute;
+    top: 0;
+    left: calc(100% + var(--picker-gap));
+    box-sizing: border-box;
+    width: var(--picker-width);
+    min-width: 0;
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px solid #c1c7d0;
+    border-radius: 6px;
+    background: #fafbfc;
+    }
+
+    .global-position-picker legend {
+    padding: 0 6px;
+    font-weight: bold;
+    }
+
+    .global-position-picker p {
+    margin: 0 0 12px;
+    color: #5e6c84;
+    font-size: 14px;
+    }
+
+    .global-position-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 16px;
+    }
+
+    .global-position-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 14px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    }
+
+    .global-position-choice input {
+    margin: 0;
+    accent-color: #0052cc;
+    }
+
+    .global-position-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 14px;
+    }
+
+    .global-position-actions button {
+    padding: 6px 10px;
+    border: 1px solid #c1c7d0;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #0052cc;
+    font: inherit;
+    cursor: pointer;
+    }
+
+    .global-status-fields {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 300px) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    }
+
+    .global-status-fields select,
+    .global-status-fields input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 5px 7px;
+    border: 1px solid #c1c7d0;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #172b4d;
+    font: inherit;
+    }
+
+    .global-status-fields select {
+    font-weight: bold;
+    cursor: pointer;
+    }
+
+    .global-status-placeholder {
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px dashed #c1c7d0;
+    border-radius: 4px;
+    }
+
+    #global-status-table {
+    table-layout: fixed;
+    }
+
+    .report-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    }
+
+    .jira-issues-table {
+    min-width: 560px;
+    }
+
+    .dashboard-table {
+    min-width: 720px;
+    }
+
+    .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 16px;
+    flex-wrap: wrap;
+    }
+
+    #observations img {
+    max-width: 100%;
+    height: auto;
+    }
+
+    .global-status-fields select:focus,
+    .global-status-fields input:focus {
+    outline: 2px solid #0052cc;
+    outline-offset: 1px;
+    }
+
+    @media (max-width: 1099px) {
+    .report-workspace {
+    padding-right: 0;
+    }
+
+    .global-position-picker {
+    position: static;
+    width: 100%;
+    margin-bottom: 16px;
+    }
+    }
+
+    @media (max-width: 700px) {
+    #global-status-table thead th:first-child {
+    width: 28% !important;
+    }
+
+    .global-status-fields {
+    grid-template-columns: 16px minmax(0, 1fr);
+    }
+
+    .global-status-fields input,
+    .global-status-placeholder-note {
+    grid-column: 1 / -1;
+    }
+
+    .position-content,
+    .operation-card {
+    padding: 10px !important;
+    }
     }
 </style>
 </head>
@@ -80,7 +261,7 @@
             border:none;
             border-radius:5px;
             padding:12px 22px;
-            font-size:14px;
+            font-size:16px;
             font-weight:bold;
             cursor:pointer;
         "
@@ -93,7 +274,7 @@
         style="
             margin-top:8px;
             min-height:18px;
-            font-size:12px;
+            font-size:14px;
             font-weight:bold;
             color:#006644;
         "
@@ -101,6 +282,7 @@
 </div>
 
 
+<div class="report-workspace">
 <div class="email-container">
     <p class="intro-text">Bom dia,</p>
 
@@ -115,6 +297,8 @@
     contenteditable="true"
     data-placeholder="Clique aqui para adicionar comentários ou observações..."
     ></div>
+
+    <!-- GLOBAL STATUS -->
 
     <!-- REPORTS -->
 
@@ -132,11 +316,180 @@
 </div>
 
 
+</div>
+
 <!-- =========================================
      SCRIPT DE CÓPIA
      ========================================= -->
 
 <script>
+
+    function initializeGlobalStatuses() {
+        const table = document.getElementById('global-status-table');
+        if (!table) return;
+
+        const section = document.getElementById('global-status-section');
+        const rows = Array.from(table.querySelectorAll('[data-global-status-row]'));
+        const toggles = new Map(Array.from(section.querySelectorAll('[data-position-toggle]'))
+            .map(toggle => [toggle.value, toggle]));
+        const storageKey = 't2d:global-status:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
+        let savedRows = [];
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (Array.isArray(saved)) savedRows = saved;
+        } catch (error) {
+            // A edição continua disponível quando o armazenamento está bloqueado.
+        }
+
+        function save() {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(rows.map(row => ({
+                    position: row.dataset.position,
+                    selected: toggles.get(row.dataset.position).checked,
+                    status: row.querySelector('[data-status-select]').value,
+                    note: row.querySelector('[data-status-note]').value,
+                }))));
+            } catch (error) {
+                // Não impede a edição nem a cópia em navegadores sem armazenamento.
+            }
+        }
+
+        function updateSelection() {
+            let count = 0;
+            rows.forEach(row => {
+                row.hidden = !toggles.get(row.dataset.position).checked;
+                if (!row.hidden) count++;
+            });
+            document.getElementById('global-status-empty').hidden = count !== 0;
+            document.getElementById('global-position-count').textContent = count === 1
+                ? '1 posto selecionado'
+                : count + ' postos selecionados';
+        }
+
+        rows.forEach(row => {
+            const toggle = toggles.get(row.dataset.position);
+            const select = row.querySelector('[data-status-select]');
+            const note = row.querySelector('[data-status-note]');
+            const dot = row.querySelector('[data-status-dot]');
+            const saved = savedRows.find(item => item && item.position === row.dataset.position);
+
+            if (saved) {
+                // As escolhas anteriores à seleção de postos continuam disponíveis.
+                toggle.checked = typeof saved.selected === 'boolean' ? saved.selected : true;
+                if (Array.from(select.options).some(option => option.value === saved.status)) {
+                    select.value = saved.status;
+                }
+                if (typeof saved.note === 'string') note.value = saved.note.slice(0, note.maxLength);
+            }
+
+            function updateDot() {
+                dot.style.color = select.selectedOptions[0].dataset.color;
+            }
+
+            updateDot();
+            toggle.addEventListener('change', () => {
+                updateSelection();
+                save();
+            });
+            select.addEventListener('change', () => {
+                updateDot();
+                save();
+            });
+            note.addEventListener('input', save);
+        });
+
+        function selectAll(selected) {
+            toggles.forEach(toggle => { toggle.checked = selected; });
+            updateSelection();
+            save();
+        }
+
+        section.querySelector('[data-select-all-positions]').addEventListener('click', () => selectAll(true));
+        section.querySelector('[data-clear-positions]').addEventListener('click', () => selectAll(false));
+        updateSelection();
+    }
+
+    function prepareReportForCopy(report, restoreActions) {
+        // Copia o relatório visível para o navegador preservar o mesmo layout do Ctrl+C.
+        // Só os controlos de edição são substituídos, durante a cópia síncrona.
+        function removeDuringCopy(element) {
+            const placeholder = document.createComment('editor-only');
+            restoreActions.push(() => placeholder.replaceWith(element));
+            element.replaceWith(placeholder);
+        }
+
+        // A cópia inclui as tabelas completas, sem as áreas de deslocamento da página.
+        report.querySelectorAll('[data-report-scroll]').forEach(wrapper => {
+            const placeholder = document.createComment('report-table-scroll');
+            const contents = Array.from(wrapper.childNodes);
+            restoreActions.push(() => {
+                wrapper.replaceChildren(...contents);
+                placeholder.replaceWith(wrapper);
+            });
+            wrapper.replaceWith(placeholder, ...contents);
+        });
+
+        const observations = report.querySelector('#observations');
+        if (observations
+            && !observations.textContent.replace(/[\s\u200b-\u200d\u2060\ufeff]/g, '')
+            && !observations.querySelector('img, svg, canvas, video, audio, iframe, object, embed, hr, table')) {
+            // Um espaço não separável evita enviar um bloco sem conteúdo ao Outlook.
+            // Preserva também os nós que o editor deixa depois de apagar o texto (ex.: <br>).
+            const originalNodes = Array.from(observations.childNodes);
+            const originalStyle = observations.getAttribute('style');
+            const originalHeight = observations.getBoundingClientRect().height;
+            restoreActions.push(() => {
+                observations.replaceChildren(...originalNodes);
+                if (originalStyle === null) observations.removeAttribute('style');
+                else observations.setAttribute('style', originalStyle);
+            });
+            observations.style.minHeight = originalHeight + 'px';
+            observations.replaceChildren(document.createTextNode('\u00a0'));
+        }
+
+        const globalStatusSection = report.querySelector('#global-status-section');
+        if (globalStatusSection && !globalStatusSection.querySelector('[data-global-status-row]:not([hidden])')) {
+            removeDuringCopy(globalStatusSection);
+        }
+
+        report.querySelectorAll('[data-global-status-row]').forEach(row => {
+            if (row.hidden) {
+                removeDuringCopy(row);
+                return;
+            }
+
+            const select = row.querySelector('[data-status-select]');
+            const selected = select.selectedOptions[0];
+            const note = row.querySelector('[data-status-note]').value.trim();
+            const fields = row.querySelector('.global-status-fields');
+            const summary = document.createElement('div');
+            const dot = row.querySelector('[data-status-dot]').cloneNode(true);
+            const label = document.createElement('strong');
+
+            dot.style.color = selected.dataset.color;
+            label.textContent = select.value ? selected.textContent.trim() : 'Não definido';
+            summary.append(dot, document.createTextNode(' '), label);
+            if (note) summary.appendChild(document.createTextNode(' — ' + note));
+
+            restoreActions.push(() => summary.replaceWith(fields));
+            fields.replaceWith(summary);
+        });
+
+        report.querySelectorAll('[data-editor-only]').forEach(removeDuringCopy);
+
+        report.querySelectorAll('[contenteditable]').forEach(element => {
+            const attributes = ['contenteditable', 'data-placeholder']
+                .filter(attribute => element.hasAttribute(attribute))
+                .map(attribute => [attribute, element.getAttribute(attribute)]);
+            restoreActions.push(() => {
+                attributes.forEach(([attribute, value]) => element.setAttribute(attribute, value));
+            });
+            attributes.forEach(([attribute]) => element.removeAttribute(attribute));
+        });
+    }
+
+    initializeGlobalStatuses();
 
     function copyEmailReport() {
 
@@ -164,11 +517,6 @@
             document.createRange();
 
 
-        range.selectNodeContents(
-            report
-        );
-
-
         const selection =
             window.getSelection();
 
@@ -182,14 +530,13 @@
         }
 
 
-        selection.removeAllRanges();
-
-        selection.addRange(
-            range
-        );
-
+        const restoreActions = [];
 
         try {
+            prepareReportForCopy(report, restoreActions);
+            range.selectNodeContents(report);
+            selection.removeAllRanges();
+            selection.addRange(range);
 
             const copied =
                 document.execCommand(
@@ -231,6 +578,11 @@
 
         }
 
+
+        finally {
+            selection.removeAllRanges();
+            restoreActions.reverse().forEach(restore => restore());
+        }
 
         setTimeout(
             () => {
