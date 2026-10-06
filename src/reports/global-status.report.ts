@@ -38,10 +38,10 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
 
   const rows = availablePositions.map((position, index) => `
     <tr id="global-status-row-${index}" data-global-status-row data-position="${escapeHtml(position)}" hidden>
-      <th scope="row" style="padding:7px 10px;border:1px solid #dfe1e6;background:#f4f5f7;text-align:left;font-size:14px;">
+      <th scope="row" style="padding:12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;font-size:14px;color:#0747a6;">
         ${escapeHtml(position)}
       </th>
-      <td style="padding:6px 10px;border:1px solid #dfe1e6;">
+      <td style="padding:10px 12px;border:1px solid #dce5f0;background:#ffffff;">
         <div class="global-status-fields">
           <span data-status-dot aria-hidden="true" style="color:#8993a4;font-size:20px;line-height:1;vertical-align:middle;">●</span>
           <select data-status-select aria-label="Estado global de ${escapeHtml(position)}">
@@ -57,7 +57,7 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
   `).join('');
 
   return `
-    <div id="global-status-section" style="margin-bottom:28px;">
+    <div id="global-status-section" style="margin-bottom:32px;">
       <fieldset class="global-position-picker" data-editor-only>
         <legend>Selecione os postos</legend>
         <p>Marque os postos que pretende incluir no estado global.</p>
@@ -68,24 +68,22 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
           <span id="global-position-count" role="status">0 postos selecionados</span>
         </div>
       </fieldset>
-      <p id="global-status-help" data-editor-only style="margin:0 0 8px;font-size:14px;font-weight:bold;">
-        Defina o estado e as observações de cada posto selecionado
-      </p>
-      <table id="global-status-table" data-report-key="${escapeHtml(reportKey)}"
+      <h2 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Estado global</h2>
+      <table id="global-status-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}"
         aria-label="Estado global por posto" cellpadding="0" cellspacing="0"
-        style="width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
+        style="width:100%;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
         <thead>
           <tr>
-            <th scope="col" style="padding:7px 10px;border:1px solid #dfe1e6;background:#f4f5f7;width:150px;">Postos</th>
-            <th scope="col" style="padding:7px 10px;border:1px solid #dfe1e6;background:#f4f5f7;">Estado Global</th>
+            <th scope="col" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:150px;text-align:left;">Postos</th>
+            <th scope="col" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;text-align:left;">Estado Global</th>
           </tr>
         </thead>
         <tbody>
           <tr id="global-status-empty" data-editor-only>
-            <th scope="row" style="padding:12px 10px;border:1px solid #dfe1e6;background:#f4f5f7;text-align:left;color:#5e6c84;">
+            <th scope="row" style="padding:16px 12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;color:#42526e;">
               Posto a selecionar
             </th>
-            <td style="padding:12px 10px;border:1px solid #dfe1e6;background:#fafbfc;color:#5e6c84;">
+            <td style="padding:16px 12px;border:1px solid #dce5f0;background:#f8faff;color:#5e6c84;">
               <div class="global-status-fields" aria-hidden="true">
                 <span style="color:#8993a4;font-size:20px;line-height:1;">●</span>
                 <span class="global-status-placeholder">Estado do posto</span>

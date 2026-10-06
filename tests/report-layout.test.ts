@@ -63,7 +63,7 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
           const pickerBounds = picker?.getBoundingClientRect();
           const sectionBounds = document.getElementById('global-status-section')?.getBoundingClientRect();
           const blocks = Array.from(document.querySelectorAll(
-            isEmail ? '#observations, #global-status-table, .position-block, .dashboard-block' : '.position-block, .dashboard-block',
+            isEmail ? '#observations, #global-status-table, #position-activities-scroll, #position-defects-section, .position-block, .dashboard-block' : '.position-block, .dashboard-block',
           ));
           return {
             pageWidth: document.documentElement.clientWidth,
@@ -108,8 +108,11 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
             const fragment = window.getSelection()!.getRangeAt(0).cloneContents();
             (window as typeof window & { copiedTables: unknown }).copiedTables = {
               wrappers: fragment.querySelectorAll('.report-table-scroll').length,
+              toolbar: fragment.querySelectorAll('.report-toolbar, #copy-email-button, #copy-email-status').length,
               dashboardCells: fragment.querySelectorAll('.dashboard-table tbody td').length,
               defects: fragment.querySelectorAll('.jira-issues-table tr').length,
+              activityColumns: fragment.querySelectorAll('#position-activities-table thead th').length,
+              activityEditors: fragment.querySelectorAll('[data-activity-note]').length,
               executionText: fragment.querySelector('.execution-summary-table')?.textContent,
               text: fragment.textContent,
             };
@@ -121,8 +124,11 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
         const copied = await page.evaluate(() =>
           (window as typeof window & { copiedTables: Record<string, unknown> }).copiedTables);
         assert.equal(copied.wrappers, 0);
+        assert.equal(copied.toolbar, 0);
         assert.equal(copied.dashboardCells, 7);
         assert.equal(copied.defects, 1);
+        assert.equal(copied.activityColumns, 5);
+        assert.equal(copied.activityEditors, 0);
         assert.ok(String(copied.executionText).includes('PENDING 3RD'));
         assert.ok(String(copied.text).includes(longText));
         assert.equal(await page.locator('.email-container').evaluate(element => element.outerHTML), before);

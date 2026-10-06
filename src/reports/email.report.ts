@@ -1,6 +1,8 @@
     import fs from 'node:fs';
     import path from 'node:path';
     import { createGlobalStatusTable } from './global-status.report';
+    import { createPositionDefectsSection } from './position-defects.report';
+    import { createPositionActivitiesTable } from './position-activities.report';
 
     import {
     JIRA_URL
@@ -55,6 +57,7 @@
                     background:${colors.background};
                     color:${colors.color};
                     border:1px solid ${colors.border};
+                    border-radius:8px;
                     padding:10px 15px;
                     text-align:center;
                 "
@@ -310,9 +313,11 @@
 
         <div class="operation-card"
         style="
-            border:1px solid #dfe1e6;
-            padding:18px;
-            margin-bottom:18px;
+            border:1px solid #dce5f0;
+            border-radius:10px;
+            background:#ffffff;
+            padding:20px;
+            margin-bottom:16px;
             font-family:Arial,sans-serif;
         "
         >
@@ -331,7 +336,7 @@
             style="
                 font-size:17px;
                 font-weight:bold;
-                text-decoration:underline;
+                line-height:1.5;
             "
             >
 
@@ -343,6 +348,8 @@
             <span
             style="
                 margin-left:8px;
+                display:inline-block;
+                border-radius:5px;
                 background:${mainStatusColors.background};
                 color:${mainStatusColors.color};
                 border:1px solid ${mainStatusColors.border};
@@ -516,8 +523,10 @@
 
                 <div class="position-block"
                 style="
-                    border:2px solid #9adf6d;
-                    margin-bottom:28px;
+                    border:1px solid #c4dfd4;
+                    border-radius:14px;
+                    background:#f3f9f6;
+                    margin-bottom:32px;
                     font-family:Arial,sans-serif;
                 "
                 >
@@ -525,11 +534,12 @@
 
                 <div
                     style="
-                    background:#c9f7a8;
-                    color:#163300;
-                    font-size:25px;
+                    background:#00875a;
+                    border-radius:13px 13px 0 0;
+                    color:#ffffff;
+                    font-size:23px;
                     font-weight:bold;
-                    padding:14px 18px;
+                    padding:16px 20px;
                     "
                 >
 
@@ -604,6 +614,8 @@
 
     return template
         .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
+        .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
+        .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
         .replace('<!-- REPORTS -->', () => reportsHtml);
 
     }
