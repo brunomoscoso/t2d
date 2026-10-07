@@ -1,3 +1,14 @@
+    export type TestPlanLink = {
+    prit: string;
+    title?: string;
+    };
+
+    export type ReleaseLinks = {
+    testPlans: Record<'smokes' | 'certification' | 'regression' | 'defectFixing', TestPlanLink>;
+    dashboardPageId: string;
+    dashboardTitle?: string;
+    };
+
     /* =========================================================
     EXECUTION STATUS
     ========================================================= */

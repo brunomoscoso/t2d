@@ -20,6 +20,8 @@
     extractDashboard
     } from './extractors/dashboard.extractor';
 
+    import { extractReleaseLinks } from './extractors/release-links.extractor';
+
     import {
     groupReportsByPosition
     } from './utils/groupReports.utils';
@@ -130,6 +132,9 @@
             reports
         );
 
+        // Reutiliza o login para obter os nomes dos planos e do dashboard.
+        const releaseLinks = await extractReleaseLinks(page.request);
+
 
         /* ===================================================
         DASHBOARD
@@ -192,7 +197,8 @@
 
         writeReports(
         positions,
-        dashboard
+        dashboard,
+        releaseLinks
         );
 
     }

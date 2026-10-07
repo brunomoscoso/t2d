@@ -246,6 +246,9 @@
     [data-position-activity]:last-child { margin-bottom: 0 !important; }
     [data-position-activity] a:hover { color: #0052cc !important; text-decoration: underline !important; }
     [data-position-defect]:hover { color: #0052cc !important; }
+    #release-links-table a:hover { color: #0747a6 !important; text-decoration: underline !important; }
+    #release-links-table tbody tr:last-child th { border-bottom-left-radius: 9px; }
+    #release-links-table tbody tr:last-child td { border-bottom-right-radius: 9px; }
     .position-block,
     .dashboard-block { box-shadow: 0 5px 20px #172b4d08; }
     .operation-card:last-child { margin-bottom: 0 !important; }
@@ -273,6 +276,9 @@
         .global-position-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         #position-defects-table th,
         #position-defects-table td { padding: 8px 6px !important; }
+        #release-links-table th,
+        #release-links-table td { padding: 10px 8px !important; }
+        #release-links-table thead th:first-child { width: 35% !important; }
         #global-status-table thead th:first-child { width: 28% !important; }
         #global-status-table th,
         #global-status-table td { padding:8px 6px !important; }
@@ -308,7 +314,7 @@
 <div class="report-workspace">
 <div class="email-container">
 
-    <div class="observation-title">Observações:</div>
+    <div class="observation-title">Daily Status Report - <!-- REPORT DATE --></div>
 
     <div
     id="observations"
@@ -324,6 +330,8 @@
     <!-- POSITION DEFECTS -->
 
     <!-- MAIN BLOCKERS -->
+
+    <!-- RELEASE LINKS -->
 
     <!-- REPORTS -->
 
@@ -725,7 +733,7 @@
         clone.style.maxWidth = '100%';
         clone.style.minWidth = '0';
         clone.style.backgroundColor = '#ffffff';
-        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table').forEach(table => {
+        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table, #release-links-table').forEach(table => {
             table.style.width = '100%';
             table.style.maxWidth = '100%';
             table.style.minWidth = '0';

@@ -3,6 +3,7 @@
 
     import {
     DashboardData,
+    ReleaseLinks,
     PositionReport
     } from '../types/report.types';
 
@@ -125,7 +126,8 @@
 
     export function writeReports(
     positions: PositionReport[],
-    dashboard?: DashboardData
+    dashboard?: DashboardData,
+    releaseLinks?: ReleaseLinks
     ): void {
 
     const outputDirectory =
@@ -202,7 +204,8 @@
 
     let emailHtml =
         createEmailReport(
-        positions
+        positions,
+        releaseLinks
         );
 
 

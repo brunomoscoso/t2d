@@ -4,6 +4,8 @@
     import { createPositionDefectsSection } from './position-defects.report';
     import { createPositionActivitiesTable } from './position-activities.report';
     import { createMainBlockersTable } from './main-blockers.report';
+    import { createReleaseLinksSection } from './release-links.report';
+    import type { ReleaseLinks } from '../types/report.types';
 
     import {
     JIRA_URL
@@ -501,8 +503,16 @@
     ========================================================= */
 
     export function createEmailReport(
-    positions: PositionReport[]
+    positions: PositionReport[],
+    releaseLinks?: ReleaseLinks
     ): string {
+
+    const reportDate = new Intl.DateTimeFormat('pt-PT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Europe/Lisbon',
+    }).format(new Date());
 
     const reportsHtml =
         positions
@@ -614,10 +624,12 @@
 
 
     return template
+        .replace('<!-- REPORT DATE -->', reportDate)
         .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
         .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
         .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
         .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
+        .replace('<!-- RELEASE LINKS -->', () => createReleaseLinksSection(releaseLinks))
         .replace('<!-- REPORTS -->', () => reportsHtml);
 
     }

@@ -62,9 +62,27 @@ As configurações funcionais ficam no código-fonte:
 
 - **Issues PRIT:** edite a lista `PRITS` em [`src/config/operations.config.ts`](src/config/operations.config.ts).
 - **Dashboard:** altere `DASHBOARD_PAGE_ID` no mesmo arquivo. Use o ID da página do dashboard, não a URL completa.
+<<<<<<< HEAD
 - **Grupos e nomes reconhecidos:** edite `POSITIONS` e `DEFAULT_POSITION` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Os aliases ajudam a associar os nomes encontrados nos títulos ou labels às posições do relatório.
 - **Estrutura e seletores do Jira:** se a interface do Jira mudar, os seletores usados na coleta ficam em [`src/config/selectors.ts`](src/config/selectors.ts).
 
+=======
+- **Links dos planos de teste:** preencha `TEST_PLANS` no mesmo arquivo com o PRIT de Smokes, Certificação, Regressão e Defect Fixing (por exemplo, `'8161'` ou `'PRIT-8161'`). Os títulos são extraídos automaticamente do Jira na sessão autenticada. Estes planos são apenas referências e não entram nos totais de execução.
+- **Texto do link do dashboard:** o nome é extraído automaticamente usando `DASHBOARD_PAGE_ID`, independentemente da coleta dos defects.
+- **Grupos e nomes reconhecidos:** edite `POSITIONS` e `DEFAULT_POSITION` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Os aliases ajudam a associar os nomes encontrados nos títulos ou labels às posições do relatório.
+- **Estrutura e seletores do Jira:** se a interface do Jira mudar, os seletores usados na coleta ficam em [`src/config/selectors.ts`](src/config/selectors.ts).
+
+Por exemplo, para configurar o link de Smokes:
+
+```typescript
+smokes: { prit: 'PRIT-8161' },
+```
+
+A caixa **Links da release** aparece no `email.html`, logo após **Principais bloqueadores**, e acompanha a cópia para o e-mail. As URLs usam `JIRA_URL`: `/browse/<PRIT>` para os planos e `/secure/Dashboard.jspa?selectPageId=<ID>` para o dashboard. Planos com `prit` vazio aparecem como **Não informado**. O link do dashboard continua disponível mesmo se a coleta dos seus dados falhar.
+
+Os títulos vêm dos endpoints de consulta de [issues e dashboards da API REST do Jira](https://docs.atlassian.com/software/jira/docs/api/REST/9.12.2/), usando a sessão já autenticada do navegador. Se uma consulta falhar, a automação registra um aviso e mantém o link com o PRIT ou ID, sem impedir a geração do relatório.
+
+>>>>>>> a397f40 (Add titulo relatorio)
 ## Testes
 
 Para executar os testes existentes:
