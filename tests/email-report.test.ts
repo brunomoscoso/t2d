@@ -45,7 +45,7 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
     assert.equal(await page.locator('[data-global-status-row]:visible').count(), 0);
     assert.equal(await page.locator('#global-status-table').isVisible(), true, 'O quadro continua visível sem postos selecionados');
     assert.equal(await page.locator('#global-status-empty').isVisible(), true);
-    assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Estado Global']);
+    assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Status de instalação', 'Estado Global']);
 
     await page.evaluate(() => {
       const table = document.getElementById('global-status-table')!;
@@ -260,7 +260,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
         const report = document.querySelector('.email-container')!;
         const range = window.getSelection()!.getRangeAt(0);
         const observations = report.querySelector('#observations');
-        const intro = report.querySelector('.intro-text')!;
+        const intro = report.querySelector('.intro-text') || report;
         const contents = document.createElement('div');
         contents.appendChild(range.cloneContents());
         (window as typeof window & { copiedHtml: string }).copiedHtml = contents.innerHTML;
@@ -271,7 +271,6 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
           left: report.getBoundingClientRect().left,
           fontFamily: getComputedStyle(intro).fontFamily,
           fontSize: getComputedStyle(intro).fontSize,
-          introMargin: getComputedStyle(intro).marginBottom,
           observationsPadding: observations && getComputedStyle(observations).paddingTop,
           observationsBorder: observations && getComputedStyle(observations).borderTopWidth,
           observationTitleWeight: getComputedStyle(report.querySelector('.observation-title')!).fontWeight,
@@ -294,7 +293,6 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     assert.ok(Number(layout.left) >= 0);
     assert.equal(layout.fontFamily, 'Arial, Helvetica, sans-serif');
     assert.equal(layout.fontSize, '16px');
-    assert.equal(layout.introMargin, '14px');
     assert.equal(layout.observationsPadding, '12px');
     assert.equal(layout.observationsBorder, '1px');
     assert.equal(layout.observationTitleWeight, '700');

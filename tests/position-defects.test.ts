@@ -151,11 +151,15 @@ test('reconhece variantes de postos no título e preserva o texto do resumo', ()
   }
 });
 
-test('omite a tabela quando não há defects criados na sprint', () => {
-  assert.equal(createPositionDefectsSection([]), '');
-  assert.equal(createPositionDefectsSection([group('COCO PT', [])]), '');
-  assert.equal(createPositionDefectsSection([group('COCO PT', [
+test('mantém a tabela com cinco campos vazios quando não há defects criados na sprint', () => {
+  for (const data of [[], [group('COCO PT', [])], [group('COCO PT', [
     issue('PRIT-1', 'Antigo', 'High', 'OPEN', 'tests'),
     issue('PRIT-2', 'Antigo', 'High', 'OPEN', 'created by'),
-  ])]), '');
+  ])]]) {
+    const html = createPositionDefectsSection(data);
+    assert.match(html, /id="position-defects-table"/);
+    assert.match(html, /data-defects-empty/);
+    assert.equal((html.match(/>--<\/td>/g) ?? []).length, 5);
+    assert.doesNotMatch(html, /data-sprint-defect|data-position-defect/);
+  }
 });

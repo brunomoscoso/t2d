@@ -71,7 +71,6 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
       }
     }
   }
-  if (!defects.size) return '';
 
   // Um PRIT partilhado aparece uma só vez. Os postos explícitos do defect
   // prevalecem sobre o posto da execução que o criou (ex.: PROD).
@@ -125,7 +124,7 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
       <thead><tr>${headers.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;font-weight:bold;">${label}</th>`).join('')}</tr></thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rows || `<tr data-defects-empty>${headers.map(() => `<td style="${cellStyle}color:#5e6c84;">--</td>`).join('')}</tr>`}</tbody>
     </table>
   </section>`;
 }
