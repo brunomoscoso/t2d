@@ -8,7 +8,7 @@ function task(prit: string, mainStatus: string, title: string): Report {
   return {
     prit, mainStatus, title, position: 'COCO PT', labels: [], totalTests: 1,
     executionStatuses: [{ status: 'PASS', quantidade: 1 }],
-    issueLinks: [{ prit: 'GTR-1', status: 'OPEN', titulo: 'Defect associado', relation: 'is blocked by', priority: 'High' }],
+    issueLinks: [{ prit: 'GTR-1', status: 'OPEN', titulo: 'Defect associado', relation: 'created', priority: 'High' }],
   };
 }
 
@@ -42,7 +42,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     assert.deepEqual(await table.locator('thead th').allTextContents(), ['Postos', 'DONE', 'IN PROGRESS', 'TO DO', 'ON HOLD']);
     assert.equal(await table.locator('tbody tr').count(), 3);
     assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Estado Global']);
-    assert.equal(await page.locator('#position-defects-table [data-defect-position]').count(), 2);
+    assert.equal(await page.locator('#position-defects-table [data-sprint-defect]').count(), 1);
     assert.ok(await page.evaluate(() => {
       const ids = ['global-status-section', 'position-activities-section', 'position-defects-section'];
       return ids.slice(1).every((id, index) => Boolean(document.getElementById(ids[index])!
@@ -106,7 +106,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
       assert.equal(await exportedNote.locator('img').count(), 0);
       assert.equal(await exported.locator('[data-activity-position="Marinas"] td').last().locator('div').textContent(), '\u00a0');
       assert.equal(await preview.locator('#global-status-table').count(), 1);
-      assert.equal(await preview.locator('#position-defects-section [data-defect-position]').count(), 2);
+      assert.equal(await preview.locator('#position-defects-section [data-sprint-defect]').count(), 1);
       assert.equal(await page.locator('.email-container').evaluate(element => element.outerHTML), before);
       assert.equal(await page.getByLabel('ON HOLD de COCO PT', { exact: true }).inputValue(), note);
     }

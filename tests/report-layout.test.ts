@@ -19,7 +19,7 @@ const positions: PositionReport[] = [{
     executionStatuses: ['PASS', 'FAIL', 'EXECUTING', 'TODO', 'ABORTED', 'FOR TESTING', 'PENDING 3RD', 'BLOCKED']
       .map(status => ({ status, quantidade: 10 })),
     issueLinks: [{
-      relation: 'is blocked by', prit: 'GTR-1001', titulo: longText,
+      relation: 'created', prit: 'GTR-1001', titulo: longText,
       status: 'IN PROGRESS', priority: 'High',
     }],
   }],
@@ -197,9 +197,9 @@ test('copia HTML fluido e mantém todas as colunas dentro de um editor de email 
       assert.equal(await preview.locator('style, script, textarea, input, select, [data-editor-only]').count(), 0);
       assert.equal(await preview.locator('#position-activities-table thead th').count(), 5);
       assert.deepEqual(await preview.locator('#position-defects-table thead th').allTextContents(),
-        ['Postos', 'Criados na sprint', 'Demais defects', 'Total']);
-      assert.equal(await preview.locator('#position-defects-table [data-position-defect]').count(), 60);
-      assert.equal(await preview.locator('[data-defect-total]').textContent(), '60');
+        ['Prioridade', 'PRIT', 'Posto(s)', 'Resumo', 'Estado']);
+      assert.equal(await preview.locator('#position-defects-table [data-position-defect]').count(), 30);
+      assert.equal(await preview.locator('#position-defects-table [data-position-defect="GTR-1000"]').count(), 0);
       assert.match(await preview.locator('#observations').innerText(), /Comentário antes da cópia/);
       assert.equal(await preview.locator('[data-status-dot]').first().evaluate(element => getComputedStyle(element).color), statusColor);
 
