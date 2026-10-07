@@ -165,7 +165,8 @@
         gap: 8px;
     }
     .global-status-fields select,
-    .global-status-fields input {
+    .global-status-fields input,
+    .installation-status-fields select {
         width: 100%;
         max-width: 100%;
         min-width: 0;
@@ -176,7 +177,14 @@
         color: #172b4d;
         font: inherit;
     }
-    .global-status-fields select { font-weight: bold; cursor: pointer; }
+    .global-status-fields select,
+    .installation-status-fields select { font-weight: bold; cursor: pointer; }
+    .installation-status-fields {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+    }
     .global-status-placeholder {
         min-width: 0;
         padding: 6px 10px;
@@ -187,10 +195,12 @@
 
     #global-status-table { table-layout: fixed; }
     #position-activities-table { min-width: 900px; overflow-wrap: anywhere; }
-    [data-activity-note] {
+    [data-activity-note],
+    [data-blocker-field] {
         display: block;
         width: 100%;
         max-width: 100%;
+        min-width: 0;
         min-height: 84px;
         padding: 10px;
         border: 1px solid #cbd9ec;
@@ -202,16 +212,34 @@
         resize: vertical;
     }
     [data-activity-note]::placeholder,
+    [data-blocker-field]::placeholder,
     .global-status-fields input::placeholder { color: #5e6c84; }
     [data-activity-note]:focus-visible,
+    [data-blocker-field]:focus-visible,
     #observations:focus-visible,
     button:focus-visible,
     a:focus-visible,
     .report-table-scroll:focus-visible { outline: 2px solid #0052cc; outline-offset: 3px; }
     #copy-email-button:focus-visible { outline-color: #ffffff; }
     .global-status-fields select:focus,
+    .installation-status-fields select:focus,
     .global-status-fields input:focus { outline: 2px solid #0052cc; outline-offset: 1px; }
     .report-summary-table { box-shadow: 0 4px 16px #172b4d08; }
+    .blocker-actions { margin-top:12px; }
+    [data-add-blocker],
+    [data-remove-blocker] {
+        padding:8px 12px;
+        border:1px solid #b8c9e2;
+        border-radius:7px;
+        background:#ffffff;
+        color:#0052cc;
+        font:inherit;
+        cursor:pointer;
+    }
+    [data-add-blocker]:hover { background:#eaf2ff; }
+    [data-remove-blocker] { margin-top:8px; color:#ae2e24; border-color:#f1b5af; }
+    [data-remove-blocker]:hover:not(:disabled) { background:#ffedeb; }
+    [data-remove-blocker]:disabled { opacity:0.45; cursor:default; }
     .report-summary-table thead th { letter-spacing: 0.3px; }
     .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
     .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
@@ -246,6 +274,8 @@
         #position-defects-table th,
         #position-defects-table td { padding: 8px 6px !important; }
         #global-status-table thead th:first-child { width: 28% !important; }
+        #global-status-table th,
+        #global-status-table td { padding:8px 6px !important; }
         .global-status-fields { grid-template-columns: 16px minmax(0, 1fr); }
         .global-status-fields input,
         .global-status-placeholder-note { grid-column: 1 / -1; }
@@ -277,11 +307,6 @@
 
 <div class="report-workspace">
 <div class="email-container">
-    <p class="intro-text">Bom dia,</p>
-
-    <p class="intro-text">
-    Segue o resumo da execução de testes:
-    </p>
 
     <div class="observation-title">Observações:</div>
 
@@ -297,6 +322,8 @@
     <!-- POSITION ACTIVITIES -->
 
     <!-- POSITION DEFECTS -->
+
+    <!-- MAIN BLOCKERS -->
 
     <!-- REPORTS -->
 
@@ -346,6 +373,7 @@
                     position: row.dataset.position,
                     selected: toggles.get(row.dataset.position).checked,
                     status: row.querySelector('[data-status-select]').value,
+                    installation: row.querySelector('[data-installation-select]').value,
                     note: row.querySelector('[data-status-note]').value,
                 }))));
             } catch (error) {
@@ -370,6 +398,8 @@
             const select = row.querySelector('[data-status-select]');
             const note = row.querySelector('[data-status-note]');
             const dot = row.querySelector('[data-status-dot]');
+            const installation = row.querySelector('[data-installation-select]');
+            const installationDot = row.querySelector('[data-installation-dot]');
             const saved = savedRows.find(item => item && item.position === row.dataset.position)
                 || savedRows.find(item => item && item.position === 'SEM POSIÇÃO'
                     && row.dataset.position === 'Exploratory Testing');
@@ -381,13 +411,26 @@
                     select.value = saved.status;
                 }
                 if (typeof saved.note === 'string') note.value = saved.note.slice(0, note.maxLength);
+                if (Array.from(installation.options).some(option => option.value === saved.installation)) {
+                    installation.value = saved.installation;
+                }
             }
 
             function updateDot() {
                 dot.style.color = select.selectedOptions[0].dataset.color;
             }
+            function updateInstallation() {
+                const color = installation.selectedOptions[0].dataset.color;
+                installation.style.color = color;
+                installationDot.style.color = color;
+            }
 
             updateDot();
+            updateInstallation();
+            installation.addEventListener('change', () => {
+                updateInstallation();
+                save();
+            });
             toggle.addEventListener('change', () => {
                 updateSelection();
                 save();
@@ -449,6 +492,108 @@
         window.addEventListener('resize', () => notes.forEach(resizeNote));
     }
 
+    function initializeBlockers() {
+        const table = document.getElementById('main-blockers-table');
+        if (!table) return;
+        const body = table.tBodies[0];
+        const rowTemplate = body.rows[0].cloneNode(true);
+        const rows = () => Array.from(body.querySelectorAll('[data-blocker-row]'));
+        const fields = () => Array.from(body.querySelectorAll('[data-blocker-field]'));
+        const storageKey = 't2d:main-blockers:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
+        let savedRows = [];
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            if (Array.isArray(saved)) {
+                // O formato anterior tinha cinco linhas fixas. Migra apenas as
+                // preenchidas; as linhas vazias adicionadas agora são guardadas.
+                savedRows = saved.filter(row => row && (
+                    (typeof row.theme === 'string' && row.theme.trim())
+                    || (typeof row.impact === 'string' && row.impact.trim())
+                ));
+            } else if (saved && saved.version === 2 && Array.isArray(saved.rows)) {
+                savedRows = saved.rows;
+            }
+        } catch (error) {
+            // A edição continua disponível sem armazenamento.
+        }
+        function save() {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify({
+                    version: 2,
+                    rows: rows().map(row => ({
+                        theme: row.querySelector('[data-blocker-field="theme"]').value,
+                        impact: row.querySelector('[data-blocker-field="impact"]').value,
+                    })),
+                }));
+            } catch (error) {
+                // Não bloqueia a edição nem a cópia.
+            }
+        }
+        function updateRows() {
+            const currentRows = rows();
+            currentRows.forEach((row, index) => {
+                row.dataset.blockerRow = index;
+                row.style.background = index % 2 ? '#f8faff' : '#ffffff';
+                row.querySelector('[data-blocker-field="theme"]').setAttribute('aria-label', 'Tema do bloqueador ' + (index + 1));
+                row.querySelector('[data-blocker-field="impact"]').setAttribute('aria-label', 'Impacto do bloqueador ' + (index + 1));
+                const remove = row.querySelector('[data-remove-blocker]');
+                remove.setAttribute('aria-label', 'Remover bloqueador ' + (index + 1));
+                remove.disabled = currentRows.length === 1;
+            });
+        }
+        function resize(field) {
+            if (!field.isConnected) return;
+            field.style.height = 'auto';
+            field.style.height = (field.scrollHeight + 2) + 'px';
+        }
+        function addRow(saved = {}, focus = false) {
+            const row = rowTemplate.cloneNode(true);
+            body.appendChild(row);
+            row.querySelectorAll('[data-blocker-field]').forEach(field => {
+                if (saved && typeof saved[field.dataset.blockerField] === 'string') {
+                    field.value = saved[field.dataset.blockerField];
+                }
+                resize(field);
+                field.addEventListener('input', () => {
+                    resize(field);
+                    save();
+                });
+            });
+            row.querySelector('[data-remove-blocker]').addEventListener('click', () => {
+                if (rows().length === 1) return;
+                const neighbor = row.nextElementSibling || row.previousElementSibling;
+                row.remove();
+                updateRows();
+                save();
+                neighbor.querySelector('[data-blocker-field="theme"]').focus();
+            });
+            updateRows();
+            if (focus) row.querySelector('[data-blocker-field="theme"]').focus();
+        }
+        body.replaceChildren();
+        (savedRows.length ? savedRows : [{}]).forEach(saved => addRow(saved));
+        document.querySelector('[data-add-blocker]').addEventListener('click', () => {
+            addRow({}, true);
+            save();
+        });
+        save();
+        window.addEventListener('resize', () => fields().forEach(resize));
+    }
+
+    function prepareBlockersForCopy(report, restoreActions) {
+        report.querySelectorAll('[data-blocker-field]').forEach(field => {
+            const text = document.createElement('div');
+            text.style.cssText = 'line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+            const value = field.value.trim() ? field.value : '--';
+            value.split('\n').forEach((line, index) => {
+                if (index) text.appendChild(document.createElement('br'));
+                text.appendChild(document.createTextNode(line || '\u00a0'));
+            });
+            restoreActions.push(() => text.replaceWith(field));
+            field.replaceWith(text);
+        });
+    }
+
     function prepareActivityTableForCopy(report, restoreActions) {
         const table = report.querySelector('#position-activities-table');
         if (!table) return;
@@ -477,6 +622,7 @@
         }
 
         prepareActivityTableForCopy(report, restoreActions);
+        prepareBlockersForCopy(report, restoreActions);
 
         // A cópia inclui as tabelas completas, sem as áreas de deslocamento da página.
         report.querySelectorAll('[data-report-scroll]').forEach(wrapper => {
@@ -533,6 +679,13 @@
 
             restoreActions.push(() => summary.replaceWith(fields));
             fields.replaceWith(summary);
+            const installationFields = row.querySelector('.installation-status-fields');
+            const installationSelect = row.querySelector('[data-installation-select]');
+            const installationLabel = document.createElement('strong');
+            installationLabel.style.color = installationSelect.selectedOptions[0].dataset.color;
+            installationLabel.textContent = installationSelect.selectedOptions[0].textContent;
+            restoreActions.push(() => installationLabel.replaceWith(installationFields));
+            installationFields.replaceWith(installationLabel);
         });
 
         report.querySelectorAll('[data-editor-only]').forEach(removeDuringCopy);
@@ -572,7 +725,7 @@
         clone.style.maxWidth = '100%';
         clone.style.minWidth = '0';
         clone.style.backgroundColor = '#ffffff';
-        clone.querySelectorAll('#position-activities-table, #position-defects-table').forEach(table => {
+        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table').forEach(table => {
             table.style.width = '100%';
             table.style.maxWidth = '100%';
             table.style.minWidth = '0';
@@ -598,6 +751,7 @@
 
     initializeGlobalStatuses();
     initializeActivityNotes();
+    initializeBlockers();
 
     function copyEmailReport() {
 

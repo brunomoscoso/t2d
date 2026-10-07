@@ -41,7 +41,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     const table = page.locator('#position-activities-table');
     assert.deepEqual(await table.locator('thead th').allTextContents(), ['Postos', 'DONE', 'IN PROGRESS', 'TO DO', 'ON HOLD']);
     assert.equal(await table.locator('tbody tr').count(), 3);
-    assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Estado Global']);
+    assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Status de instalação', 'Estado Global']);
     assert.equal(await page.locator('#position-defects-table [data-sprint-defect]').count(), 1);
     assert.ok(await page.evaluate(() => {
       const ids = ['global-status-section', 'position-activities-section', 'position-defects-section'];

@@ -3,6 +3,7 @@
     import { createGlobalStatusTable } from './global-status.report';
     import { createPositionDefectsSection } from './position-defects.report';
     import { createPositionActivitiesTable } from './position-activities.report';
+    import { createMainBlockersTable } from './main-blockers.report';
 
     import {
     JIRA_URL
@@ -616,6 +617,7 @@
         .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
         .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
         .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
+        .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
         .replace('<!-- REPORTS -->', () => reportsHtml);
 
     }
