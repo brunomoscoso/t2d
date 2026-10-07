@@ -1,4 +1,4 @@
-    import { POSITIONS } from '../config/positions.config';
+    import { DEFAULT_POSITION, POSITIONS } from '../config/positions.config';
 
 
     /* =========================================================
@@ -327,6 +327,6 @@
     }
 
 
-    return 'SEM POSIÇÃO';
+    return DEFAULT_POSITION;
 
     }

@@ -13,7 +13,7 @@
         padding: clamp(12px, 2vw, 30px);
         font-family: Arial, Helvetica, sans-serif;
         color: #172b4d;
-        background: #eef3fb;
+        background: #ffffff;
         font-size: 16px;
     }
 
@@ -215,10 +215,9 @@
     .report-summary-table thead th { letter-spacing: 0.3px; }
     .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
     .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
-    [data-position-activity]:last-child,
-    [data-defect-group]:last-child { margin-bottom: 0 !important; }
+    [data-position-activity]:last-child { margin-bottom: 0 !important; }
     [data-position-activity] a:hover { color: #0052cc !important; text-decoration: underline !important; }
-    [data-position-defect]:hover { background: #d6e6ff !important; border-color: #0052cc !important; }
+    [data-position-defect]:hover { color: #0052cc !important; }
     .position-block,
     .dashboard-block { box-shadow: 0 5px 20px #172b4d08; }
     .operation-card:last-child { margin-bottom: 0 !important; }
@@ -244,9 +243,8 @@
         .report-toolbar-actions,
         #copy-email-button { width: 100%; }
         .global-position-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        #position-defects-table thead th:first-child { width: 24% !important; }
         #position-defects-table th,
-        #position-defects-table td { padding: 8px !important; }
+        #position-defects-table td { padding: 8px 6px !important; }
         #global-status-table thead th:first-child { width: 28% !important; }
         .global-status-fields { grid-template-columns: 16px minmax(0, 1fr); }
         .global-status-fields input,
@@ -371,7 +369,9 @@
             const select = row.querySelector('[data-status-select]');
             const note = row.querySelector('[data-status-note]');
             const dot = row.querySelector('[data-status-dot]');
-            const saved = savedRows.find(item => item && item.position === row.dataset.position);
+            const saved = savedRows.find(item => item && item.position === row.dataset.position)
+                || savedRows.find(item => item && item.position === 'SEM POSIÇÃO'
+                    && row.dataset.position === 'Exploratory Testing');
 
             if (saved) {
                 // As escolhas anteriores à seleção de postos continuam disponíveis.
@@ -429,7 +429,9 @@
         }
 
         notes.forEach(note => {
-            const saved = savedNotes.find(item => item && item.position === note.dataset.position);
+            const saved = savedNotes.find(item => item && item.position === note.dataset.position)
+                || savedNotes.find(item => item && item.position === 'SEM POSIÇÃO'
+                    && note.dataset.position === 'Exploratory Testing');
             if (saved && typeof saved.note === 'string') note.value = saved.note;
             resizeNote(note);
             note.addEventListener('input', () => {
@@ -454,7 +456,7 @@
         table.style.minWidth = '0';
         table.querySelectorAll('[data-activity-note]').forEach(note => {
             const text = document.createElement('div');
-            text.style.cssText = 'line-height:1.5;overflow-wrap:anywhere;';
+            text.style.cssText = 'line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
             const value = note.value.trim() ? note.value : '\u00a0';
             value.split('\n').forEach((line, index) => {
                 if (index) text.appendChild(document.createElement('br'));
@@ -466,8 +468,7 @@
     }
 
     function prepareReportForCopy(report, restoreActions) {
-        // Copia o relatório visível para o navegador preservar o mesmo layout do Ctrl+C.
-        // Só os controlos de edição são substituídos, durante a cópia síncrona.
+        // Substitui os controlos por texto durante a cópia síncrona.
         function removeDuringCopy(element) {
             const placeholder = document.createComment('editor-only');
             restoreActions.push(() => placeholder.replaceWith(element));
@@ -546,6 +547,41 @@
         });
     }
 
+    function createEmailClipboardHtml(report) {
+        const clone = report.cloneNode(true);
+        const sourceElements = [report, ...report.querySelectorAll('*')];
+        const clonedElements = [clone, ...clone.querySelectorAll('*')];
+        // Preserva a aparência sem converter as larguras percentuais em pixels,
+        // como acontece na serialização nativa do navegador para o clipboard.
+        const visualProperties = [
+            'box-sizing', 'font-family', 'font-size', 'font-weight', 'font-style',
+            'color', 'background-color', 'line-height', 'text-align',
+            'text-decoration', 'vertical-align', 'white-space', 'overflow-wrap',
+            'word-break', 'padding', 'margin', 'border', 'border-radius',
+            'border-collapse', 'border-spacing', 'table-layout',
+        ];
+        sourceElements.forEach((element, index) => {
+            const computed = getComputedStyle(element);
+            const target = clonedElements[index];
+            visualProperties.forEach(property => {
+                target.style.setProperty(property, computed.getPropertyValue(property));
+            });
+        });
+        clone.style.width = '100%';
+        clone.style.maxWidth = '100%';
+        clone.style.minWidth = '0';
+        clone.style.backgroundColor = '#ffffff';
+        clone.querySelectorAll('#position-activities-table, #position-defects-table').forEach(table => {
+            table.style.width = '100%';
+            table.style.maxWidth = '100%';
+            table.style.minWidth = '0';
+            table.querySelectorAll('th, td').forEach(cell => {
+                cell.style.padding = '8px 6px';
+            });
+        });
+        return clone.outerHTML;
+    }
+
     initializeGlobalStatuses();
     initializeActivityNotes();
 
@@ -595,6 +631,17 @@
             range.selectNodeContents(report);
             selection.removeAllRanges();
             selection.addRange(range);
+
+            const html = createEmailClipboardHtml(report);
+            const plainText = report.innerText;
+            const writeClipboard = event => {
+                if (!event.clipboardData) return;
+                event.clipboardData.setData('text/html', html);
+                event.clipboardData.setData('text/plain', plainText);
+                event.preventDefault();
+            };
+            document.addEventListener('copy', writeClipboard, true);
+            restoreActions.push(() => document.removeEventListener('copy', writeClipboard, true));
 
             const copied =
                 document.execCommand(
