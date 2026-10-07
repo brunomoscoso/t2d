@@ -1,67 +1,131 @@
 import { JIRA_URL } from '../config/jira.config';
-import type { PositionReport } from '../types/report.types';
-import { escapeHtml } from '../utils/html.utils';
+import { POSITIONS } from '../config/positions.config';
+import type { IssueLink, PositionReport } from '../types/report.types';
+import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 
-type AssociatedDefect = { key: string; createdInSprint: boolean };
+const priorities: Record<string, { label: string; color: string; background: string; rank: number }> = {
+  highest: { label: 'Crítica', color: '#ae2e24', background: '#ffedeb', rank: 0 },
+  high: { label: 'Alta', color: '#a54800', background: '#fff3eb', rank: 1 },
+  medium: { label: 'Média', color: '#875e00', background: '#fff7d6', rank: 2 },
+  low: { label: 'Baixa', color: '#0747a6', background: '#e9f2ff', rank: 3 },
+  lowest: { label: 'Muito baixa', color: '#216e4e', background: '#e3fcef', rank: 4 },
+};
+const unknownPriority = { label: 'Não definida', color: '#5e6c84', background: '#f1f2f4', rank: 5 };
+const getPriority = (value: string) => priorities[value.trim().toLowerCase()] ?? unknownPriority;
+const displayPosition = (position: string) => position === 'Tangerina' ? 'Tangerina PT' : position;
 
-function renderDefectLinks(defects: AssociatedDefect[]): string {
-  if (!defects.length) return '<span style="color:#8993a4;" aria-label="Nenhum defect nesta categoria">—</span>';
-
-  return `<div style="line-height:1.7;white-space:normal;overflow-wrap:anywhere;">
-    ${defects.map(defect => `<a data-position-defect="${escapeHtml(defect.key)}"
-        href="${escapeHtml(`${JIRA_URL.replace(/\/$/, '')}/browse/${encodeURIComponent(defect.key)}`)}"
-        target="_blank" rel="noopener noreferrer"
-        style="color:#0747a6;font-size:13px;text-decoration:underline;overflow-wrap:anywhere;">${escapeHtml(defect.key)}</a>`).join(', ')}
-  </div>`;
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function titleDetails(title: string): { positions: string[]; summary: string } {
+  const prefix = title.match(/^(?:\s*\[[^\]]*\])+/)?.[0] ?? '';
+  const metadata = normalize(prefix.replace(/[\[\]]/g, ' '));
+  const positions = new Set<string>();
+  // Suporta tanto [COCO][PT][SP] como [COCO SP/PT] e [Cyber PT].
+  for (const match of metadata.matchAll(/\b(COCO|CYBER)\s+((?:PT|SP)(?:\s*(?:[/,&]|\bAND\b|\bE\b)?\s*(?:PT|SP))?)\b/g)) {
+    const name = match[1] === 'COCO' ? 'COCO' : 'Cyber';
+    for (const country of match[2].match(/PT|SP/g) ?? []) positions.add(`${name} ${country}`);
+  }
+  const tangerina = metadata.match(/\b(?:TANGERINA|TANG)(?:\s+(PT|SP))?\b/);
+  if (tangerina) positions.add(`Tangerina ${tangerina[1] ?? 'PT'}`);
+  for (const definition of POSITIONS) {
+    if (/^(COCO|Cyber|Tangerina)\b/.test(definition.name)) continue;
+    if ([definition.name, ...definition.aliases].some(alias =>
+      ` ${metadata.replace(/[^A-Z0-9 ]/g, ' ')} `.includes(` ${normalize(alias)} `))) {
+      positions.add(definition.name);
+    }
+  }
+  // PROD aparece também fora dos colchetes, entre os qualificadores do título.
+  const productionTag = /(?:^|\s+[-–—]\s+)PROD(?=\s+[-–—]\s+|$)/gi;
+  if (/\bPROD\b/.test(metadata) || productionTag.test(title)) positions.add('PROD');
+  const summary = title.slice(prefix.length).replace(productionTag, '')
+    .replace(/^\s*[-–—:]\s*/, '').trim();
+  return { positions: [...positions], summary };
+}
+
+type SprintDefect = {
+  key: string;
+  issue: IssueLink;
+  positions: Set<string>;
+  fallbackPositions: Set<string>;
+};
+
 export function createPositionDefectsSection(positions: PositionReport[]): string {
-  const byPosition = new Map<string, Map<string, AssociatedDefect>>();
+  const defects = new Map<string, SprintDefect>();
+  // Só a relação "created" identifica os defects criados nesta sprint.
   for (const position of positions) {
-    const defects = byPosition.get(position.position) ?? new Map<string, AssociatedDefect>();
-    byPosition.set(position.position, defects);
-    // Reutiliza os Issue Links do bloco Defect Status, sem inferir associações pelo título.
     for (const report of position.reports) {
       for (const issue of report.issueLinks) {
         const key = issue.prit.trim().toUpperCase();
-        if (!key) continue;
-        const defect = defects.get(key) ?? { key, createdInSprint: false };
-        // A categoria "created" identifica os abertos na sprint, independentemente do status.
-        // Prevalece se o mesmo PRIT tiver outras relações nas execuções deste posto.
-        defect.createdInSprint ||= issue.relation.trim().toLowerCase() === 'created';
-        defects.set(key, defect);
+        if (!key || issue.relation.trim().toLowerCase() !== 'created') continue;
+        if (!defects.has(key)) {
+          defects.set(key, { key, issue: { ...issue }, positions: new Set(), fallbackPositions: new Set() });
+        } else {
+          const saved = defects.get(key)!.issue;
+          if (!saved.titulo.trim()) saved.titulo = issue.titulo;
+          if (!saved.status.trim()) saved.status = issue.status;
+          if (getPriority(saved.priority) === unknownPriority) saved.priority = issue.priority;
+        }
+      }
+    }
+  }
+  if (!defects.size) return '';
+
+  // Um PRIT partilhado aparece uma só vez. Os postos explícitos do defect
+  // prevalecem sobre o posto da execução que o criou (ex.: PROD).
+  for (const position of positions) {
+    for (const report of position.reports) {
+      for (const issue of report.issueLinks) {
+        const defect = defects.get(issue.prit.trim().toUpperCase());
+        if (!defect) continue;
+        titleDetails(issue.titulo).positions.forEach(name => defect.positions.add(name));
+        defect.fallbackPositions.add(displayPosition(position.position));
       }
     }
   }
 
-  const cellStyle = 'padding:14px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
-  const rows = [...byPosition].filter(([, defects]) => defects.size).map(([position, defects]) => {
-    const items = [...defects.values()].sort((a, b) => a.key.localeCompare(b.key, undefined, { numeric: true }));
-    const created = items.filter(defect => defect.createdInSprint);
-    const other = items.filter(defect => !defect.createdInSprint);
-
-    return `<tr data-defect-position="${escapeHtml(position)}">
-      <th scope="row" style="${cellStyle}background:#edf3fc;color:#0747a6;">${escapeHtml(position)}</th>
-      <td data-defect-column="created" style="${cellStyle}">${renderDefectLinks(created)}</td>
-      <td data-defect-column="other" style="${cellStyle}">${renderDefectLinks(other)}</td>
-      <td style="${cellStyle}text-align:center;"><strong data-defect-total style="display:inline-block;max-width:100%;padding:4px 3px;border-radius:8px;background:#e4eeff;color:#0747a6;font-size:14px;">${defects.size}</strong></td>
+  const positionOrder = POSITIONS.map(position => displayPosition(position.name));
+  const sorted = [...defects.values()].sort((a, b) =>
+    getPriority(a.issue.priority).rank - getPriority(b.issue.priority).rank
+    || a.key.localeCompare(b.key, undefined, { numeric: true }));
+  const cellStyle = 'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+  const badgeStyle = 'display:inline-block;box-sizing:border-box;max-width:100%;padding:4px;border-radius:6px;font-size:12px;font-weight:bold;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+  const rows = sorted.map((defect, index) => {
+    const priority = getPriority(defect.issue.priority);
+    const statusColors = getIssueStatusColors(defect.issue.status);
+    const names = [...(defect.positions.size ? defect.positions : defect.fallbackPositions)]
+      .sort((a, b) => {
+        const index = (name: string) => positionOrder.includes(name) ? positionOrder.indexOf(name) : positionOrder.length;
+        return index(a) - index(b) || a.localeCompare(b);
+      });
+    const summary = titleDetails(defect.issue.titulo).summary || 'Sem resumo';
+    const status = defect.issue.status.trim().replace(/[_-]+/g, ' ').toLowerCase()
+      .replace(/\b\w/g, character => character.toUpperCase()) || 'Sem estado';
+    return `<tr data-sprint-defect="${escapeHtml(defect.key)}" style="background:${index % 2 ? '#f8faff' : '#ffffff'};">
+      <td data-defect-priority style="${cellStyle}"><span style="${badgeStyle}background:${priority.background};color:${priority.color};"><span aria-hidden="true">●</span> ${priority.label}</span></td>
+      <td style="${cellStyle}"><a data-position-defect="${escapeHtml(defect.key)}"
+        href="${escapeHtml(`${JIRA_URL.replace(/\/$/, '')}/browse/${encodeURIComponent(defect.key)}`)}"
+        target="_blank" rel="noopener noreferrer" style="color:#0747a6;font-weight:bold;text-decoration:underline;">${escapeHtml(defect.key)}</a></td>
+      <td data-defect-positions style="${cellStyle}background:#edf3fc;color:#0747a6;font-weight:bold;">${escapeHtml(names.join(', '))}</td>
+      <td data-defect-summary style="${cellStyle}">${escapeHtml(summary)}</td>
+      <td data-defect-status style="${cellStyle}"><span style="${badgeStyle}background:${statusColors.background};color:${statusColors.color};border:1px solid ${statusColors.border};">${escapeHtml(status)}</span></td>
     </tr>`;
   }).join('');
-
-  if (!rows) return '';
-
-  return `
-    <section id="position-defects-section" aria-labelledby="position-defects-title" style="margin:0 0 32px;">
-      <h2 id="position-defects-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Defects por posto</h2>
-      <table id="position-defects-table" class="report-summary-table" aria-label="Defects por posto" width="100%" cellpadding="0" cellspacing="0"
-        style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;overflow-wrap:anywhere;">
-        <thead><tr>
-          <th scope="col" width="20%" style="${cellStyle}width:20%;border-color:#244779;background:#244779;color:#ffffff;">Postos</th>
-          <th scope="col" width="33%" style="${cellStyle}width:33%;border-color:#244779;background:#244779;color:#ffffff;">Criados na sprint</th>
-          <th scope="col" width="33%" style="${cellStyle}width:33%;border-color:#244779;background:#244779;color:#ffffff;">Demais defects</th>
-          <th scope="col" width="14%" style="${cellStyle}width:14%;border-color:#244779;background:#244779;color:#ffffff;text-align:center;">Total</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </section>`;
+  const headers = [
+    { label: 'Prioridade', width: '13%' },
+    { label: 'PRIT', width: '15%' },
+    { label: 'Posto(s)', width: '18%' },
+    { label: 'Resumo', width: '41%' },
+    { label: 'Estado', width: '13%' },
+  ];
+  return `<section id="position-defects-section" aria-labelledby="position-defects-title" style="margin:0 0 32px;">
+    <h2 id="position-defects-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
+    <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"
+      style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
+      <thead><tr>${headers.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;font-weight:bold;">${label}</th>`).join('')}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </section>`;
 }
