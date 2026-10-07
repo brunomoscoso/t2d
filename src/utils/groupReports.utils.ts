@@ -1,4 +1,4 @@
-    import { POSITIONS } from '../config/positions.config';
+    import { DEFAULT_POSITION, POSITIONS } from '../config/positions.config';
 
     import {
     PositionReport,
@@ -29,11 +29,11 @@
     );
 
     const getOrder = (position: string): number => {
-        if (position === 'SEM POSIÇÃO') {
+        if (position === DEFAULT_POSITION) {
             return POSITIONS.length + 1;
         }
 
-        // Posições não cadastradas ficam depois da cola e antes de SEM POSIÇÃO.
+        // Posições não cadastradas ficam depois da cola e antes de Exploratory Testing.
         return positionOrder.get(position) ?? POSITIONS.length;
     };
 

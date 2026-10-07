@@ -55,9 +55,19 @@ test('reconhece os locais do laboratório e a grafia anterior de Las Rosas', () 
   assert.equal(getPosition([], '[ARCO_DO_CEGO][PT] Regression'), 'Arco do Cego');
   assert.equal(getPosition([], '[Las-Rozas] Regression'), 'Las Rosas');
   assert.equal(getPosition([], '[LAS_ROSAS] Regression'), 'Las Rosas');
-  for (const name of ['Olivais', 'Badajoz', 'Cyber', 'Marinas']) {
+  for (const name of ['Olivais', 'Badajoz', 'Marinas']) {
     assert.equal(getPosition([], `[${name.toUpperCase()}] Regression`), name);
   }
+});
+
+test('distingue Cyber SP e Cyber PT no título e nas labels', () => {
+  for (const country of ['SP', 'PT']) {
+    for (const name of [`Cyber ${country}`, `[CYBER][${country}]`, `cyber_${country}`, `Cyber-${country}`]) {
+      assert.equal(getPosition([], `${name} Regression`), `Cyber ${country}`);
+      assert.equal(getPosition([`POSITION_${name}`], 'Regression'), `Cyber ${country}`);
+    }
+  }
+  assert.equal(getPosition([], '[Cyber] Regression'), 'Exploratory Testing');
 });
 
 test('usa labels quando o título não identifica o grupo', () => {
@@ -73,6 +83,6 @@ test('o título continua tendo prioridade sobre as labels', () => {
 
 test('não deduz o tipo apenas pelo país nem por palavras parcialmente iguais', () => {
   for (const title of ['[PT] Validation', '[SP] Validation', '[COCO] Regression', 'COCO PTX', 'Tangerinas', 'Nova posição']) {
-    assert.equal(getPosition([], title), 'SEM POSIÇÃO', title);
+    assert.equal(getPosition([], title), 'Exploratory Testing', title);
   }
 });

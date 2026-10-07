@@ -3,6 +3,8 @@ export type PositionDefinition = {
   aliases: string[];
 };
 
+export const DEFAULT_POSITION = 'Exploratory Testing';
+
 /**
  * Cola dos grupos do relatório.
  *
@@ -13,7 +15,7 @@ export type PositionDefinition = {
  *
  * A ordem define a prioridade quando o texto contém mais de um nome.
  * Também define a ordem de exibição dos grupos no relatório.
- * SEM POSIÇÃO fica sempre por último, antes do dashboard.
+ * Exploratory Testing fica sempre por último, antes do dashboard.
  * Os tipos vêm antes dos locais para manter, por exemplo, todas as
  * execuções explicitamente COCO PT juntas, independentemente do local.
  * Não usar PT/SP isolados como aliases: o país não identifica o tipo.
@@ -26,7 +28,8 @@ export const POSITIONS: PositionDefinition[] = [
   { name: 'Badajoz', aliases: ['Badajoz'] },
   { name: 'Pontes', aliases: ['Pontes'] },
   { name: 'Las Rosas', aliases: ['Las Rosas', 'Las Rozas'] },
-  { name: 'Cyber', aliases: ['Cyber'] },
+  { name: 'Cyber SP', aliases: ['Cyber SP'] },
+  { name: 'Cyber PT', aliases: ['Cyber PT'] },
   { name: 'Marinas', aliases: ['Marinas'] },
   { name: 'Arco do Cego', aliases: ['Arco do Cego'] },
   { name: 'VMPOS - ALGRAGIDE', aliases: ['VMPOS - ALGRAGIDE'] },
