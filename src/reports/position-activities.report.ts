@@ -3,7 +3,7 @@ import type { PositionReport, Report } from '../types/report.types';
 import { escapeHtml } from '../utils/html.utils';
 
 type ActivityColumn = 'done' | 'in-progress' | 'to-do' | 'other';
-const cellStyle = 'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;';
+const cellStyle = 'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
 const columns = {
   done: { symbol: '✓', color: '#00875a', background: '#f3fbf7' },
   'in-progress': { symbol: '↻', color: '#0052cc', background: '#f3f7ff' },
@@ -104,7 +104,7 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
     <h2 id="position-activities-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Atividades por posto</h2>
     <div id="position-activities-scroll" class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Atividades por posto; desloque para ver todas as colunas">
       <table id="position-activities-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}" aria-label="Atividades por posto" width="100%" cellpadding="0" cellspacing="0"
-        style="width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
+        style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
         <thead><tr>${headers.map(({ label, width, background, color }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};background:${background};color:${color};border-color:${background};text-align:left;">${label}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="5" style="${cellStyle}color:#5e6c84;">Nenhuma atividade extraída do Jira para este relatório.</td></tr>`}</tbody>
       </table>
