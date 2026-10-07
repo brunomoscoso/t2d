@@ -287,6 +287,7 @@
 
     <div
     id="observations"
+    style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:normal;color:#172b4d;line-height:1.5;text-align:left;overflow-wrap:anywhere;"
     contenteditable="true"
     data-placeholder="Clique aqui para adicionar comentários ou observações..."
     ></div>
@@ -579,6 +580,19 @@
                 cell.style.padding = '8px 6px';
             });
         });
+
+        const observations = clone.querySelector('#observations');
+        if (observations) {
+            const outlookWrapper = document.createElement('div');
+            outlookWrapper.setAttribute('data-olk-copy-source', 'MessageBody');
+            outlookWrapper.setAttribute(
+                'style',
+                'border:0;font-style:inherit;font-variant:inherit;font-weight:inherit;font-stretch:inherit;font-size:12pt;line-height:inherit;font-family:Calibri,Helvetica,sans-serif;margin:0;padding:0;vertical-align:baseline;color:inherit;direction:ltr;'
+            );
+            outlookWrapper.append(...Array.from(observations.childNodes));
+            observations.appendChild(outlookWrapper);
+        }
+
         return clone.outerHTML;
     }
 
