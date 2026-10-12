@@ -68,7 +68,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     text-align:center;
                     vertical-align:middle;
                     color:${priority.color};
-                    font-size:17px;
+                    font-size:14px;
                     font-weight:bold;
                 "
                 >
@@ -96,7 +96,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     style="
                     color:#0052cc;
                     text-decoration:none;
-                    font-size:13px;
+                    font-size:11px;
                     "
                 >
 
@@ -116,7 +116,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
                     color:#172b4d;
-                    font-size:13px;
+                    font-size:11px;
                 "
                 >
 
@@ -168,7 +168,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     padding:6px;
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
-                    font-size:12px;
+                    font-size:11px;
                 "
                 >
 
@@ -187,7 +187,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     border-bottom:1px solid #dfe1e6;
                     vertical-align:middle;
                     white-space:nowrap;
-                    font-size:12px;
+                    font-size:11px;
                 "
                 >
 
@@ -231,7 +231,7 @@ function createDashboardBlock(dashboard: DashboardData): string {
             background:#c9372c;
             color:#ffffff;
             padding:16px 20px;
-            font-size:20px;
+            font-size:14px;
             font-weight:bold;
             "
         >
@@ -245,7 +245,7 @@ function createDashboardBlock(dashboard: DashboardData): string {
                 padding:5px 10px;
                 border-radius:6px;
                 background:#a7251d;
-                font-size:13px;
+                font-size:11px;
                 font-weight:normal;
             "
             >
@@ -280,7 +280,7 @@ function createDashboardBlock(dashboard: DashboardData): string {
                 style="
                 background:#fff2ef;
                 color:#6e302b;
-                font-size:12px;
+                font-size:11px;
                 text-align:left;
                 "
             >

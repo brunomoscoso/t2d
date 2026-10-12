@@ -116,7 +116,7 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
   const cellStyle =
     'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
   const badgeStyle =
-    'display:inline-block;box-sizing:border-box;max-width:100%;padding:4px;border-radius:6px;font-size:12px;font-weight:bold;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+    'display:inline-block;box-sizing:border-box;max-width:100%;padding:4px;border-radius:6px;font-size:11px;font-weight:bold;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
   const rows = sorted
     .map((defect, index) => {
       const priority = getPriority(defect.issue.priority);
@@ -154,9 +154,9 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     { label: 'Estado', width: '13%' },
   ];
   return `<section id="position-defects-section" aria-labelledby="position-defects-title" style="margin:0 0 32px;">
-    <h2 id="position-defects-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
+    <h2 id="position-defects-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
     <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"
-      style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
+      style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
       <thead><tr>${headers.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;font-weight:bold;">${label}</th>`).join('')}</tr></thead>
       <tbody>${rows || `<tr data-defects-empty>${headers.map(() => `<td style="${cellStyle}color:#5e6c84;">--</td>`).join('')}</tr>`}</tbody>
     </table>

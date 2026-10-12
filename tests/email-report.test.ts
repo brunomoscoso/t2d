@@ -415,7 +415,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     assert.equal(layout.width, reportWidth);
     assert.ok(Number(layout.left) >= 0);
     assert.equal(layout.fontFamily, 'Arial, Helvetica, sans-serif');
-    assert.equal(layout.fontSize, '16px');
+    assert.equal(layout.fontSize, '11px');
     assert.equal(layout.observationsPadding, '12px');
     assert.equal(layout.observationsBorder, '1px');
     assert.equal(layout.observationTitleWeight, '700');

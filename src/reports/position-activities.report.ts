@@ -146,17 +146,17 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
     { label: 'ON HOLD', width: '20%', background: '#c9372c', color: '#ffffff' },
   ];
   return `<section id="position-activities-section" aria-labelledby="position-activities-title" style="margin:0 0 32px;">
-    <h2 id="position-activities-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Atividades por posto</h2>
+    <h2 id="position-activities-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Atividades por posto</h2>
     <div id="position-activities-scroll" class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Atividades por posto; desloque para ver todas as colunas">
       <table id="position-activities-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}" aria-label="Atividades por posto" width="100%" cellpadding="0" cellspacing="0"
-        style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
+        style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#172b4d;">
         <thead><tr>${headers.map(({ label, width, background, color }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};background:${background};color:${color};border-color:${background};text-align:left;">${label}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="${headers.length}" style="${cellStyle}color:#5e6c84;">Nenhuma atividade extraída do Jira para este relatório.</td></tr>`}</tbody>
       </table>
     </div>
     ${
       otherStates.length
-        ? `<div data-other-activity-states style="margin-top:12px;font-size:14px;">
+        ? `<div data-other-activity-states style="margin-top:12px;font-size:11px;">
       <strong>Outros estados do Jira</strong>${otherStates.join('')}
     </div>`
         : ''

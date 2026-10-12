@@ -9,17 +9,17 @@ import {
 export const overallResultsStyles = `
   .overall-plan-picker { min-width:0; margin:0 0 18px; padding:16px; border:1px solid #cbd9ec; border-radius:14px; background:#fff; }
   .overall-plan-picker legend { padding:0 6px; font-weight:bold; color:#0747a6; }
-  .overall-plan-picker p { margin:0 0 12px; color:#5e6c84; font-size:14px; line-height:1.5; }
+  .overall-plan-picker p { margin:0 0 12px; color:#5e6c84; font-size:11px; line-height:1.5; }
   .overall-plan-picker .global-position-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:5px 12px; }
-  .overall-plan-picker .global-position-choice { display:flex; align-items:center; gap:8px; padding:8px; border-radius:7px; font-size:14px; cursor:pointer; overflow-wrap:anywhere; }
+  .overall-plan-picker .global-position-choice { display:flex; align-items:center; gap:8px; padding:8px; border-radius:7px; font-size:11px; cursor:pointer; overflow-wrap:anywhere; }
   .overall-plan-picker .global-position-choice:hover,
   .overall-plan-picker .global-position-choice:has(input:checked) { background:#eaf2ff; color:#0747a6; }
   .overall-plan-picker input { margin:0; width:16px; height:16px; flex-shrink:0; accent-color:#0052cc; }
-  .overall-plan-picker .global-position-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px; font-size:14px; }
+  .overall-plan-picker .global-position-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px; font-size:11px; }
   .overall-plan-picker button { padding:8px 10px; border:1px solid #b8c9e2; border-radius:7px; background:#fff; color:#0052cc; font:inherit; cursor:pointer; }
   .overall-plan-picker button:hover { background:#eaf2ff; }
   .overall-plan-picker :focus-visible { outline:2px solid #0052cc; outline-offset:3px; }
-  #overall-plan-count { color:#0747a6; font-size:13px; font-weight:bold; }
+  #overall-plan-count { color:#0747a6; font-size:11px; font-weight:bold; }
   .overall-results-table { min-width:760px; }
   #overall-results-section [hidden] { display:none !important; }
   @media print {
@@ -74,7 +74,7 @@ export const overallResultsScript = `
 
 function renderWarnings(warnings: string[]): string {
   return warnings.length
-    ? `<ul style="margin:12px 0;padding-left:22px;color:#875e00;font-size:14px;line-height:1.5;">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>`
+    ? `<ul style="margin:12px 0;padding-left:22px;color:#875e00;font-size:11px;line-height:1.5;">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>`
     : '';
 }
 
@@ -107,8 +107,8 @@ export function createOverallResultsSection(overall: OverallResults): string {
             .map((status) => {
               const count = status === null ? result.total : (result.counts[status] ?? 0);
               return `<td ${status === null ? 'data-overall-total' : `data-overall-status="${escapeHtml(status)}"`} style="${cellStyle}background:${status === null ? '#edf3fc' : '#ffffff'};">
-          <strong style="font-size:20px;line-height:1.4;color:#172b4d;">${plan.available ? count : '—'}</strong><br />
-          <span style="font-size:12px;line-height:1.4;color:#5e6c84;">${plan.available ? overallPercentage(count, result.total) : '—'}</span>
+          <strong style="font-size:14px;line-height:1.4;color:#172b4d;">${plan.available ? count : '—'}</strong><br />
+          <span style="font-size:11px;line-height:1.4;color:#5e6c84;">${plan.available ? overallPercentage(count, result.total) : '—'}</span>
         </td>`;
             })
             .join('');
@@ -121,10 +121,10 @@ export function createOverallResultsSection(overall: OverallResults): string {
         ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>`
         : 'PRIT não configurado';
       return `<div id="overall-plan-${index}" data-overall-plan="${escapeHtml(plan.key)}" hidden style="margin:0 0 24px;">
-      <h3 id="overall-plan-title-${index}" style="margin:0 0 12px;font-size:18px;line-height:1.5;color:#142e57;">${escapeHtml(plan.title)} — ${reference}</h3>
+      <h3 id="overall-plan-title-${index}" style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.title)} — ${reference}</h3>
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-plan-title-${index}" width="100%" cellpadding="0" cellspacing="0"
-          style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;">
+          style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;">
           <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Mercado</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -133,7 +133,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
     })
     .join('');
   return `<section id="overall-results-section" data-report-key="${escapeHtml(overall.reportKey)}" data-empty="true" aria-labelledby="overall-results-title" style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;">
-    <h2 id="overall-results-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Overall Test Results</h2>
+    <h2 id="overall-results-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Overall Test Results</h2>
     <fieldset class="overall-plan-picker" data-editor-only>
       <legend>Selecione os Test Plans</legend>
       <p>Resultados das execuções coletadas, separados por PT e SP.</p>

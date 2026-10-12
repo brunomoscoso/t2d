@@ -388,7 +388,7 @@ export function createHtmlReport(
     body {
 
     margin:0;
-    font-size:18px;
+    font-size:11px;
 
     padding:clamp(12px, 2vw, 30px);
     overflow-wrap:anywhere;
@@ -439,7 +439,7 @@ export function createHtmlReport(
 
     color:#163300;
 
-    font-size:27px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -492,7 +492,7 @@ export function createHtmlReport(
 
     .task-name {
 
-    font-size:18px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -507,7 +507,7 @@ export function createHtmlReport(
 
     padding:3px 9px;
 
-    font-size:12px;
+    font-size:11px;
 
     font-weight:bold;
 
@@ -546,7 +546,7 @@ export function createHtmlReport(
 
     .prit-header {
 
-    font-size:14px;
+    font-size:11px;
 
     font-weight:bold;
 
@@ -579,7 +579,7 @@ export function createHtmlReport(
 
     display:block;
 
-    font-size:12px;
+    font-size:11px;
 
     color:#5e6c84;
 
@@ -590,7 +590,7 @@ export function createHtmlReport(
 
     display:block;
 
-    font-size:23px;
+    font-size:14px;
 
     }
 
@@ -636,7 +636,7 @@ export function createHtmlReport(
 
     .status-number {
 
-    font-size:28px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -726,7 +726,7 @@ export function createHtmlReport(
 
     .relation-title {
 
-    font-size:14px;
+    font-size:11px;
 
     font-weight:bold;
 
@@ -757,7 +757,7 @@ export function createHtmlReport(
 
     padding:5px;
 
-    font-size:13px;
+    font-size:11px;
 
     }
 
@@ -812,7 +812,7 @@ export function createHtmlReport(
 
     text-align:center;
 
-    font-size:17px;
+    font-size:14px;
 
     font-weight:bold;
 
@@ -845,7 +845,7 @@ export function createHtmlReport(
 
     color:#6b778c;
 
-    font-size:13px;
+    font-size:11px;
 
     }
 

@@ -54,7 +54,7 @@ function createReportBlock(report: Report): string {
 
                 <div
                     style="
-                    font-size:27px;
+                    font-size:14px;
                     font-weight:bold;
                     "
                 >
@@ -141,7 +141,7 @@ function createReportBlock(report: Report): string {
                             href="${JIRA_URL}/browse/${encodeURIComponent(issue.prit)}"
                             style="
                                 color:#0052cc;
-                                font-size:13px;
+                                font-size:11px;
                                 text-decoration:none;
                             "
                             >
@@ -157,7 +157,7 @@ function createReportBlock(report: Report): string {
                             style="
                             padding:5px;
                             border-bottom:1px solid #dfe1e6;
-                            font-size:13px;
+                            font-size:11px;
                             "
                         >
 
@@ -172,7 +172,7 @@ function createReportBlock(report: Report): string {
                             style="
                             border-bottom:1px solid #dfe1e6;
                             color:${priority.color};
-                            font-size:17px;
+                            font-size:14px;
                             font-weight:bold;
                             "
                         >
@@ -222,7 +222,7 @@ function createReportBlock(report: Report): string {
 
                 <div
                     style="
-                    font-size:14px;
+                    font-size:11px;
                     font-weight:bold;
                     margin-bottom:4px;
                     "
@@ -284,7 +284,7 @@ function createReportBlock(report: Report): string {
 
             <span
             style="
-                font-size:17px;
+                font-size:14px;
                 font-weight:bold;
                 line-height:1.5;
             "
@@ -304,7 +304,7 @@ function createReportBlock(report: Report): string {
                 color:${mainStatusColors.color};
                 border:1px solid ${mainStatusColors.border};
                 padding:3px 8px;
-                font-size:12px;
+                font-size:11px;
                 font-weight:bold;
             "
             >
@@ -333,7 +333,7 @@ function createReportBlock(report: Report): string {
                 href="${JIRA_URL}/browse/${encodeURIComponent(report.prit)}"
                 style="
                     color:#0052cc;
-                    font-size:14px;
+                    font-size:11px;
                     font-weight:bold;
                     text-decoration:none;
                 "
@@ -353,7 +353,7 @@ function createReportBlock(report: Report): string {
 
                 <strong
                 style="
-                    font-size:13px;
+                    font-size:11px;
                 "
                 >
 
@@ -426,7 +426,7 @@ function createReportBlock(report: Report): string {
                 style="
                 margin-top:8px;
                 color:#6b778c;
-                font-size:13px;
+                font-size:11px;
                 "
             >
 
@@ -480,7 +480,7 @@ export function createEmailReport(
                     background:#00875a;
                     border-radius:13px 13px 0 0;
                     color:#ffffff;
-                    font-size:23px;
+                    font-size:14px;
                     font-weight:bold;
                     padding:16px 20px;
                     "
