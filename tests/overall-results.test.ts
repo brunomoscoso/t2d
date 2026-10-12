@@ -4,7 +4,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { chromium } from 'playwright';
-import { aggregateOverallResults, getExecutionMarket, overallPercentage } from '../src/utils/overall-results.utils';
+import {
+  aggregateOverallResults,
+  getExecutionMarket,
+  overallPercentage,
+} from '../src/utils/overall-results.utils';
 import { createEmailReport } from '../src/reports/email.report';
 import { createHtmlReport } from '../src/reports/html.report';
 import { writeReports } from '../src/reports/report.writer';
@@ -12,9 +16,17 @@ import type { PositionReport, ReleaseLinks, Report } from '../src/types/report.t
 
 function execution(prit: string, title: string, counts: Record<string, number>): Report {
   return {
-    prit, title, mainStatus: 'OPEN', position: 'COCO PT', labels: ['SP'], issueLinks: [],
+    prit,
+    title,
+    mainStatus: 'OPEN',
+    position: 'COCO PT',
+    labels: ['SP'],
+    issueLinks: [],
     totalTests: Object.values(counts).reduce((total, count) => total + count, 0),
-    executionStatuses: Object.entries(counts).map(([status, quantidade]) => ({ status, quantidade })),
+    executionStatuses: Object.entries(counts).map(([status, quantidade]) => ({
+      status,
+      quantidade,
+    })),
   };
 }
 
@@ -23,7 +35,12 @@ function fixture(): { positions: PositionReport[]; links: ReleaseLinks } {
     execution('PRIT-1', '[COCO][PT] Smoke', { PASS: 1, TODO: 1 }),
     execution('PRIT-2', 'coco_pt_regression', { PASS: 8, FAIL: 1, TODO: 1 }),
     execution('PRIT-3', 'SP-Certification', {
-      PASS: 3, EXECUTING: 1, ABORTED: 1, BLOCKED: 1, 'FOR TESTING': 1, PENDING_3RD: 1,
+      PASS: 3,
+      EXECUTING: 1,
+      ABORTED: 1,
+      BLOCKED: 1,
+      'FOR TESTING': 1,
+      PENDING_3RD: 1,
       'CUSTOM <QA> & "STATUS" $&': 2,
     }),
     execution('PRIT-4', 'PASSPORT SCRIPT', { PASS: 99 }),
@@ -31,10 +48,17 @@ function fixture(): { positions: PositionReport[]; links: ReleaseLinks } {
     execution('PRIT-6', '[PT] Sem plano', { FAIL: 99 }),
   ];
   return {
-    positions: [{ position: 'COCO PT', reports }, { position: 'Outra posição', reports: [reports[0]] }],
+    positions: [
+      { position: 'COCO PT', reports },
+      { position: 'Outra posição', reports: [reports[0]] },
+    ],
     links: {
       testPlans: {
-        smokes: { prit: '8161', title: 'Smokes <QA> & "release" $&', executionPrits: ['PRIT-1', 'PRIT-2', 'PRIT-3', 'PRIT-4', 'PRIT-5', 'PRIT-999'] },
+        smokes: {
+          prit: '8161',
+          title: 'Smokes <QA> & "release" $&',
+          executionPrits: ['PRIT-1', 'PRIT-2', 'PRIT-3', 'PRIT-4', 'PRIT-5', 'PRIT-999'],
+        },
         certification: { prit: 'PRIT-8157', executionPrits: ['PRIT-3'] },
         regression: { prit: '8165', executionPrits: ['PRIT-1', 'PRIT-1'] },
         defectFixing: { prit: '8171', executionPrits: [] },
@@ -46,13 +70,36 @@ function fixture(): { positions: PositionReport[]; links: ReleaseLinks } {
 
 test('classifica mercados somente por siglas delimitadas e rejeita títulos ambíguos', () => {
   for (const market of ['PT', 'SP'] as const) {
-    for (const title of [market, `[${market}]`, `COCO ${market} Smoke`, `coco-${market.toLowerCase()}-smoke`,
-      `coco_${market}_smoke`, `${market}/${market}`, `(${market})`, `Teste — ${market}`]) {
+    for (const title of [
+      market,
+      `[${market}]`,
+      `COCO ${market} Smoke`,
+      `coco-${market.toLowerCase()}-smoke`,
+      `coco_${market}_smoke`,
+      `${market}/${market}`,
+      `(${market})`,
+      `Teste — ${market}`,
+    ]) {
       assert.equal(getExecutionMarket(title), market, title);
     }
   }
-  for (const title of ['PASSPORT', 'SCRIPT', 'SPARE', 'ADAPTOR', 'PT1', '1SP', 'áPT', 'SPé', 'SP\u0301',
-    '[PT][SP]', 'PT_SP', 'PT-SP', 'PT/SP', '', 'Portugal Espanha']) {
+  for (const title of [
+    'PASSPORT',
+    'SCRIPT',
+    'SPARE',
+    'ADAPTOR',
+    'PT1',
+    '1SP',
+    'áPT',
+    'SPé',
+    'SP\u0301',
+    '[PT][SP]',
+    'PT_SP',
+    'PT-SP',
+    'PT/SP',
+    '',
+    'Portugal Espanha',
+  ]) {
     assert.equal(getExecutionMarket(title), undefined, title);
   }
 });
@@ -69,7 +116,16 @@ test('soma por plano e mercado, mantém status adicionais e não calcula média 
   assert.equal(smokes.markets.SP.total, 10, 'Não usa a posição nem a label SP para classificar PT');
   assert.equal(smokes.markets.SP.counts.FOR_TESTING, 1);
   assert.equal(smokes.markets.SP.counts['CUSTOM_<QA>_&_"STATUS"_$&'], 2);
-  assert.deepEqual(smokes.statuses.slice(0, 8), ['PASS', 'TODO', 'EXECUTING', 'FAIL', 'ABORTED', 'BLOCKED', 'FOR_TESTING', 'PENDING_3RD']);
+  assert.deepEqual(smokes.statuses.slice(0, 8), [
+    'PASS',
+    'TODO',
+    'EXECUTING',
+    'FAIL',
+    'ABORTED',
+    'BLOCKED',
+    'FOR_TESTING',
+    'PENDING_3RD',
+  ]);
   assert.equal(certification.markets.SP.total, 10);
   assert.equal(certification.markets.PT.total, 0);
   assert.equal(regression.markets.PT.total, 2, 'Cada plano conta as suas execuções uma vez');
@@ -90,11 +146,17 @@ test('distingue consulta indisponível de mercado vazio e sinaliza dados incompl
   delete links.testPlans.smokes.executionPrits;
   links.testPlans.certification.prit = '';
   positions[0].reports[0].executionStatuses = [
-    { status: ' to-do ', quantidade: 2 }, { status: 'TODO', quantidade: 1 },
-    { status: 'NEW_STATUS_2', quantidade: 3 }, { status: 'FAIL', quantidade: -1 },
-    { status: '', quantidade: 4 }, { status: 'PASS', quantidade: NaN },
+    { status: ' to-do ', quantidade: 2 },
+    { status: 'TODO', quantidade: 1 },
+    { status: 'NEW_STATUS_2', quantidade: 3 },
+    { status: 'FAIL', quantidade: -1 },
+    { status: '', quantidade: 4 },
+    { status: 'PASS', quantidade: NaN },
   ];
-  const [smokes, certification, regression, defects] = aggregateOverallResults(positions, links.testPlans).plans;
+  const [smokes, certification, regression, defects] = aggregateOverallResults(
+    positions,
+    links.testPlans,
+  ).plans;
   assert.equal(smokes.available, false);
   assert.match(smokes.warnings[0], /indisponíveis/);
   assert.equal(certification.available, false);
@@ -105,10 +167,13 @@ test('distingue consulta indisponível de mercado vazio e sinaliza dados incompl
   assert.equal(regression.warnings.length, 4);
   positions[0].reports[0].executionStatuses = [];
   positions[0].reports[0].totalTests = null;
-  assert.match(aggregateOverallResults(positions, links.testPlans).plans[2].warnings[0], /não coletados/);
+  assert.match(
+    aggregateOverallResults(positions, links.testPlans).plans[2].warnings[0],
+    /não coletados/,
+  );
 });
 
-test('o writer entrega os mesmos agregados às duas versões HTML e preserva os dados por posição', t => {
+test('o writer entrega os mesmos agregados às duas versões HTML e preserva os dados por posição', (t) => {
   const { positions, links } = fixture();
   t.mock.method(console, 'warn', () => {});
   t.mock.method(console, 'log', () => {});
@@ -117,7 +182,10 @@ test('o writer entrega os mesmos agregados às duas versões HTML e preserva os 
   const directory = fs.mkdtempSync(path.join(temporaryRoot, 't2d-overall-'));
   try {
     fs.mkdirSync(path.join(directory, 'src/templates'), { recursive: true });
-    fs.copyFileSync(path.join(cwd, 'src/templates/email-body.html'), path.join(directory, 'src/templates/email-body.html'));
+    fs.copyFileSync(
+      path.join(cwd, 'src/templates/email-body.html'),
+      path.join(directory, 'src/templates/email-body.html'),
+    );
     process.chdir(directory);
     writeReports(positions, undefined, links);
     for (const file of ['report.html', 'email.html']) {
@@ -139,14 +207,19 @@ test('o writer entrega os mesmos agregados às duas versões HTML e preserva os 
 });
 
 test('edita, restaura e exporta apenas os planos selecionados, preservando o editor e o detalhe', async () => {
-  const browser = await chromium.launch({ channel: process.platform === 'win32' ? 'msedge' : undefined, headless: true });
+  const browser = await chromium.launch({
+    channel: process.platform === 'win32' ? 'msedge' : undefined,
+    headless: true,
+  });
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors: string[] = [];
-    page.on('pageerror', error => errors.push(error.message));
+    page.on('pageerror', (error) => errors.push(error.message));
     const { positions, links } = fixture();
     let html = createEmailReport(positions, links);
-    await page.route('http://overall.test/**', route => route.fulfill({ contentType: 'text/html', body: html }));
+    await page.route('http://overall.test/**', (route) =>
+      route.fulfill({ contentType: 'text/html', body: html }),
+    );
     await page.goto('http://overall.test/email.html');
     const picker = page.getByRole('group', { name: 'Selecione os Test Plans' });
     const selected = page.locator('[data-overall-plan]:visible');
@@ -170,8 +243,20 @@ test('edita, restaura e exporta apenas os planos selecionados, preservando o edi
     await page.locator('[data-select-all-test-plans]').click();
     assert.equal(await selected.count(), 4);
     const empty = page.locator('[data-overall-plan="defectFixing"]');
-    assert.equal(await empty.locator('tbody strong').allTextContents().then(values => values.every(value => value === '0')), true);
-    assert.equal(await empty.locator('tbody td span').allTextContents().then(values => values.every(value => value === '0%')), true);
+    assert.equal(
+      await empty
+        .locator('tbody strong')
+        .allTextContents()
+        .then((values) => values.every((value) => value === '0')),
+      true,
+    );
+    assert.equal(
+      await empty
+        .locator('tbody td span')
+        .allTextContents()
+        .then((values) => values.every((value) => value === '0%')),
+      true,
+    );
     assert.match(await empty.innerText(), /Sem execuções/);
     await page.locator('[data-clear-test-plans]').click();
     await page.reload();
@@ -180,43 +265,94 @@ test('edita, restaura e exporta apenas os planos selecionados, preservando o edi
     await page.evaluate(() => {
       document.execCommand = () => {
         const data = new DataTransfer();
-        document.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
-        (window as any).copiedOverall = { html: data.getData('text/html'), text: data.getData('text/plain') };
+        document.dispatchEvent(
+          new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }),
+        );
+        (window as any).copiedOverall = {
+          html: data.getData('text/html'),
+          text: data.getData('text/plain'),
+        };
         return true;
       };
     });
     await page.locator('#copy-email-button').click();
-    assert.ok(!(await page.evaluate(() => (window as any).copiedOverall.html)).includes('overall-results-section'));
+    assert.ok(
+      !(await page.evaluate(() => (window as any).copiedOverall.html)).includes(
+        'overall-results-section',
+      ),
+    );
     await page.locator('[data-test-plan-toggle][value="smokes"]').check();
     await page.locator('[data-test-plan-toggle][value="defectFixing"]').check();
     const preview = await browser.newPage();
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 });
-      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
-      const beforeCopy = await page.locator('.email-container').evaluate(element => element.outerHTML);
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+        ),
+      );
+      const beforeCopy = await page
+        .locator('.email-container')
+        .evaluate((element) => element.outerHTML);
       await page.locator('#copy-email-button').click();
       const copied = await page.evaluate(() => (window as any).copiedOverall);
       assert.ok(!copied.text.includes('Selecione os Test Plans'));
       assert.ok(copied.text.includes('Overall Test Results'));
       await preview.setContent(`<div id="destination" style="width:320px">${copied.html}</div>`);
-      assert.deepEqual(await preview.locator('[data-overall-plan]').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-overall-plan'))), ['smokes', 'defectFixing']);
-      assert.equal(await preview.locator('input, select, textarea, script, [data-editor-only], [contenteditable], [data-report-scroll]').count(), 0);
+      assert.deepEqual(
+        await preview
+          .locator('[data-overall-plan]')
+          .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-overall-plan'))),
+        ['smokes', 'defectFixing'],
+      );
+      assert.equal(
+        await preview
+          .locator(
+            'input, select, textarea, script, [data-editor-only], [contenteditable], [data-report-scroll]',
+          )
+          .count(),
+        0,
+      );
       assert.equal(await preview.locator('.overall-results-table').count(), 2);
       assert.equal(await preview.locator('[data-overall-plan="smokes"] thead th').count(), 11);
-      assert.equal(await preview.locator('[data-overall-plan="smokes"] [data-overall-market="PT"] [data-overall-status="PASS"]').innerText(), '9\n75%');
-      assert.ok(await preview.locator('.overall-results-table').evaluateAll(tables => tables.every(table => {
-        const box = table.getBoundingClientRect();
-        const parent = document.getElementById('destination')!.getBoundingClientRect();
-        return box.right <= parent.right + 1 && table.scrollWidth <= table.clientWidth + 1;
-      })));
-      assert.equal(await page.locator('.email-container').evaluate(element => element.outerHTML), beforeCopy);
+      assert.equal(
+        await preview
+          .locator(
+            '[data-overall-plan="smokes"] [data-overall-market="PT"] [data-overall-status="PASS"]',
+          )
+          .innerText(),
+        '9\n75%',
+      );
+      assert.ok(
+        await preview.locator('.overall-results-table').evaluateAll((tables) =>
+          tables.every((table) => {
+            const box = table.getBoundingClientRect();
+            const parent = document.getElementById('destination')!.getBoundingClientRect();
+            return box.right <= parent.right + 1 && table.scrollWidth <= table.clientWidth + 1;
+          }),
+        ),
+      );
+      assert.equal(
+        await page.locator('.email-container').evaluate((element) => element.outerHTML),
+        beforeCopy,
+      );
     }
     assert.deepEqual(await page.locator('.position-block').allTextContents(), detailBefore);
-    const beforeFailure = await page.locator('.email-container').evaluate(element => element.outerHTML);
+    const beforeFailure = await page
+      .locator('.email-container')
+      .evaluate((element) => element.outerHTML);
     for (const throws of [false, true]) {
-      await page.evaluate(shouldThrow => { document.execCommand = () => { if (shouldThrow) throw new Error('Cópia bloqueada'); return false; }; }, throws);
+      await page.evaluate((shouldThrow) => {
+        document.execCommand = () => {
+          if (shouldThrow) throw new Error('Cópia bloqueada');
+          return false;
+        };
+      }, throws);
       await page.locator('#copy-email-button').click();
-      assert.equal(await page.locator('.email-container').evaluate(element => element.outerHTML), beforeFailure);
+      assert.equal(
+        await page.locator('.email-container').evaluate((element) => element.outerHTML),
+        beforeFailure,
+      );
     }
     await page.emulateMedia({ media: 'print' });
     assert.equal(await picker.isVisible(), false);
@@ -229,18 +365,28 @@ test('edita, restaura e exporta apenas os planos selecionados, preservando o edi
     assert.equal(await selected.count(), 0, 'Outra configuração de planos não herda a seleção');
     await page.evaluate(() => {
       const section = document.getElementById('overall-results-section')!;
-      localStorage.setItem('t2d:overall-results:v1:' + location.pathname + ':' + section.dataset.reportKey, '[null,{},123,"unknown","smokes"]');
+      localStorage.setItem(
+        't2d:overall-results:v1:' + location.pathname + ':' + section.dataset.reportKey,
+        '[null,{},123,"unknown","smokes"]',
+      );
     });
     await page.reload();
     assert.equal(await selected.count(), 1);
     await page.evaluate(() => {
       const section = document.getElementById('overall-results-section')!;
-      localStorage.setItem('t2d:overall-results:v1:' + location.pathname + ':' + section.dataset.reportKey, '{invalid');
+      localStorage.setItem(
+        't2d:overall-results:v1:' + location.pathname + ':' + section.dataset.reportKey,
+        '{invalid',
+      );
     });
     await page.reload();
     assert.equal(await selected.count(), 0);
     await page.addInitScript(() => {
-      Object.defineProperty(window, 'localStorage', { get() { throw new Error('Indisponível'); } });
+      Object.defineProperty(window, 'localStorage', {
+        get() {
+          throw new Error('Indisponível');
+        },
+      });
     });
     await page.reload();
     await page.locator('[data-select-all-test-plans]').click();
@@ -251,7 +397,11 @@ test('edita, restaura e exporta apenas os planos selecionados, preservando o edi
     await page.locator('[data-select-all-test-plans]').click();
     assert.equal(await selected.count(), 4, 'A versão report.html usa o mesmo seletor');
     await page.setViewportSize({ width: 320, height: 1000 });
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      ),
+    );
     html = createEmailReport([]);
     await page.goto('http://overall.test/empty.html');
     await page.locator('[data-select-all-test-plans]').click();

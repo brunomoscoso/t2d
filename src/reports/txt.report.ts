@@ -1,120 +1,49 @@
-    import {
-    PositionReport
-    } from '../types/report.types';
+import { PositionReport } from '../types/report.types';
 
+export function createTxtReport(positions: PositionReport[]): string {
+  let txt = '';
 
-    export function createTxtReport(
-    positions: PositionReport[]
-    ): string {
+  for (const position of positions) {
+    txt += '==================================================\n';
 
-    let txt = '';
+    txt += `${position.position}\n`;
 
+    txt += '==================================================\n\n';
 
-    for (
-        const position
-        of positions
-    ) {
+    for (const report of position.reports) {
+      txt += `--------------------------------------------------\n`;
 
-        txt +=
-        '==================================================\n';
+      txt += `${report.prit}\n`;
 
-        txt +=
-        `${position.position}\n`;
+      txt += `${report.title}\n`;
 
-        txt +=
-        '==================================================\n\n';
+      txt += `--------------------------------------------------\n`;
 
+      txt += `Total Tests: ${report.totalTests ?? '-'}\n\n`;
 
-        for (
-        const report
-        of position.reports
-        ) {
+      txt += 'Execution Status:\n';
 
-        txt +=
-            `--------------------------------------------------\n`;
+      for (const item of report.executionStatuses) {
+        txt += `${item.status}: ${item.quantidade}\n`;
+      }
 
-        txt +=
-            `${report.prit}\n`;
+      txt += '\nIssue Links:\n';
 
-        txt +=
-            `${report.title}\n`;
+      const relations = [...new Set(report.issueLinks.map((issue) => issue.relation))];
 
-        txt +=
-            `--------------------------------------------------\n`;
+      for (const relation of relations) {
+        txt += `\n${relation}\n`;
 
+        const issues = report.issueLinks.filter((issue) => issue.relation === relation);
 
-        txt +=
-            `Total Tests: ${report.totalTests ?? '-'}\n\n`;
-
-
-        txt +=
-            'Execution Status:\n';
-
-
-        for (
-            const item
-            of report.executionStatuses
-        ) {
-
-            txt +=
-            `${item.status}: ${item.quantidade}\n`;
-
+        for (const issue of issues) {
+          txt += `${issue.prit} | ${issue.titulo} | ${issue.status}\n`;
         }
+      }
 
-
-        txt +=
-            '\nIssue Links:\n';
-
-
-        const relations =
-            [
-            ...new Set(
-                report.issueLinks.map(
-                issue =>
-                    issue.relation
-                )
-            )
-            ];
-
-
-        for (
-            const relation
-            of relations
-        ) {
-
-            txt +=
-            `\n${relation}\n`;
-
-
-            const issues =
-            report.issueLinks.filter(
-                issue =>
-                issue.relation ===
-                relation
-            );
-
-
-            for (
-            const issue
-            of issues
-            ) {
-
-            txt +=
-                `${issue.prit} | ${issue.titulo} | ${issue.status}\n`;
-
-            }
-
-        }
-
-
-        txt +=
-            '\n\n';
-
-        }
-
+      txt += '\n\n';
     }
+  }
 
-
-    return txt;
-
-    }
+  return txt;
+}

@@ -1,6 +1,10 @@
 import { JIRA_URL } from '../config/jira.config';
 import { escapeHtml, getStatusColors } from '../utils/html.utils';
-import { overallPercentage, type Market, type OverallResults } from '../utils/overall-results.utils';
+import {
+  overallPercentage,
+  type Market,
+  type OverallResults,
+} from '../utils/overall-results.utils';
 
 export const overallResultsStyles = `
   .overall-plan-picker { min-width:0; margin:0 0 18px; padding:16px; border:1px solid #cbd9ec; border-radius:14px; background:#fff; }
@@ -69,35 +73,51 @@ export const overallResultsScript = `
 `;
 
 function renderWarnings(warnings: string[]): string {
-  return warnings.length ? `<ul style="margin:12px 0;padding-left:22px;color:#875e00;font-size:14px;line-height:1.5;">${warnings.map(warning => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>` : '';
+  return warnings.length
+    ? `<ul style="margin:12px 0;padding-left:22px;color:#875e00;font-size:14px;line-height:1.5;">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>`
+    : '';
 }
 
 export function createOverallResultsSection(overall: OverallResults): string {
-  const cellStyle = 'padding:12px 8px;border:1px solid #dce5f0;text-align:center;vertical-align:middle;overflow-wrap:anywhere;';
-  const choices = overall.plans.map((plan, index) => `<label class="global-position-choice">
+  const cellStyle =
+    'padding:12px 8px;border:1px solid #dce5f0;text-align:center;vertical-align:middle;overflow-wrap:anywhere;';
+  const choices = overall.plans
+    .map(
+      (plan, index) => `<label class="global-position-choice">
     <input type="checkbox" data-test-plan-toggle value="${escapeHtml(plan.key)}" aria-controls="overall-plan-${index}" />
     <span>${escapeHtml(plan.label)} (${escapeHtml(plan.prit || 'PRIT não configurado')})</span>
-  </label>`).join('');
-  const tables = overall.plans.map((plan, index) => {
-    const headers = plan.statuses.map(status => {
-      const colors = getStatusColors(status);
-      return `<th scope="col" style="${cellStyle}background:${colors.background};color:${colors.color};">${escapeHtml(status)}</th>`;
-    }).join('');
-    const rows = (['PT', 'SP'] as Market[]).map(market => {
-      const result = plan.markets[market];
-      const cells = [...plan.statuses, null].map(status => {
-        const count = status === null ? result.total : result.counts[status] ?? 0;
-        return `<td ${status === null ? 'data-overall-total' : `data-overall-status="${escapeHtml(status)}"`} style="${cellStyle}background:${status === null ? '#edf3fc' : '#ffffff'};">
+  </label>`,
+    )
+    .join('');
+  const tables = overall.plans
+    .map((plan, index) => {
+      const headers = plan.statuses
+        .map((status) => {
+          const colors = getStatusColors(status);
+          return `<th scope="col" style="${cellStyle}background:${colors.background};color:${colors.color};">${escapeHtml(status)}</th>`;
+        })
+        .join('');
+      const rows = (['PT', 'SP'] as Market[])
+        .map((market) => {
+          const result = plan.markets[market];
+          const cells = [...plan.statuses, null]
+            .map((status) => {
+              const count = status === null ? result.total : (result.counts[status] ?? 0);
+              return `<td ${status === null ? 'data-overall-total' : `data-overall-status="${escapeHtml(status)}"`} style="${cellStyle}background:${status === null ? '#edf3fc' : '#ffffff'};">
           <strong style="font-size:20px;line-height:1.4;color:#172b4d;">${plan.available ? count : '—'}</strong><br />
           <span style="font-size:12px;line-height:1.4;color:#5e6c84;">${plan.available ? overallPercentage(count, result.total) : '—'}</span>
         </td>`;
-      }).join('');
-      return `<tr data-overall-market="${market}">
+            })
+            .join('');
+          return `<tr data-overall-market="${market}">
         <th scope="row" style="${cellStyle}background:#edf3fc;color:#0747a6;">${market}${plan.available && !result.executions ? '<br /><span style="font-size:11px;font-weight:normal;">Sem execuções</span>' : ''}</th>${cells}
       </tr>`;
-    }).join('');
-    const reference = plan.prit ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>` : 'PRIT não configurado';
-    return `<div id="overall-plan-${index}" data-overall-plan="${escapeHtml(plan.key)}" hidden style="margin:0 0 24px;">
+        })
+        .join('');
+      const reference = plan.prit
+        ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>`
+        : 'PRIT não configurado';
+      return `<div id="overall-plan-${index}" data-overall-plan="${escapeHtml(plan.key)}" hidden style="margin:0 0 24px;">
       <h3 id="overall-plan-title-${index}" style="margin:0 0 12px;font-size:18px;line-height:1.5;color:#142e57;">${escapeHtml(plan.title)} — ${reference}</h3>
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-plan-title-${index}" width="100%" cellpadding="0" cellspacing="0"
@@ -108,7 +128,8 @@ export function createOverallResultsSection(overall: OverallResults): string {
       </div>
       ${renderWarnings(plan.warnings)}
     </div>`;
-  }).join('');
+    })
+    .join('');
   return `<section id="overall-results-section" data-report-key="${escapeHtml(overall.reportKey)}" data-empty="true" aria-labelledby="overall-results-title" style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;">
     <h2 id="overall-results-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Overall Test Results</h2>
     <fieldset class="overall-plan-picker" data-editor-only>

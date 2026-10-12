@@ -62,7 +62,12 @@ test('reconhece os locais do laboratório e a grafia anterior de Las Rosas', () 
 
 test('distingue Cyber SP e Cyber PT no título e nas labels', () => {
   for (const country of ['SP', 'PT']) {
-    for (const name of [`Cyber ${country}`, `[CYBER][${country}]`, `cyber_${country}`, `Cyber-${country}`]) {
+    for (const name of [
+      `Cyber ${country}`,
+      `[CYBER][${country}]`,
+      `cyber_${country}`,
+      `Cyber-${country}`,
+    ]) {
       assert.equal(getPosition([], `${name} Regression`), `Cyber ${country}`);
       assert.equal(getPosition([`POSITION_${name}`], 'Regression'), `Cyber ${country}`);
     }
@@ -82,7 +87,14 @@ test('o título continua tendo prioridade sobre as labels', () => {
 });
 
 test('não deduz o tipo apenas pelo país nem por palavras parcialmente iguais', () => {
-  for (const title of ['[PT] Validation', '[SP] Validation', '[COCO] Regression', 'COCO PTX', 'Tangerinas', 'Nova posição']) {
+  for (const title of [
+    '[PT] Validation',
+    '[SP] Validation',
+    '[COCO] Regression',
+    'COCO PTX',
+    'Tangerinas',
+    'Nova posição',
+  ]) {
     assert.equal(getPosition([], title), 'Exploratory Testing', title);
   }
 });

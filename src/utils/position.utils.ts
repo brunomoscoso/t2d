@@ -1,7 +1,6 @@
-    import { DEFAULT_POSITION, POSITIONS } from '../config/positions.config';
+import { DEFAULT_POSITION, POSITIONS } from '../config/positions.config';
 
-
-    /* =========================================================
+/* =========================================================
     NORMALIZA TEXTO
     =========================================================
     *
@@ -16,124 +15,76 @@
     * "arco do cego"
     */
 
-    function normalizeText(
-    value: string
-    ): string {
+function normalizeText(value: string): string {
+  return (
+    value
 
-    return value
+      /*
+       * Remove acentos.
+       *
+       * Ex.:
+       * POSIÇÃO → POSICAO
+       */
 
-        /*
-        * Remove acentos.
-        *
-        * Ex.:
-        * POSIÇÃO → POSICAO
-        */
+      .normalize('NFD')
 
-        .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
 
-        .replace(
-        /[\u0300-\u036f]/g,
-        ''
-        )
+      /*
+       * Tudo em minúsculo.
+       */
 
-        /*
-        * Tudo em minúsculo.
-        */
+      .toLowerCase()
 
-        .toLowerCase()
+      /*
+       * "_" e "-" viram espaço.
+       */
 
-        /*
-        * "_" e "-" viram espaço.
-        */
+      .replace(/[_-]+/g, ' ')
 
-        .replace(
-        /[_-]+/g,
-        ' '
-        )
+      /*
+       * Remove outros separadores.
+       */
 
-        /*
-        * Remove outros separadores.
-        */
+      .replace(/[^a-z0-9\s]+/g, ' ')
 
-        .replace(
-        /[^a-z0-9\s]+/g,
-        ' '
-        )
+      /*
+       * Múltiplos espaços viram um.
+       */
 
-        /*
-        * Múltiplos espaços viram um.
-        */
+      .replace(/\s+/g, ' ')
 
-        .replace(
-        /\s+/g,
-        ' '
-        )
+      .trim()
+  );
+}
 
-        .trim();
-
-    }
-
-
-    /* =========================================================
+/* =========================================================
     PROCURA POSIÇÃO CONHECIDA EM QUALQUER TEXTO
     ========================================================= */
 
-    function findKnownPosition(
-    value: string
-    ): string | null {
+function findKnownPosition(value: string): string | null {
+  const normalizedValue = normalizeText(value);
 
-    const normalizedValue =
-        normalizeText(
-        value
-        );
+  /*
+   * A cola define a prioridade: tipos explícitos vêm antes dos locais.
+   */
 
+  const definitions = POSITIONS;
 
-    /*
-    * A cola define a prioridade: tipos explícitos vêm antes dos locais.
-    */
+  for (const position of definitions) {
+    for (const alias of [position.name, ...position.aliases]) {
+      const normalizedAlias = normalizeText(alias);
 
-    const definitions =
-        POSITIONS;
-
-
-    for (
-        const position
-        of definitions
-    ) {
-
-        for (
-        const alias
-        of [position.name, ...position.aliases]
-        ) {
-
-        const normalizedAlias =
-            normalizeText(
-            alias
-            );
-
-
-        if (
-            normalizedAlias &&
-            ` ${normalizedValue} `.includes(
-            ` ${normalizedAlias} `
-            )
-        ) {
-
-            return position.name;
-
-        }
-
-        }
-
+      if (normalizedAlias && ` ${normalizedValue} `.includes(` ${normalizedAlias} `)) {
+        return position.name;
+      }
     }
+  }
 
+  return null;
+}
 
-    return null;
-
-    }
-
-
-    /* =========================================================
+/* =========================================================
     POSIÇÃO PELO TÍTULO
     =========================================================
     *
@@ -143,190 +94,104 @@
     * em qualquer lugar do título.
     */
 
-    export function getPositionFromTitle(
-    title: string
-    ): string | null {
+export function getPositionFromTitle(title: string): string | null {
+  return findKnownPosition(title);
+}
 
-    return findKnownPosition(
-        title
-    );
-
-    }
-
-
-    /* =========================================================
+/* =========================================================
     POSIÇÃO PELAS LABELS
     ========================================================= */
 
-    export function getPositionFromLabels(
-    labels: string[]
-    ): string | null {
+export function getPositionFromLabels(labels: string[]): string | null {
+  /*
+   * Primeiro procura qualquer posição conhecida
+   * dentro das labels.
+   */
+
+  for (const label of labels) {
+    const knownPosition = findKnownPosition(label);
+
+    if (knownPosition) {
+      return knownPosition;
+    }
+  }
+
+  /*
+   * Mantemos o comportamento que você já tinha
+   * para labels do tipo:
+   *
+   * POSITION_TANGERINA
+   * POSITION-TANGERINA
+   * POSITION: TANGERINA
+   * POSITION TANGERINA
+   *
+   * POSICAO_TANGERINA
+   * POSIÇÃO_TANGERINA
+   */
+
+  const regex = /^(?:POSITION|POSICAO|POSIÇÃO)[_:\-\s=]+(.+)$/i;
+
+  for (const label of labels) {
+    const match = label.match(regex);
+
+    if (!match) {
+      continue;
+    }
+
+    const value = match[1].replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 
     /*
-    * Primeiro procura qualquer posição conhecida
-    * dentro das labels.
-    */
+     * Tenta transformar a label
+     * no nome canônico.
+     */
 
-    for (
-        const label
-        of labels
-    ) {
+    const knownPosition = findKnownPosition(value);
 
-        const knownPosition =
-        findKnownPosition(
-            label
-        );
-
-
-        if (
-        knownPosition
-        ) {
-
-        return knownPosition;
-
-        }
-
+    if (knownPosition) {
+      return knownPosition;
     }
-
 
     /*
-    * Mantemos o comportamento que você já tinha
-    * para labels do tipo:
-    *
-    * POSITION_TANGERINA
-    * POSITION-TANGERINA
-    * POSITION: TANGERINA
-    * POSITION TANGERINA
-    *
-    * POSICAO_TANGERINA
-    * POSIÇÃO_TANGERINA
-    */
+     * Se não for uma posição cadastrada,
+     * mantém o valor original da label.
+     */
 
-    const regex =
-        /^(?:POSITION|POSICAO|POSIÇÃO)[_:\-\s=]+(.+)$/i;
+    return value;
+  }
 
+  return null;
+}
 
-    for (
-        const label
-        of labels
-    ) {
-
-        const match =
-        label.match(
-            regex
-        );
-
-
-        if (
-        !match
-        ) {
-
-        continue;
-
-        }
-
-
-        const value =
-        match[1]
-            .replace(
-            /_/g,
-            ' '
-            )
-            .replace(
-            /\s+/g,
-            ' '
-            )
-            .trim();
-
-
-        /*
-        * Tenta transformar a label
-        * no nome canônico.
-        */
-
-        const knownPosition =
-        findKnownPosition(
-            value
-        );
-
-
-        if (
-        knownPosition
-        ) {
-
-        return knownPosition;
-
-        }
-
-
-        /*
-        * Se não for uma posição cadastrada,
-        * mantém o valor original da label.
-        */
-
-        return value;
-
-    }
-
-
-    return null;
-
-    }
-
-
-    /* =========================================================
+/* =========================================================
     POSIÇÃO FINAL
     ========================================================= */
 
-    export function getPosition(
-    labels: string[],
-    title: string
-    ): string {
+export function getPosition(labels: string[], title: string): string {
+  /*
+   * IMPORTANTE:
+   *
+   * Primeiro olhamos o título.
+   *
+   * Se o título possuir "Arco do Cego",
+   * queremos "Arco do Cego", mesmo que
+   * exista algo genérico como PT.
+   */
 
-    /*
-    * IMPORTANTE:
-    *
-    * Primeiro olhamos o título.
-    *
-    * Se o título possuir "Arco do Cego",
-    * queremos "Arco do Cego", mesmo que
-    * exista algo genérico como PT.
-    */
+  const fromTitle = getPositionFromTitle(title);
 
-    const fromTitle =
-        getPositionFromTitle(
-        title
-        );
+  if (fromTitle) {
+    return fromTitle;
+  }
 
+  /*
+   * Depois usamos labels.
+   */
 
-    if (
-        fromTitle
-    ) {
+  const fromLabels = getPositionFromLabels(labels);
 
-        return fromTitle;
+  if (fromLabels) {
+    return fromLabels;
+  }
 
-    }
-
-
-    /*
-    * Depois usamos labels.
-    */
-
-    const fromLabels =
-        getPositionFromLabels(
-        labels
-        );
-
-
-    if (
-        fromLabels
-    ) {
-
-        return fromLabels;
-
-    }
-
-
-    return DEFAULT_POSITION;
-
-    }
+  return DEFAULT_POSITION;
+}

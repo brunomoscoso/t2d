@@ -1,49 +1,39 @@
-    import { createOverallResultsSection, overallResultsStyles, overallResultsScript } from './overall-results.report';
-    import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
-    import type { ReleaseLinks } from '../types/report.types';
-    import {
-    JIRA_URL
-    } from '../config/jira.config';
+import {
+  createOverallResultsSection,
+  overallResultsStyles,
+  overallResultsScript,
+} from './overall-results.report';
+import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
+import type { ReleaseLinks } from '../types/report.types';
+import { JIRA_URL } from '../config/jira.config';
 
-    import {
-    PositionReport,
-    Report
-    } from '../types/report.types';
+import { PositionReport, Report } from '../types/report.types';
 
-    import {
-    escapeHtml,
-    getIssueStatusColors,
-    getPriorityMeta,
-    getStatusClass
-    } from '../utils/html.utils';
+import {
+  escapeHtml,
+  getIssueStatusColors,
+  getPriorityMeta,
+  getStatusClass,
+} from '../utils/html.utils';
 
-
-    /* =========================================================
+/* =========================================================
     BLOCO DE UM PRIT
     ========================================================= */
 
-    function createReportBlock(
-    report: Report
-    ): string {
-
-    /* =====================================================
+function createReportBlock(report: Report): string {
+  /* =====================================================
         STATUS PRINCIPAL
         ===================================================== */
 
-    const mainStatusColors =
-        getIssueStatusColors(
-        report.mainStatus
-        );
+  const mainStatusColors = getIssueStatusColors(report.mainStatus);
 
-
-    /* =====================================================
+  /* =====================================================
         EXECUTION STATUS
         ===================================================== */
 
-    const statuses =
-        report.executionStatuses
-        .map(
-            item => `
+  const statuses = report.executionStatuses
+    .map(
+      (item) => `
 
             <div
                 class="
@@ -67,56 +57,27 @@
 
             </div>
 
-            `
-        )
-        .join('');
+            `,
+    )
+    .join('');
 
-
-    /* =====================================================
+  /* =====================================================
         ISSUE LINKS
         ===================================================== */
 
-    const relations =
-        [
-        ...new Set(
-            report.issueLinks.map(
-            issue =>
-                issue.relation
-            )
-        )
-        ];
+  const relations = [...new Set(report.issueLinks.map((issue) => issue.relation))];
 
+  const issueLinks = relations
+    .map((relation) => {
+      const issues = report.issueLinks.filter((issue) => issue.relation === relation);
 
-    const issueLinks =
-        relations
-        .map(
-            relation => {
+      const rows = issues
+        .map((issue) => {
+          const priority = getPriorityMeta(issue.priority);
 
-            const issues =
-                report.issueLinks.filter(
-                issue =>
-                    issue.relation === relation
-                );
+          const statusColors = getIssueStatusColors(issue.status);
 
-
-            const rows =
-                issues
-                .map(
-                    issue => {
-
-                    const priority =
-                        getPriorityMeta(
-                        issue.priority
-                        );
-
-
-                    const statusColors =
-                        getIssueStatusColors(
-                        issue.status
-                        );
-
-
-                    return `
+          return `
 
                         <tr class="jira-issue-row">
 
@@ -191,13 +152,10 @@
                         </tr>
 
                     `;
+        })
+        .join('');
 
-                    }
-                )
-                .join('');
-
-
-            return `
+      return `
 
                 <div class="relation">
 
@@ -226,17 +184,14 @@
                 </div>
 
             `;
+    })
+    .join('');
 
-            }
-        )
-        .join('');
-
-
-    /* =====================================================
+  /* =====================================================
         BLOCO
         ===================================================== */
 
-    return `
+  return `
 
         <div class="operation-card">
 
@@ -347,9 +302,8 @@
 
 
         ${
-            issueLinks ||
-
-            `
+          issueLinks ||
+          `
             <div class="empty">
 
                 Nenhum Issue Link encontrado.
@@ -362,37 +316,22 @@
         </div>
 
     `;
+}
 
-    }
-
-
-    /* =========================================================
+/* =========================================================
     HTML
     ========================================================= */
 
-    export function createHtmlReport(
-    positions: PositionReport[],
-    releaseLinks?: ReleaseLinks,
-    overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans)
-    ): string {
+export function createHtmlReport(
+  positions: PositionReport[],
+  releaseLinks?: ReleaseLinks,
+  overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
+): string {
+  const positionsHtml = positions
+    .map((position) => {
+      const reportsHtml = position.reports.map((report) => createReportBlock(report)).join('');
 
-    const positionsHtml =
-        positions
-        .map(
-            position => {
-
-            const reportsHtml =
-                position.reports
-                .map(
-                    report =>
-                    createReportBlock(
-                        report
-                    )
-                )
-                .join('');
-
-
-            return `
+      return `
 
                 <section class="position-block">
 
@@ -414,13 +353,10 @@
                 </section>
 
             `;
+    })
+    .join('');
 
-            }
-        )
-        .join('');
-
-
-    return `
+  return `
 
     <!DOCTYPE html>
 
@@ -963,5 +899,4 @@
     </html>
 
     `;
-
-    }
+}

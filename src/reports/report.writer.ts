@@ -1,118 +1,54 @@
-    import fs from 'node:fs';
-    import path from 'node:path';
-    import { aggregateOverallResults } from '../utils/overall-results.utils';
+import fs from 'node:fs';
+import path from 'node:path';
+import { aggregateOverallResults } from '../utils/overall-results.utils';
 
-    import {
-    DashboardData,
-    ReleaseLinks,
-    PositionReport
-    } from '../types/report.types';
+import { DashboardData, ReleaseLinks, PositionReport } from '../types/report.types';
 
-    import {
-    createTxtReport
-    } from './txt.report';
+import { createTxtReport } from './txt.report';
 
-    import {
-    createHtmlReport
-    } from './html.report';
+import { createHtmlReport } from './html.report';
 
-    import {
-    createEmailReport
-    } from './email.report';
+import { createEmailReport } from './email.report';
 
-    import {
-    createDashboardEmailHtml,
-    createDashboardHtml
-    } from './dashboard.report';
+import { createDashboardEmailHtml, createDashboardHtml } from './dashboard.report';
 
-
-    /* =========================================================
+/* =========================================================
     INJECT BEFORE BODY END
     ========================================================= */
 
-    function injectBeforeBodyEnd(
-    html: string,
-    content: string
-    ): string {
+function injectBeforeBodyEnd(html: string, content: string): string {
+  const bodyEnd = html.toLowerCase().lastIndexOf('</body>');
 
-    const bodyEnd =
-        html
-        .toLowerCase()
-        .lastIndexOf(
-            '</body>'
-        );
+  if (bodyEnd === -1) {
+    return html + content;
+  }
 
+  return html.slice(0, bodyEnd) + content + html.slice(bodyEnd);
+}
 
-    if (
-        bodyEnd === -1
-    ) {
-
-        return (
-        html +
-        content
-        );
-
-    }
-
-
-    return (
-
-        html.slice(
-        0,
-        bodyEnd
-        ) +
-
-        content +
-
-        html.slice(
-        bodyEnd
-        )
-
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     DASHBOARD NO EMAIL
     ========================================================= */
 
-    function injectDashboardIntoEmail(
-    emailHtml: string,
-    dashboardHtml: string
-    ): string {
+function injectDashboardIntoEmail(emailHtml: string, dashboardHtml: string): string {
+  /*
+   * Se existir o marcador no template,
+   * usamos exatamente aquela posição.
+   */
 
-    /*
-    * Se existir o marcador no template,
-    * usamos exatamente aquela posição.
-    */
+  if (emailHtml.includes('<!-- DASHBOARD -->')) {
+    return emailHtml.replace('<!-- DASHBOARD -->', dashboardHtml);
+  }
 
-    if (
-        emailHtml.includes(
-        '<!-- DASHBOARD -->'
-        )
-    ) {
+  /*
+   * Fallback:
+   * adiciona antes do </body>.
+   */
 
-        return emailHtml.replace(
-        '<!-- DASHBOARD -->',
-        dashboardHtml
-        );
+  return injectBeforeBodyEnd(emailHtml, dashboardHtml);
+}
 
-    }
-
-
-    /*
-    * Fallback:
-    * adiciona antes do </body>.
-    */
-
-    return injectBeforeBodyEnd(
-        emailHtml,
-        dashboardHtml
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     WRITE REPORTS
     =========================================================
     *
@@ -125,234 +61,140 @@
     * continua funcionando.
     */
 
-    export function writeReports(
-    positions: PositionReport[],
-    dashboard?: DashboardData,
-    releaseLinks?: ReleaseLinks
-    ): void {
+export function writeReports(
+  positions: PositionReport[],
+  dashboard?: DashboardData,
+  releaseLinks?: ReleaseLinks,
+): void {
+  const overall = aggregateOverallResults(positions, releaseLinks?.testPlans);
+  for (const warning of new Set([
+    ...overall.warnings,
+    ...overall.plans.flatMap((plan) => plan.warnings),
+  ])) {
+    console.warn(`⚠️ ${warning}`);
+  }
 
-    const overall = aggregateOverallResults(positions, releaseLinks?.testPlans);
-    for (const warning of new Set([...overall.warnings, ...overall.plans.flatMap(plan => plan.warnings)])) {
-        console.warn(`⚠️ ${warning}`);
-    }
+  const outputDirectory = path.join(process.cwd(), 'output');
 
-    const outputDirectory =
-        path.join(
-        process.cwd(),
-        'output'
-        );
+  fs.mkdirSync(outputDirectory, {
+    recursive: true,
+  });
 
-
-    fs.mkdirSync(
-        outputDirectory,
-        {
-        recursive:
-            true
-        }
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         REPORT JSON
         ===================================================== */
 
-    fs.writeFileSync(
+  fs.writeFileSync(
+    path.join(outputDirectory, 'report.json'),
 
-        path.join(
-        outputDirectory,
-        'report.json'
-        ),
+    JSON.stringify(positions, null, 2),
 
-        JSON.stringify(
-        positions,
-        null,
-        2
-        ),
+    'utf-8',
+  );
 
-        'utf-8'
-
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         TXT
         ===================================================== */
 
-    fs.writeFileSync(
+  fs.writeFileSync(
+    path.join(outputDirectory, 'report.txt'),
 
-        path.join(
-        outputDirectory,
-        'report.txt'
-        ),
+    createTxtReport(positions),
 
-        createTxtReport(
-        positions
-        ),
+    'utf-8',
+  );
 
-        'utf-8'
-
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         HTML ORIGINAL
         ===================================================== */
 
-    let reportHtml =
-        createHtmlReport(
-        positions,
-        releaseLinks,
-        overall
-        );
+  let reportHtml = createHtmlReport(positions, releaseLinks, overall);
 
-
-    /* =====================================================
+  /* =====================================================
         EMAIL ORIGINAL
         ===================================================== */
 
-    let emailHtml =
-        createEmailReport(
-        positions,
-        releaseLinks,
-        overall
-        );
+  let emailHtml = createEmailReport(positions, releaseLinks, overall);
 
-
-    /* =====================================================
+  /* =====================================================
         DASHBOARD
         ===================================================== */
 
-    if (dashboard) {
+  if (dashboard) {
+    /*
+     * JSON separado para debug.
+     */
 
-        /*
-        * JSON separado para debug.
-        */
+    fs.writeFileSync(
+      path.join(outputDirectory, 'dashboard.json'),
 
-        fs.writeFileSync(
+      JSON.stringify(dashboard, null, 2),
 
-        path.join(
-            outputDirectory,
-            'dashboard.json'
-        ),
+      'utf-8',
+    );
 
-        JSON.stringify(
-            dashboard,
-            null,
-            2
-        ),
+    /*
+     * Dashboard por último no report.html.
+     */
 
-        'utf-8'
+    reportHtml = injectBeforeBodyEnd(
+      reportHtml,
 
-        );
+      createDashboardHtml(dashboard),
+    );
 
+    /*
+     * Dashboard por último no email.
+     */
 
-        /*
-        * Dashboard por último no report.html.
-        */
+    emailHtml = injectDashboardIntoEmail(
+      emailHtml,
 
-        reportHtml =
-        injectBeforeBodyEnd(
+      createDashboardEmailHtml(dashboard),
+    );
+  }
 
-            reportHtml,
-
-            createDashboardHtml(
-            dashboard
-            )
-
-        );
-
-
-        /*
-        * Dashboard por último no email.
-        */
-
-        emailHtml =
-        injectDashboardIntoEmail(
-
-            emailHtml,
-
-            createDashboardEmailHtml(
-            dashboard
-            )
-
-        );
-
-    }
-
-
-    /* =====================================================
+  /* =====================================================
         SALVA HTML
         ===================================================== */
 
-    fs.writeFileSync(
+  fs.writeFileSync(
+    path.join(outputDirectory, 'report.html'),
 
-        path.join(
-        outputDirectory,
-        'report.html'
-        ),
+    reportHtml,
 
-        reportHtml,
+    'utf-8',
+  );
 
-        'utf-8'
-
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         SALVA EMAIL
         ===================================================== */
 
-    fs.writeFileSync(
+  fs.writeFileSync(
+    path.join(outputDirectory, 'email.html'),
 
-        path.join(
-        outputDirectory,
-        'email.html'
-        ),
+    emailHtml,
 
-        emailHtml,
+    'utf-8',
+  );
 
-        'utf-8'
-
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         LOG
         ===================================================== */
 
-    console.log('\n');
+  console.log('\n');
 
+  console.log('✅ Relatórios gerados:');
 
-    console.log(
-        '✅ Relatórios gerados:'
-    );
+  console.log('output/report.json');
 
+  console.log('output/report.txt');
 
-    console.log(
-        'output/report.json'
-    );
+  console.log('output/report.html');
 
+  console.log('output/email.html');
 
-    console.log(
-        'output/report.txt'
-    );
-
-
-    console.log(
-        'output/report.html'
-    );
-
-
-    console.log(
-        'output/email.html'
-    );
-
-
-    if (dashboard) {
-
-        console.log(
-        'output/dashboard.json'
-        );
-
-    }
-    }
+  if (dashboard) {
+    console.log('output/dashboard.json');
+  }
+}

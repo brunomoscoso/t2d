@@ -1,290 +1,153 @@
-    import {
-    Locator,
-    Page
-    } from 'playwright';
+import { Locator, Page } from 'playwright';
 
-    import {
-    JIRA_URL
-    } from '../config/jira.config';
+import { JIRA_URL } from '../config/jira.config';
 
-    import {
-    SELECTORS
-    } from '../config/selectors';
+import { SELECTORS } from '../config/selectors';
 
-    import {
-    DashboardData,
-    DashboardDefect
-    } from '../types/report.types';
+import { DashboardData, DashboardDefect } from '../types/report.types';
 
-
-    /* =========================================================
+/* =========================================================
     CLEAN TEXT
     ========================================================= */
 
-    function cleanText(
-    value: string
-    ): string {
+function cleanText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
 
-    return value
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-
-    /* =========================================================
+/* =========================================================
     NORMALIZA PRIORIDADE
     ========================================================= */
 
-    function normalizePriority(
-    value: string
-    ): string | null {
+function normalizePriority(value: string): string | null {
+  const normalized = cleanText(value);
 
-    const normalized =
-        cleanText(
-        value
-        );
+  const match = normalized.match(/\b(Highest|High|Medium|Lowest|Low)\b/i);
 
+  if (match) {
+    const priority = match[1].toLowerCase();
 
-    const match =
-        normalized.match(
-        /\b(Highest|High|Medium|Lowest|Low)\b/i
-        );
-
-
-    if (match) {
-
-        const priority =
-        match[1]
-            .toLowerCase();
-
-
-        if (
-        priority === 'highest'
-        ) {
-        return 'Highest';
-        }
-
-
-        if (
-        priority === 'high'
-        ) {
-        return 'High';
-        }
-
-
-        if (
-        priority === 'medium'
-        ) {
-        return 'Medium';
-        }
-
-
-        if (
-        priority === 'low'
-        ) {
-        return 'Low';
-        }
-
-
-        if (
-        priority === 'lowest'
-        ) {
-        return 'Lowest';
-        }
-
+    if (priority === 'highest') {
+      return 'Highest';
     }
 
-
-    /*
-    * Fallback para símbolos.
-    */
-
-    if (
-        /⇈|↑↑/.test(
-        normalized
-        )
-    ) {
-        return 'Highest';
+    if (priority === 'high') {
+      return 'High';
     }
 
-
-    if (
-        /⇊|↓↓/.test(
-        normalized
-        )
-    ) {
-        return 'Lowest';
+    if (priority === 'medium') {
+      return 'Medium';
     }
 
-
-    if (
-        /↑/.test(
-        normalized
-        )
-    ) {
-        return 'High';
+    if (priority === 'low') {
+      return 'Low';
     }
 
-
-    if (
-        /=/.test(
-        normalized
-        )
-    ) {
-        return 'Medium';
+    if (priority === 'lowest') {
+      return 'Lowest';
     }
+  }
 
+  /*
+   * Fallback para símbolos.
+   */
 
-    if (
-        /↓/.test(
-        normalized
-        )
-    ) {
-        return 'Low';
-    }
+  if (/⇈|↑↑/.test(normalized)) {
+    return 'Highest';
+  }
 
+  if (/⇊|↓↓/.test(normalized)) {
+    return 'Lowest';
+  }
 
-    return null;
-    }
+  if (/↑/.test(normalized)) {
+    return 'High';
+  }
 
+  if (/=/.test(normalized)) {
+    return 'Medium';
+  }
 
+  if (/↓/.test(normalized)) {
+    return 'Low';
+  }
 
+  return null;
+}
 
-    /* =========================================================
+/* =========================================================
     SCROLL LENTO ATÉ O FINAL DO DASHBOARD
     ========================================================= */
 
-    async function slowScrollToBottom(
-    page: Page
-    ): Promise<void> {
+async function slowScrollToBottom(page: Page): Promise<void> {
+  console.log('Scrollando Dashboard lentamente até o final...');
 
-    console.log(
-        'Scrollando Dashboard lentamente até o final...'
-    );
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      const distance = 250;
 
+      const interval = 500;
 
-    await page.evaluate(
-        async () => {
+      const maxSteps = 200;
 
-        await new Promise<void>(
-            resolve => {
+      let steps = 0;
 
-            const distance =
-                250;
+      let bottomChecks = 0;
 
-            const interval =
-                500;
+      const timer = window.setInterval(() => {
+        steps++;
 
-            const maxSteps =
-                200;
-
-            let steps =
-                0;
-
-            let bottomChecks =
-                0;
-
-
-            const timer =
-                window.setInterval(
-                () => {
-
-                steps++;
-
-
-                const pageHeight =
-                    Math.max(
-                    document.body.scrollHeight,
-                    document.documentElement.scrollHeight
-                    );
-
-
-                const currentPosition =
-                    window.scrollY +
-                    window.innerHeight;
-
-
-                /*
-                * Precisamos confirmar o final algumas vezes,
-                * porque o Jira pode aumentar a altura da página
-                * depois de renderizar novos gadgets.
-                */
-
-                if (
-                    currentPosition >=
-                    pageHeight - 10
-                ) {
-
-                    bottomChecks++;
-
-                }
-
-                else {
-
-                    bottomChecks = 0;
-
-
-                    window.scrollBy({
-                    top:
-                        distance,
-
-                    left:
-                        0,
-
-                    behavior:
-                        'smooth'
-                    });
-
-                }
-
-
-                /*
-                * Três verificações seguidas no final:
-                * aproximadamente 1,5 segundo.
-                */
-
-                if (
-                    bottomChecks >= 3 ||
-                    steps >= maxSteps
-                ) {
-
-                    window.clearInterval(
-                    timer
-                    );
-
-
-                    resolve();
-
-                }
-
-                },
-                interval
-            );
-
-            }
+        const pageHeight = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
         );
 
+        const currentPosition = window.scrollY + window.innerHeight;
+
+        /*
+         * Precisamos confirmar o final algumas vezes,
+         * porque o Jira pode aumentar a altura da página
+         * depois de renderizar novos gadgets.
+         */
+
+        if (currentPosition >= pageHeight - 10) {
+          bottomChecks++;
+        } else {
+          bottomChecks = 0;
+
+          window.scrollBy({
+            top: distance,
+
+            left: 0,
+
+            behavior: 'smooth',
+          });
         }
-    );
 
+        /*
+         * Três verificações seguidas no final:
+         * aproximadamente 1,5 segundo.
+         */
 
-    /*
-    * Pequena espera final para o Jira
-    * terminar de renderizar o último gadget.
-    */
+        if (bottomChecks >= 3 || steps >= maxSteps) {
+          window.clearInterval(timer);
 
-    await page.waitForTimeout(
-        1500
-    );
+          resolve();
+        }
+      }, interval);
+    });
+  });
 
+  /*
+   * Pequena espera final para o Jira
+   * terminar de renderizar o último gadget.
+   */
 
-    console.log(
-        '✅ Scroll lento do Dashboard concluído.'
-    );
+  await page.waitForTimeout(1500);
 
-    }
+  console.log('✅ Scroll lento do Dashboard concluído.');
+}
 
-    /* =========================================================
+/* =========================================================
     LOCALIZA O GADGET OPEN DEFECTS
     =========================================================
     *
@@ -298,104 +161,63 @@
     *       └── table.issue-table
     */
 
-    async function findOpenDefectsGadget(
-    page: Page
-    ): Promise<{
-    content: Locator;
-    rawTitle: string;
-    title: string;
-    }> {
+async function findOpenDefectsGadget(page: Page): Promise<{
+  content: Locator;
+  rawTitle: string;
+  title: string;
+}> {
+  console.log('Procurando Certification Open Defects...');
 
-    console.log(
-        'Procurando Certification Open Defects...'
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         1. TÍTULO CORRETO
         ===================================================== */
 
-    const heading =
-        page
-        .locator(
-            SELECTORS.dashboard.gadgetTitle
-        )
-        .filter({
-            hasText:
-            /Certification\s+Open\s+Defects/i
-        })
-        .first();
+  const heading = page
+    .locator(SELECTORS.dashboard.gadgetTitle)
+    .filter({
+      hasText: /Certification\s+Open\s+Defects/i,
+    })
+    .first();
 
+  await heading.waitFor({
+    state: 'visible',
 
-    await heading.waitFor({
-        state:
-        'visible',
+    timeout: 60000,
+  });
 
-        timeout:
-        60000
-    });
-
-
-    /* =====================================================
+  /* =====================================================
         2. TEXTO DO TÍTULO
         ===================================================== */
 
-    const rawTitle =
-        cleanText(
-        await heading.innerText()
-        );
+  const rawTitle = cleanText(await heading.innerText());
 
+  if (!/Certification\s+Open\s+Defects/i.test(rawTitle)) {
+    throw new Error('O título encontrado não corresponde a Certification Open Defects.');
+  }
 
-    if (
-        !/Certification\s+Open\s+Defects/i.test(
-        rawTitle
-        )
-    ) {
+  console.log(`✅ Título encontrado: ${rawTitle}`);
 
-        throw new Error(
-        'O título encontrado não corresponde a Certification Open Defects.'
-        );
+  /*
+   * Remove:
+   *
+   * Filter Results:
+   *
+   * Exemplo final:
+   *
+   * Release v5.6.0.9 Certification Open Defects
+   */
 
-    }
+  const title = rawTitle.replace(/^Filter Results:\s*/i, '').trim();
 
+  console.log(`Título utilizado: ${title}`);
 
-    console.log(
-        `✅ Título encontrado: ${rawTitle}`
-    );
-
-
-    /*
-    * Remove:
-    *
-    * Filter Results:
-    *
-    * Exemplo final:
-    *
-    * Release v5.6.0.9 Certification Open Defects
-    */
-
-    const title =
-        rawTitle
-        .replace(
-            /^Filter Results:\s*/i,
-            ''
-        )
-        .trim();
-
-
-    console.log(
-        `Título utilizado: ${title}`
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         3. HEADER QUE CONTÉM O H2
         ===================================================== */
 
-    const header =
-        heading
-        .locator(
-            `xpath=ancestor::div[
+  const header = heading
+    .locator(
+      `xpath=ancestor::div[
             contains(
                 concat(
                 " ",
@@ -404,33 +226,19 @@
                 ),
                 " dashboard-item-header "
             )
-            ][1]`
-        )
-        .first();
+            ][1]`,
+    )
+    .first();
 
+  const headerExists = await header.count();
 
-    const headerExists =
-        await header
-        .count();
+  if (headerExists === 0) {
+    throw new Error('dashboard-item-header do Open Defects não encontrado.');
+  }
 
+  console.log('✅ Header do gadget encontrado.');
 
-    if (
-        headerExists === 0
-    ) {
-
-        throw new Error(
-        'dashboard-item-header do Open Defects não encontrado.'
-        );
-
-    }
-
-
-    console.log(
-        '✅ Header do gadget encontrado.'
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         4. PRÓXIMA DIV:
             dashboard-item-content
         =====================================================
@@ -446,10 +254,9 @@
     * </div>
     */
 
-    const content =
-        header
-        .locator(
-            `xpath=following-sibling::div[
+  const content = header
+    .locator(
+      `xpath=following-sibling::div[
             contains(
                 concat(
                 " ",
@@ -458,64 +265,42 @@
                 ),
                 " dashboard-item-content "
             )
-            ][1]`
-        )
-        .first();
+            ][1]`,
+    )
+    .first();
 
+  await content.waitFor({
+    state: 'visible',
 
-    await content.waitFor({
-        state:
-        'visible',
+    timeout: 60000,
+  });
 
-        timeout:
-        60000
-    });
+  console.log('✅ dashboard-item-content correto encontrado.');
 
-
-    console.log(
-        '✅ dashboard-item-content correto encontrado.'
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         5. CONFIRMA A TABELA SOMENTE NESSE CONTENT
         ===================================================== */
 
-    const table =
-        content
-        .locator(
-            SELECTORS.dashboard.table
-        )
-        .first();
+  const table = content.locator(SELECTORS.dashboard.table).first();
 
+  await table.waitFor({
+    state: 'visible',
 
-    await table.waitFor({
-        state:
-        'visible',
+    timeout: 60000,
+  });
 
-        timeout:
-        60000
-    });
+  console.log('✅ Tabela Open Defects encontrada.');
 
+  return {
+    content,
 
-    console.log(
-        '✅ Tabela Open Defects encontrada.'
-    );
+    rawTitle,
 
+    title,
+  };
+}
 
-    return {
-
-        content,
-
-        rawTitle,
-
-        title
-
-    };
-    }
-
-
-    /* =========================================================
+/* =========================================================
     LOCALIZA A TABELA
     =========================================================
     *
@@ -526,103 +311,44 @@
     * no Dashboard não interferem.
     */
 
-    async function findDefectsTable(
-    content: Locator
-    ): Promise<Locator> {
+async function findDefectsTable(content: Locator): Promise<Locator> {
+  const tables = content.locator(SELECTORS.dashboard.table);
 
-    const tables =
-        content.locator(
-        SELECTORS.dashboard.table
-        );
+  const total = await tables.count();
 
+  if (total === 0) {
+    throw new Error('Nenhuma issue-table encontrada dentro de Open Defects.');
+  }
 
-    const total =
-        await tables.count();
+  /*
+   * Normalmente teremos apenas uma.
+   *
+   * Mesmo assim validamos pelos headers.
+   */
 
+  for (let i = 0; i < total; i++) {
+    const table = tables.nth(i);
 
-    if (
-        total === 0
-    ) {
+    const headers = (await table.locator('thead th').allTextContents()).map(cleanText);
 
-        throw new Error(
-        'Nenhuma issue-table encontrada dentro de Open Defects.'
-        );
+    const normalizedHeaders = headers.map((header) => header.toLowerCase());
 
+    const valid =
+      normalizedHeaders.includes('key') &&
+      normalizedHeaders.includes('summary') &&
+      normalizedHeaders.includes('status') &&
+      normalizedHeaders.includes('assignee') &&
+      normalizedHeaders.includes('created');
+
+    if (valid) {
+      return table;
     }
+  }
 
+  throw new Error('A tabela encontrada dentro de Open Defects não possui os headers esperados.');
+}
 
-    /*
-    * Normalmente teremos apenas uma.
-    *
-    * Mesmo assim validamos pelos headers.
-    */
-
-    for (
-        let i = 0;
-        i < total;
-        i++
-    ) {
-
-        const table =
-        tables.nth(i);
-
-
-        const headers =
-        (
-            await table
-            .locator(
-                'thead th'
-            )
-            .allTextContents()
-        )
-            .map(
-            cleanText
-            );
-
-
-        const normalizedHeaders =
-        headers.map(
-            header =>
-            header.toLowerCase()
-        );
-
-
-        const valid =
-        normalizedHeaders.includes(
-            'key'
-        ) &&
-        normalizedHeaders.includes(
-            'summary'
-        ) &&
-        normalizedHeaders.includes(
-            'status'
-        ) &&
-        normalizedHeaders.includes(
-            'assignee'
-        ) &&
-        normalizedHeaders.includes(
-            'created'
-        );
-
-
-        if (
-        valid
-        ) {
-
-        return table;
-
-        }
-
-    }
-
-
-    throw new Error(
-        'A tabela encontrada dentro de Open Defects não possui os headers esperados.'
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     ÍNDICES DAS COLUNAS
     =========================================================
     *
@@ -634,344 +360,151 @@
     * pelo próprio header.
     */
 
-    async function getColumnIndexes(
-    table: Locator
-    ) {
+async function getColumnIndexes(table: Locator) {
+  const headers = (await table.locator('thead th').allTextContents()).map(cleanText);
 
-    const headers =
-        (
-        await table
-            .locator(
-            'thead th'
-            )
-            .allTextContents()
-        )
-        .map(
-            cleanText
-        );
+  const find = (name: string) => {
+    return headers.findIndex((header) => header.toLowerCase() === name.toLowerCase());
+  };
 
+  return {
+    type: find('T') >= 0 ? find('T') : 0,
 
-    const find =
-        (
-        name: string
-        ) => {
+    priority: find('P') >= 0 ? find('P') : 1,
 
-        return headers.findIndex(
-            header =>
-            header
-                .toLowerCase() ===
-            name.toLowerCase()
-        );
+    key: find('Key') >= 0 ? find('Key') : 2,
 
-        };
+    summary: find('Summary') >= 0 ? find('Summary') : 3,
 
+    status: find('Status') >= 0 ? find('Status') : 4,
 
-    return {
+    assignee: find('Assignee') >= 0 ? find('Assignee') : 5,
 
-        type:
-        find('T') >= 0
-            ? find('T')
-            : 0,
+    created: find('Created') >= 0 ? find('Created') : 6,
+  };
+}
 
-        priority:
-        find('P') >= 0
-            ? find('P')
-            : 1,
-
-        key:
-        find('Key') >= 0
-            ? find('Key')
-            : 2,
-
-        summary:
-        find('Summary') >= 0
-            ? find('Summary')
-            : 3,
-
-        status:
-        find('Status') >= 0
-            ? find('Status')
-            : 4,
-
-        assignee:
-        find('Assignee') >= 0
-            ? find('Assignee')
-            : 5,
-
-        created:
-        find('Created') >= 0
-            ? find('Created')
-            : 6
-
-    };
-    }
-
-
-    /* =========================================================
+/* =========================================================
     ISSUE TYPE
     ========================================================= */
 
-    async function extractIssueType(
-    cell: Locator
-    ): Promise<string> {
+async function extractIssueType(cell: Locator): Promise<string> {
+  const elements = cell.locator('img, [title], [aria-label]');
 
-    const elements =
-        cell.locator(
-        'img, [title], [aria-label]'
-        );
+  const total = await elements.count();
 
+  for (let i = 0; i < total; i++) {
+    const element = elements.nth(i);
 
-    const total =
-        await elements.count();
+    const values = [
+      await element.getAttribute('alt'),
 
+      await element.getAttribute('title'),
 
-    for (
-        let i = 0;
-        i < total;
-        i++
-    ) {
+      await element.getAttribute('aria-label'),
+    ];
 
-        const element =
-        elements.nth(i);
+    for (const value of values) {
+      if (!value) {
+        continue;
+      }
 
-
-        const values = [
-
-        await element
-            .getAttribute(
-            'alt'
-            ),
-
-        await element
-            .getAttribute(
-            'title'
-            ),
-
-        await element
-            .getAttribute(
-            'aria-label'
-            )
-
-        ];
-
-
-        for (
-        const value
-        of values
-        ) {
-
-        if (!value) {
-            continue;
-        }
-
-
-        if (
-            /defect|bug/i.test(
-            value
-            )
-        ) {
-
-            return cleanText(
-            value
-            );
-
-        }
-
-        }
-
+      if (/defect|bug/i.test(value)) {
+        return cleanText(value);
+      }
     }
+  }
 
+  /*
+   * O gadget é especificamente
+   * Certification Open Defects.
+   */
 
-    /*
-    * O gadget é especificamente
-    * Certification Open Defects.
-    */
+  return 'Defect';
+}
 
-    return 'Defect';
-    }
-
-
-    /* =========================================================
+/* =========================================================
     PRIORIDADE
     ========================================================= */
 
-    async function extractPriority(
-    cell: Locator
-    ): Promise<string> {
+async function extractPriority(cell: Locator): Promise<string> {
+  const elements = cell.locator('img, [title], [aria-label], [class]');
 
-    const elements =
-        cell.locator(
-        'img, [title], [aria-label], [class]'
-        );
+  const total = await elements.count();
 
+  for (let i = 0; i < total; i++) {
+    const element = elements.nth(i);
 
-    const total =
-        await elements.count();
+    const values = [
+      await element.getAttribute('alt'),
 
+      await element.getAttribute('title'),
 
-    for (
-        let i = 0;
-        i < total;
-        i++
-    ) {
+      await element.getAttribute('aria-label'),
 
-        const element =
-        elements.nth(i);
+      await element.getAttribute('class'),
+    ];
 
+    for (const value of values) {
+      if (!value) {
+        continue;
+      }
 
-        const values = [
+      const priority = normalizePriority(value);
 
-        await element
-            .getAttribute(
-            'alt'
-            ),
-
-        await element
-            .getAttribute(
-            'title'
-            ),
-
-        await element
-            .getAttribute(
-            'aria-label'
-            ),
-
-        await element
-            .getAttribute(
-            'class'
-            )
-
-        ];
-
-
-        for (
-        const value
-        of values
-        ) {
-
-        if (!value) {
-            continue;
-        }
-
-
-        const priority =
-            normalizePriority(
-            value
-            );
-
-
-        if (priority) {
-
-            return priority;
-
-        }
-
-        }
-
+      if (priority) {
+        return priority;
+      }
     }
+  }
 
+  /*
+   * Fallback pelo texto da própria célula.
+   */
 
-    /*
-    * Fallback pelo texto da própria célula.
-    */
+  const text = await cell.innerText().catch(() => '');
 
-    const text =
-        await cell
-        .innerText()
-        .catch(
-            () => ''
-        );
+  return normalizePriority(text) ?? 'Unknown';
+}
 
-
-    return (
-        normalizePriority(
-        text
-        ) ??
-        'Unknown'
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     LÊ CÉLULA
     ========================================================= */
 
-    async function readCell(
-    cells: Locator,
-    index: number
-    ): Promise<string> {
+async function readCell(cells: Locator, index: number): Promise<string> {
+  const total = await cells.count();
 
-    const total =
-        await cells.count();
+  if (index < 0 || index >= total) {
+    return '';
+  }
 
+  return cleanText(
+    await cells
+      .nth(index)
+      .innerText()
+      .catch(() => ''),
+  );
+}
 
-    if (
-        index < 0 ||
-        index >= total
-    ) {
-
-        return '';
-
-    }
-
-
-    return cleanText(
-        await cells
-        .nth(
-            index
-        )
-        .innerText()
-        .catch(
-            () => ''
-        )
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     EXTRAI DEFECTS DA PÁGINA ATUAL
     ========================================================= */
 
-    async function extractCurrentPage(
-    table: Locator
-    ): Promise<DashboardDefect[]> {
+async function extractCurrentPage(table: Locator): Promise<DashboardDefect[]> {
+  const indexes = await getColumnIndexes(table);
 
-    const indexes =
-        await getColumnIndexes(
-        table
-        );
+  const rows = table.locator(SELECTORS.dashboard.rows);
 
+  const totalRows = await rows.count();
 
-    const rows =
-        table.locator(
-        SELECTORS.dashboard.rows
-        );
+  console.log(`Linhas de defects encontradas: ${totalRows}`);
 
+  const defects: DashboardDefect[] = [];
 
-    const totalRows =
-        await rows.count();
+  for (let i = 0; i < totalRows; i++) {
+    const row = rows.nth(i);
 
-
-    console.log(
-        `Linhas de defects encontradas: ${totalRows}`
-    );
-
-
-    const defects:
-        DashboardDefect[] = [];
-
-
-    for (
-        let i = 0;
-        i < totalRows;
-        i++
-    ) {
-
-        const row =
-        rows.nth(i);
-
-
-        /* =====================================================
+    /* =====================================================
         KEY
         =====================================================
         *
@@ -983,118 +516,55 @@
         * >
         */
 
-        let key =
-        (
-            await row
-            .getAttribute(
-                'data-issuekey'
-            )
-        )?.trim() ?? '';
+    let key = (await row.getAttribute('data-issuekey'))?.trim() ?? '';
 
+    const cells = row.locator(SELECTORS.dashboard.cells);
 
-        const cells =
-        row.locator(
-            SELECTORS.dashboard.cells
-        );
+    /*
+     * Fallback caso data-issuekey não exista.
+     */
 
+    if (!key) {
+      key = await readCell(cells, indexes.key);
+    }
 
-        /*
-        * Fallback caso data-issuekey não exista.
-        */
+    if (!/^[A-Za-z]+-\d+$/.test(key)) {
+      continue;
+    }
 
-        if (!key) {
-
-        key =
-            await readCell(
-            cells,
-            indexes.key
-            );
-
-        }
-
-
-        if (
-        !/^[A-Za-z]+-\d+$/.test(
-            key
-        )
-        ) {
-
-        continue;
-
-        }
-
-
-        /* =====================================================
+    /* =====================================================
         DEFECT
         ===================================================== */
 
-        const defect:
-        DashboardDefect = {
+    const defect: DashboardDefect = {
+      issueType: await extractIssueType(cells.nth(indexes.type)),
 
-        issueType:
-            await extractIssueType(
-            cells.nth(
-                indexes.type
-            )
-            ),
+      priority: await extractPriority(cells.nth(indexes.priority)),
 
-        priority:
-            await extractPriority(
-            cells.nth(
-                indexes.priority
-            )
-            ),
+      key,
 
-        key,
+      summary: await readCell(cells, indexes.summary),
 
-        summary:
-            await readCell(
-            cells,
-            indexes.summary
-            ),
+      status: await readCell(cells, indexes.status),
 
-        status:
-            await readCell(
-            cells,
-            indexes.status
-            ),
+      assignee: await readCell(cells, indexes.assignee),
 
-        assignee:
-            await readCell(
-            cells,
-            indexes.assignee
-            ),
+      created: await readCell(cells, indexes.created),
+    };
 
-        created:
-            await readCell(
-            cells,
-            indexes.created
-            )
+    defects.push(defect);
 
-        };
+    /*
+     * Mesmo padrão dos Issue Links.
+     */
 
+    console.log(`${defect.key} | ${defect.priority} | ${defect.status}`);
+  }
 
-        defects.push(
-        defect
-        );
+  return defects;
+}
 
-
-        /*
-        * Mesmo padrão dos Issue Links.
-        */
-
-        console.log(
-        `${defect.key} | ${defect.priority} | ${defect.status}`
-        );
-
-    }
-
-
-    return defects;
-    }
-
-
-    /* =========================================================
+/* =========================================================
     ASSINATURA DA TABELA
     =========================================================
     *
@@ -1102,472 +572,228 @@
     * realmente mudou o conteúdo.
     */
 
-    async function getTableSignature(
-    table: Locator
-    ): Promise<string> {
+async function getTableSignature(table: Locator): Promise<string> {
+  const rows = table.locator(SELECTORS.dashboard.rows);
 
-    const rows =
-        table.locator(
-        SELECTORS.dashboard.rows
-        );
+  const count = await rows.count();
 
+  if (count === 0) {
+    return '';
+  }
 
-    const count =
-        await rows.count();
+  const firstKey = (await rows.first().getAttribute('data-issuekey')) ?? '';
 
+  const lastKey = (await rows.last().getAttribute('data-issuekey')) ?? '';
 
-    if (
-        count === 0
-    ) {
+  return `${count}|${firstKey}|${lastKey}`;
+}
 
-        return '';
-
-    }
-
-
-    const firstKey =
-        (
-        await rows
-            .first()
-            .getAttribute(
-            'data-issuekey'
-            )
-        ) ?? '';
-
-
-    const lastKey =
-        (
-        await rows
-            .last()
-            .getAttribute(
-            'data-issuekey'
-            )
-        ) ?? '';
-
-
-    return (
-        `${count}|${firstKey}|${lastKey}`
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     PROCURA NEXT
     ========================================================= */
 
-    async function findNextButton(
-    content: Locator
-    ): Promise<Locator | null> {
+async function findNextButton(content: Locator): Promise<Locator | null> {
+  const selectors = [
+    'a[rel="next"]',
 
-    const selectors = [
+    'a.aui-nav-next',
 
-        'a[rel="next"]',
+    '.aui-nav-next a',
 
-        'a.aui-nav-next',
+    'li.aui-nav-next a',
 
-        '.aui-nav-next a',
+    'a[title*="Next"]',
 
-        'li.aui-nav-next a',
+    'button[title*="Next"]',
 
-        'a[title*="Next"]',
+    'a[aria-label*="Next"]',
 
-        'button[title*="Next"]',
+    'button[aria-label*="Next"]',
+  ];
 
-        'a[aria-label*="Next"]',
+  for (const selector of selectors) {
+    const buttons = content.locator(selector);
 
-        'button[aria-label*="Next"]'
+    const total = await buttons.count();
 
-    ];
+    for (let i = 0; i < total; i++) {
+      const button = buttons.nth(i);
 
+      const visible = await button.isVisible().catch(() => false);
 
-    for (
-        const selector
-        of selectors
-    ) {
+      if (!visible) {
+        continue;
+      }
 
-        const buttons =
-        content.locator(
-            selector
-        );
+      const ariaDisabled = await button.getAttribute('aria-disabled');
 
+      const className = (await button.getAttribute('class')) ?? '';
 
-        const total =
-        await buttons.count();
+      const parentClass =
+        (await button
+          .locator('..')
+          .getAttribute('class')
+          .catch(() => '')) ?? '';
 
+      const disabled =
+        ariaDisabled === 'true' || /disabled/i.test(className) || /disabled/i.test(parentClass);
 
-        for (
-        let i = 0;
-        i < total;
-        i++
-        ) {
-
-        const button =
-            buttons.nth(i);
-
-
-        const visible =
-            await button
-            .isVisible()
-            .catch(
-                () => false
-            );
-
-
-        if (!visible) {
-            continue;
-        }
-
-
-        const ariaDisabled =
-            await button
-            .getAttribute(
-                'aria-disabled'
-            );
-
-
-        const className =
-            (
-            await button
-                .getAttribute(
-                'class'
-                )
-            ) ?? '';
-
-
-        const parentClass =
-            (
-            await button
-                .locator(
-                '..'
-                )
-                .getAttribute(
-                'class'
-                )
-                .catch(
-                () => ''
-                )
-            ) ?? '';
-
-
-        const disabled =
-            ariaDisabled === 'true' ||
-            /disabled/i.test(
-            className
-            ) ||
-            /disabled/i.test(
-            parentClass
-            );
-
-
-        if (!disabled) {
-
-            return button;
-
-        }
-
-        }
-
+      if (!disabled) {
+        return button;
+      }
     }
+  }
 
+  return null;
+}
 
-    return null;
-    }
-
-
-    /* =========================================================
+/* =========================================================
     PRÓXIMA PÁGINA
     ========================================================= */
 
-    async function goToNextPage(
-    page: Page,
-    content: Locator,
-    table: Locator
-    ): Promise<boolean> {
+async function goToNextPage(page: Page, content: Locator, table: Locator): Promise<boolean> {
+  const next = await findNextButton(content);
 
-    const next =
-        await findNextButton(
-        content
-        );
-
-
-    if (!next) {
-
-        return false;
-
-    }
-
-
-    const previousSignature =
-        await getTableSignature(
-        table
-        );
-
-
-    await next.click();
-
-
-    /*
-    * Espera a issue-table mudar.
-    */
-
-    for (
-        let attempt = 0;
-        attempt < 40;
-        attempt++
-    ) {
-
-        await page.waitForTimeout(
-        300
-        );
-
-
-        const newTable =
-        await findDefectsTable(
-            content
-        )
-            .catch(
-            () => null
-            );
-
-
-        if (!newTable) {
-
-        continue;
-
-        }
-
-
-        const newSignature =
-        await getTableSignature(
-            newTable
-        );
-
-
-        if (
-        newSignature &&
-        newSignature !==
-            previousSignature
-        ) {
-
-        return true;
-
-        }
-
-    }
-
-
+  if (!next) {
     return false;
+  }
+
+  const previousSignature = await getTableSignature(table);
+
+  await next.click();
+
+  /*
+   * Espera a issue-table mudar.
+   */
+
+  for (let attempt = 0; attempt < 40; attempt++) {
+    await page.waitForTimeout(300);
+
+    const newTable = await findDefectsTable(content).catch(() => null);
+
+    if (!newTable) {
+      continue;
     }
 
+    const newSignature = await getTableSignature(newTable);
 
-    /* =========================================================
+    if (newSignature && newSignature !== previousSignature) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/* =========================================================
     EXTRAI TODAS AS PÁGINAS
     ========================================================= */
 
-    async function extractAllDefects(
-    page: Page,
-    content: Locator
-    ): Promise<DashboardDefect[]> {
+async function extractAllDefects(page: Page, content: Locator): Promise<DashboardDefect[]> {
+  /*
+   * Map evita duplicar a mesma issue.
+   */
 
-    /*
-    * Map evita duplicar a mesma issue.
-    */
+  const defects = new Map<string, DashboardDefect>();
 
-    const defects =
-        new Map<
-        string,
-        DashboardDefect
-        >();
+  /*
+   * Apenas proteção contra loop infinito.
+   *
+   * NÃO é limite de quantidade de defects.
+   */
 
+  const MAX_PAGES = 100;
 
-    /*
-    * Apenas proteção contra loop infinito.
-    *
-    * NÃO é limite de quantidade de defects.
-    */
+  for (let currentPage = 1; currentPage <= MAX_PAGES; currentPage++) {
+    const table = await findDefectsTable(content);
 
-    const MAX_PAGES =
-        100;
+    const currentDefects = await extractCurrentPage(table);
 
+    console.log(`Dashboard página ${currentPage}: ${currentDefects.length} defects`);
 
-    for (
-        let currentPage = 1;
-        currentPage <= MAX_PAGES;
-        currentPage++
-    ) {
-
-        const table =
-        await findDefectsTable(
-            content
-        );
-
-
-        const currentDefects =
-        await extractCurrentPage(
-            table
-        );
-
-
-        console.log(
-        `Dashboard página ${currentPage}: ${currentDefects.length} defects`
-        );
-
-
-        for (
-        const defect
-        of currentDefects
-        ) {
-
-        defects.set(
-            defect.key,
-            defect
-        );
-
-        }
-
-
-        const moved =
-        await goToNextPage(
-            page,
-            content,
-            table
-        );
-
-
-        if (!moved) {
-
-        break;
-
-        }
-
+    for (const defect of currentDefects) {
+      defects.set(defect.key, defect);
     }
 
+    const moved = await goToNextPage(page, content, table);
 
-    return Array.from(
-        defects.values()
-    );
+    if (!moved) {
+      break;
     }
+  }
 
+  return Array.from(defects.values());
+}
 
-    /* =========================================================
+/* =========================================================
     DASHBOARD
     ========================================================= */
 
-    export async function extractDashboard(
-    page: Page,
-    pageId: string
-    ): Promise<DashboardData> {
+export async function extractDashboard(page: Page, pageId: string): Promise<DashboardData> {
+  const dashboardUrl = `${JIRA_URL}/secure/Dashboard.jspa?selectPageId=${encodeURIComponent(
+    pageId,
+  )}`;
 
-    const dashboardUrl =
-        `${JIRA_URL}/secure/Dashboard.jspa?selectPageId=${encodeURIComponent(
-        pageId
-        )}`;
+  console.log('\n');
 
+  console.log('========================================');
 
-    console.log('\n');
+  console.log(`Abrindo Dashboard ${pageId}`);
 
+  console.log('========================================');
 
-    console.log(
-        '========================================'
-    );
-
-
-    console.log(
-        `Abrindo Dashboard ${pageId}`
-    );
-
-
-    console.log(
-        '========================================'
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         ABRE DASHBOARD
         ===================================================== */
 
-    await page.goto(
-        dashboardUrl,
-        {
-        waitUntil:
-            'domcontentloaded',
+  await page.goto(dashboardUrl, {
+    waitUntil: 'domcontentloaded',
 
-        timeout:
-            60000
-        }
-    );
+    timeout: 60000,
+  });
 
+  console.log('Aguardando gadgets do Dashboard...');
 
-    console.log(
-        'Aguardando gadgets do Dashboard...'
-    );
+  /*
+   * Pequena espera inicial para o Jira
+   * começar a renderizar os gadgets.
+   */
 
+  await page.waitForTimeout(3000);
 
-    /*
-    * Pequena espera inicial para o Jira
-    * começar a renderizar os gadgets.
-    */
-
-    await page.waitForTimeout(
-        3000
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         SCROLL LENTO ATÉ O FINAL
         ===================================================== */
 
-    await slowScrollToBottom(
-        page
-    );
+  await slowScrollToBottom(page);
 
-
-    /* =====================================================
+  /* =====================================================
         LOCALIZA O BLOCO CORRETO
         ===================================================== */
 
-    const {
-        content,
-        rawTitle,
-        title
-    } =
-        await findOpenDefectsGadget(
-        page
-        );
+  const { content, rawTitle, title } = await findOpenDefectsGadget(page);
 
-
-    /* =====================================================
+  /* =====================================================
         EXTRAI OS DEFECTS
         ===================================================== */
 
-    const defects =
-        await extractAllDefects(
-        page,
-        content
-        );
+  const defects = await extractAllDefects(page, content);
 
+  console.log(`✅ Total Dashboard: ${defects.length} defects`);
 
-    console.log(
-        `✅ Total Dashboard: ${defects.length} defects`
-    );
-
-
-    /* =====================================================
+  /* =====================================================
         RESULTADO
         ===================================================== */
 
-    return {
+  return {
+    pageId,
 
-        pageId,
+    rawTitle,
 
-        rawTitle,
+    title,
 
-        title,
+    total: defects.length,
 
-        total:
-        defects.length,
-
-        defects
-
-    };
-    }
+    defects,
+  };
+}

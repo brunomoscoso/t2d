@@ -1,234 +1,88 @@
-    import {
-    Page
-    } from 'playwright';
+import { Page } from 'playwright';
 
-    import {
-    JIRA_URL
-    } from '../config/jira.config';
+import { JIRA_URL } from '../config/jira.config';
 
-    import {
-    SELECTORS
-    } from '../config/selectors';
+import { SELECTORS } from '../config/selectors';
 
-    import {
-    Report
-    } from '../types/report.types';
+import { Report } from '../types/report.types';
 
-    import {
-    extractTotalTests
-    } from './totalTests.extractor';
+import { extractTotalTests } from './totalTests.extractor';
 
-    import {
-    extractExecutionStatuses
-    } from './execution-status.extractor';
+import { extractExecutionStatuses } from './execution-status.extractor';
 
-    import {
-    extractIssueLinks
-    } from './issueLinks.extractor';
+import { extractIssueLinks } from './issueLinks.extractor';
 
-    import {
-    extractLabels
-    } from './labels.extractor';
+import { extractLabels } from './labels.extractor';
 
-    import {
-    extractMainStatus
-    } from './mainStatus.extractor';
+import { extractMainStatus } from './mainStatus.extractor';
 
-    import {
-    getPosition
-    } from '../utils/position.utils';
+import { getPosition } from '../utils/position.utils';
 
+// Extrai os dados usados pelos relatórios a partir de uma issue de execução.
+export async function extractPrit(page: Page, prit: string): Promise<Report> {
+  console.log('\n');
 
-    /* =========================================================
-    EXTRAI UM PRIT
-    ========================================================= */
+  console.log('========================================');
 
-    export async function extractPrit(
-    page: Page,
-    prit: string
-    ): Promise<Report> {
+  console.log(`Abrindo ${prit}`);
 
-    console.log('\n');
+  console.log('========================================');
 
-    console.log(
-        '========================================'
-    );
+  await page.goto(
+    `${JIRA_URL}/browse/${prit}`,
 
-    console.log(
-        `Abrindo ${prit}`
-    );
+    {
+      waitUntil: 'domcontentloaded',
+    },
+  );
 
-    console.log(
-        '========================================'
-    );
+  await page.locator(SELECTORS.title).waitFor({
+    state: 'visible',
 
+    timeout: 60000,
+  });
 
-    /* =====================================================
-        ABRE PRIT
-        ===================================================== */
+  const title = (await page.locator(SELECTORS.title).innerText()).trim();
 
-    await page.goto(
+  console.log(`Título: ${title}`);
 
-        `${JIRA_URL}/browse/${prit}`,
+  const mainStatus = await extractMainStatus(page);
 
-        {
-        waitUntil:
-            'domcontentloaded'
-        }
+  const labels = await extractLabels(page);
 
-    );
+  console.log('Labels:', labels);
 
+  const position = getPosition(labels, title);
 
-    /* =====================================================
-        AGUARDA TÍTULO
-        ===================================================== */
+  console.log(`Posição: ${position}`);
 
-    await page
-        .locator(
-        SELECTORS.title
-        )
-        .waitFor({
+  const executionStatuses = await extractExecutionStatuses(page);
 
-        state:
-            'visible',
+  const totalTests = await extractTotalTests(page);
 
-        timeout:
-            60000
+  await page.evaluate(() => {
+    window.scrollTo(0, document.body.scrollHeight);
+  });
 
-        });
+  await page.waitForTimeout(1000);
 
+  const issueLinks = await extractIssueLinks(page);
 
-    /* =====================================================
-        TÍTULO
-        ===================================================== */
+  return {
+    prit,
 
-    const title =
-        (
-        await page
-            .locator(
-            SELECTORS.title
-            )
-            .innerText()
-        )
-        .trim();
+    title,
 
+    mainStatus,
 
-    console.log(
-        `Título: ${title}`
-    );
+    labels,
 
+    position,
 
-    /* =====================================================
-        STATUS PRINCIPAL
-        ===================================================== */
+    totalTests,
 
-    const mainStatus =
-        await extractMainStatus(
-        page
-        );
+    executionStatuses,
 
-
-    /* =====================================================
-        LABELS
-        ===================================================== */
-
-    const labels =
-        await extractLabels(
-        page
-        );
-
-
-    console.log(
-        'Labels:',
-        labels
-    );
-
-
-    /* =====================================================
-        POSIÇÃO
-        ===================================================== */
-
-    const position =
-        getPosition(
-        labels,
-        title
-        );
-
-
-    console.log(
-        `Posição: ${position}`
-    );
-
-
-    /* =====================================================
-        EXECUTION STATUS
-        ===================================================== */
-
-    const executionStatuses =
-        await extractExecutionStatuses(
-        page
-        );
-
-
-    /* =====================================================
-        TOTAL TESTS
-        ===================================================== */
-
-    const totalTests =
-        await extractTotalTests(
-        page
-        );
-
-
-    /* =====================================================
-        ISSUE LINKS
-        ===================================================== */
-
-    await page.evaluate(
-        () => {
-
-        window.scrollTo(
-            0,
-            document.body.scrollHeight
-        );
-
-        }
-    );
-
-
-    await page.waitForTimeout(
-        1000
-    );
-
-
-    const issueLinks =
-        await extractIssueLinks(
-        page
-        );
-
-
-    /* =====================================================
-        RESULTADO
-        ===================================================== */
-
-    return {
-
-        prit,
-
-        title,
-
-        mainStatus,
-
-        labels,
-
-        position,
-
-        totalTests,
-
-        executionStatuses,
-
-        issueLinks
-
-    };
-
-    }
+    issueLinks,
+  };
+}

@@ -1,260 +1,123 @@
-    import {
-    Page
-    } from 'playwright';
+import { Page } from 'playwright';
 
-    import {
-    SELECTORS
-    } from '../config/selectors';
+import { SELECTORS } from '../config/selectors';
 
-    import {
-    ExecutionStatus
-    } from '../types/report.types';
+import { ExecutionStatus } from '../types/report.types';
 
+// Extrai as quantidades por status; não retorna uma lista vazia se a secção estiver incompleta.
+export async function extractExecutionStatuses(page: Page): Promise<ExecutionStatus[]> {
+  console.log('Procurando Overall Execution Status...');
 
-    export async function extractExecutionStatuses(
-    page: Page
-    ): Promise<ExecutionStatus[]> {
+  const overallStatus = page
+    .getByText('Overall Execution Status', {
+      exact: true,
+    })
+    .first();
 
-    console.log(
-        'Procurando Overall Execution Status...'
-    );
+  try {
+    await overallStatus.waitFor({
+      state: 'visible',
+      timeout: 20000,
+    });
+  } catch (error) {
+    throw new Error('Overall Execution Status não encontrado após 20 segundos.', { cause: error });
+  }
 
+  await overallStatus.scrollIntoViewIfNeeded();
 
-    const overallStatus =
-        page
-        .getByText(
-            'Overall Execution Status',
-            {
-            exact: true
-            }
-        )
-        .first();
+  await page.waitForTimeout(1000);
 
+  // Primeiro tenta ler os elementos estruturados do Xray.
+  const countsLocator = page.locator(SELECTORS.executionStatusCount);
 
-    try {
-        await overallStatus.waitFor({
-            state: 'visible',
-            timeout: 20000,
-        });
-    } catch (error) {
-        throw new Error(
-            'Overall Execution Status não encontrado após 20 segundos.',
-            { cause: error },
-        );
+  const namesLocator = page.locator(SELECTORS.executionStatusName);
+
+  const totalCounts = await countsLocator.count();
+
+  const totalNames = await namesLocator.count();
+
+  if (totalCounts > 0 && totalNames > 0) {
+    const counts = await countsLocator.allTextContents();
+
+    const names = await namesLocator.allTextContents();
+
+    const statuses: ExecutionStatus[] = [];
+
+    if (counts.length !== names.length) {
+      throw new Error(
+        `Overall Execution Status incompleto: foram encontrados ${names.length} status e ${counts.length} quantidades.`,
+      );
     }
 
+    for (let i = 0; i < counts.length; i++) {
+      const quantidade = Number(counts[i].trim());
 
-    await overallStatus
-        .scrollIntoViewIfNeeded();
+      const status = names[i].trim();
 
+      if (!status || !Number.isSafeInteger(quantidade) || quantidade < 0) {
+        throw new Error(`Overall Execution Status contém dados inválidos na linha ${i + 1}.`);
+      }
 
-    await page.waitForTimeout(
-        1000
-    );
-
-
-    /* =====================================================
-        ESTRATÉGIA PRINCIPAL
-        ===================================================== */
-
-    const countsLocator =
-        page.locator(
-        SELECTORS.executionStatusCount
-        );
-
-
-    const namesLocator =
-        page.locator(
-        SELECTORS.executionStatusName
-        );
-
-
-    const totalCounts =
-        await countsLocator.count();
-
-
-    const totalNames =
-        await namesLocator.count();
-
-
-    if (
-        totalCounts > 0 &&
-        totalNames > 0
-    ) {
-
-        const counts =
-        await countsLocator
-            .allTextContents();
-
-
-        const names =
-        await namesLocator
-            .allTextContents();
-
-
-        const statuses:
-        ExecutionStatus[] = [];
-
-
-        if (counts.length !== names.length) {
-            throw new Error(
-                `Overall Execution Status incompleto: foram encontrados ${names.length} status e ${counts.length} quantidades.`,
-            );
-        }
-
-        for (
-        let i = 0;
-        i < counts.length;
-        i++
-        ) {
-
-        const quantidade =
-            Number(
-            counts[i]
-                .trim()
-            );
-
-
-        const status =
-            names[i]
-            .trim();
-
-
-        if (
-            !status ||
-            !Number.isSafeInteger(quantidade) ||
-            quantidade < 0
-        ) {
-            throw new Error(
-                `Overall Execution Status contém dados inválidos na linha ${i + 1}.`,
-            );
-        }
-
-        statuses.push({
-            status,
-            quantidade,
-        });
-
-        }
-
-        if (statuses.length === 0) {
-            throw new Error('Overall Execution Status foi encontrado, mas não contém resultados.');
-        }
-        return statuses;
-
+      statuses.push({
+        status,
+        quantidade,
+      });
     }
-
-
-    /* =====================================================
-        FALLBACK
-        ===================================================== */
-
-    console.log(
-        'ℹ️ Utilizando fallback de texto.'
-    );
-
-
-    const summaryText =
-        await overallStatus.evaluate(
-        element => {
-
-            let parent =
-            element.parentElement;
-
-
-            while (parent) {
-
-            const text =
-                parent.innerText;
-
-
-            if (
-                /Total Tests:\s*\d+/i
-                .test(text)
-            ) {
-
-                return text;
-
-            }
-
-
-            parent =
-                parent.parentElement;
-
-            }
-
-
-            return '';
-
-        }
-        );
-
-
-    if (!summaryText) {
-        throw new Error(
-            'Overall Execution Status não contém dados nem o total de testes para validar o fallback.',
-        );
-    }
-
-
-    const statusPart =
-        summaryText
-        .replace(
-            /Overall Execution Status/i,
-            ''
-        )
-        .split(
-            /Total Tests:/i
-        )[0]
-        .replace(
-            /\s+/g,
-            ' '
-        )
-        .trim();
-
-
-    const statuses:
-        ExecutionStatus[] = [];
-
-
-    const regex =
-        /(\d+)\s+([A-Za-z][A-Za-z0-9 _-]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
-
-
-    let match:
-        RegExpExecArray | null;
-
-
-    while (
-        (
-        match =
-            regex.exec(
-            statusPart
-            )
-        ) !== null
-    ) {
-
-        statuses.push({
-
-        quantidade:
-            Number(
-            match[1]
-            ),
-
-        status:
-            match[2]
-            .trim()
-            .toUpperCase()
-
-        });
-
-    }
-
 
     if (statuses.length === 0) {
-        throw new Error('Não foi possível extrair nenhum status de Overall Execution Status.');
+      throw new Error('Overall Execution Status foi encontrado, mas não contém resultados.');
     }
-
     return statuses;
+  }
 
+  // Algumas versões do Jira não expõem os seletores do Xray; nesse caso, analisa o texto próximo.
+  console.log('ℹ️ Utilizando fallback de texto.');
+
+  const summaryText = await overallStatus.evaluate((element) => {
+    let parent = element.parentElement;
+
+    while (parent) {
+      const text = parent.innerText;
+
+      if (/Total Tests:\s*\d+/i.test(text)) {
+        return text;
+      }
+
+      parent = parent.parentElement;
     }
+
+    return '';
+  });
+
+  if (!summaryText) {
+    throw new Error(
+      'Overall Execution Status não contém dados nem o total de testes para validar o fallback.',
+    );
+  }
+
+  const statusPart = summaryText
+    .replace(/Overall Execution Status/i, '')
+    .split(/Total Tests:/i)[0]
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const statuses: ExecutionStatus[] = [];
+
+  const regex = /(\d+)\s+([A-Za-z][A-Za-z0-9 _-]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
+
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(statusPart)) !== null) {
+    statuses.push({
+      quantidade: Number(match[1]),
+
+      status: match[2].trim().toUpperCase(),
+    });
+  }
+
+  if (statuses.length === 0) {
+    throw new Error('Não foi possível extrair nenhum status de Overall Execution Status.');
+  }
+
+  return statuses;
+}

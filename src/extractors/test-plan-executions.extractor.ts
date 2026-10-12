@@ -12,7 +12,7 @@ export async function extractTestPlanExecutions(
 ): Promise<ReleaseLinks['testPlans']> {
   const plans = structuredClone(configured);
   const baseUrl = jiraUrl.replace(/\/+$/, '');
-  Object.values(plans).forEach(plan => {
+  Object.values(plans).forEach((plan) => {
     plan.prit = normalizeTestPlanPrit(plan.prit);
     delete plan.executionPrits;
   });
@@ -21,12 +21,15 @@ export async function extractTestPlanExecutions(
     try {
       const keys = new Set<string>();
       let startAt = 0;
+      // A pesquisa é paginada para não truncar planos com mais de 100 execuções.
       while (true) {
         const response = await request.get(`${baseUrl}/rest/api/2/search`, {
           headers: { Accept: 'application/json' },
           params: {
             jql: `issue in testPlanTestExecutions("${prit}") ORDER BY key ASC`,
-            fields: 'key', startAt, maxResults: 100,
+            fields: 'key',
+            startAt,
+            maxResults: 100,
           },
           timeout: 15000,
         });
@@ -37,16 +40,28 @@ export async function extractTestPlanExecutions(
         } finally {
           await response.dispose();
         }
-        if (!data || !Array.isArray(data.issues) || !Number.isSafeInteger(data.total)
-          || data.total < 0 || data.startAt !== startAt) {
+        if (
+          !data ||
+          !Array.isArray(data.issues) ||
+          !Number.isSafeInteger(data.total) ||
+          data.total < 0 ||
+          data.startAt !== startAt
+        ) {
           throw new Error('Resposta de pesquisa inválida');
         }
         for (const issue of data.issues) {
-          if (!issue || typeof issue.key !== 'string' || !/^[A-Z][A-Z0-9_]*-\d+$/i.test(issue.key)) {
+          if (
+            !issue ||
+            typeof issue.key !== 'string' ||
+            !/^[A-Z][A-Z0-9_]*-\d+$/i.test(issue.key)
+          ) {
             throw new Error('Execução sem identificador válido');
           }
           const key = issue.key.toUpperCase();
-          if (keys.has(key)) throw new Error('Paginação repetiu uma execução; a lista pode ter mudado durante a consulta');
+          if (keys.has(key))
+            throw new Error(
+              'Paginação repetiu uma execução; a lista pode ter mudado durante a consulta',
+            );
           keys.add(key);
         }
         startAt += data.issues.length;
@@ -54,17 +69,21 @@ export async function extractTestPlanExecutions(
         if (!data.issues.length) throw new Error('Paginação incompleta');
       }
     } catch (error) {
-      console.warn(`⚠️ Não foi possível obter as execuções de ${prit}; o Overall deste plano ficará indisponível.`,
-        error instanceof Error ? error.message : String(error));
+      console.warn(
+        `⚠️ Não foi possível obter as execuções de ${prit}; o Overall deste plano ficará indisponível.`,
+        error instanceof Error ? error.message : String(error),
+      );
       return undefined;
     }
   }
 
   const requests = new Map<string, Promise<string[] | undefined>>();
-  await Promise.all(Object.values(plans).map(async plan => {
-    if (!plan.prit) return;
-    if (!requests.has(plan.prit)) requests.set(plan.prit, readExecutions(plan.prit));
-    plan.executionPrits = await requests.get(plan.prit);
-  }));
+  await Promise.all(
+    Object.values(plans).map(async (plan) => {
+      if (!plan.prit) return;
+      if (!requests.has(plan.prit)) requests.set(plan.prit, readExecutions(plan.prit));
+      plan.executionPrits = await requests.get(plan.prit);
+    }),
+  );
   return plans;
 }

@@ -1,73 +1,69 @@
-    export type TestPlanLink = {
-    prit: string;
-    title?: string;
-    // undefined: consulta indisponível; []: consulta concluída sem execuções.
-    executionPrits?: string[];
-    };
+export type TestPlanLink = {
+  prit: string;
+  title?: string;
+  // undefined: consulta indisponível; []: consulta concluída sem execuções.
+  executionPrits?: string[];
+};
 
-    export type ReleaseLinks = {
-    testPlans: Record<'smokes' | 'certification' | 'regression' | 'defectFixing', TestPlanLink>;
-    dashboardPageId: string;
-    dashboardTitle?: string;
-    };
+export type ReleaseLinks = {
+  testPlans: Record<'smokes' | 'certification' | 'regression' | 'defectFixing', TestPlanLink>;
+  dashboardPageId: string;
+  dashboardTitle?: string;
+};
 
-    /* =========================================================
+/* =========================================================
     EXECUTION STATUS
     ========================================================= */
 
-    export type ExecutionStatus = {
-    status: string;
-    quantidade: number;
-    };
+export type ExecutionStatus = {
+  status: string;
+  quantidade: number;
+};
 
-
-    /* =========================================================
+/* =========================================================
     ISSUE LINK
     ========================================================= */
 
-    export type IssueLink = {
-    relation: string;
-    prit: string;
-    titulo: string;
-    status: string;
-    priority: string;
-    };
+export type IssueLink = {
+  relation: string;
+  prit: string;
+  titulo: string;
+  status: string;
+  priority: string;
+};
 
-
-    /* =========================================================
+/* =========================================================
     REPORT
     ========================================================= */
 
-    export type Report = {
-    prit: string;
+export type Report = {
+  prit: string;
 
-    title: string;
+  title: string;
 
-    mainStatus: string;
+  mainStatus: string;
 
-    labels: string[];
+  labels: string[];
 
-    position: string;
+  position: string;
 
-    totalTests: number | null;
+  totalTests: number | null;
 
-    executionStatuses: ExecutionStatus[];
+  executionStatuses: ExecutionStatus[];
 
-    issueLinks: IssueLink[];
-    };
+  issueLinks: IssueLink[];
+};
 
-
-    /* =========================================================
+/* =========================================================
     POSITION REPORT
     ========================================================= */
 
-    export type PositionReport = {
-    position: string;
-    reports: Report[];
-    };
+export type PositionReport = {
+  position: string;
+  reports: Report[];
+};
 
-
-    /* =========================================================
+/* =========================================================
     DASHBOARD DEFECT
     =========================================================
     *
@@ -86,45 +82,44 @@
     * Created
     */
 
-    export type DashboardDefect = {
-    issueType: string;
+export type DashboardDefect = {
+  issueType: string;
 
-    priority: string;
+  priority: string;
 
-    key: string;
+  key: string;
 
-    summary: string;
+  summary: string;
 
-    status: string;
+  status: string;
 
-    assignee: string;
+  assignee: string;
 
-    created: string;
-    };
+  created: string;
+};
 
-
-    /* =========================================================
+/* =========================================================
     DASHBOARD DATA
     ========================================================= */
 
-    export type DashboardData = {
-    pageId: string;
+export type DashboardData = {
+  pageId: string;
 
-    /*
-    * Nome completo encontrado no Jira.
-    */
-    rawTitle: string;
+  /*
+   * Nome completo encontrado no Jira.
+   */
+  rawTitle: string;
 
-    /*
-    * Nome utilizado no relatório.
-    *
-    * Exemplo:
-    *
-    * Release v5.3.0.36 Certification Open Defects
-    */
-    title: string;
+  /*
+   * Nome utilizado no relatório.
+   *
+   * Exemplo:
+   *
+   * Release v5.3.0.36 Certification Open Defects
+   */
+  title: string;
 
-    total: number;
+  total: number;
 
-    defects: DashboardDefect[];
-    };
+  defects: DashboardDefect[];
+};

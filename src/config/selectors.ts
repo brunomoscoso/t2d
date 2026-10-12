@@ -1,124 +1,99 @@
-    export const SELECTORS = {
-
-    /* =====================================================
+export const SELECTORS = {
+  /* =====================================================
         PRIT
         ===================================================== */
 
-    title:
-        '#summary-val',
+  title: '#summary-val',
 
-
-    /* =====================================================
+  /* =====================================================
         STATUS PRINCIPAL DO PRIT
         ===================================================== */
 
-    mainStatusCandidates: [
+  mainStatusCandidates: [
+    '#status-val',
 
-        '#status-val',
+    'span#status-val',
 
-        'span#status-val',
+    '.status-view span.dropdown-text',
 
-        '.status-view span.dropdown-text',
+    'span.dropdown-text',
+  ],
 
-        'span.dropdown-text'
-
-    ],
-
-
-    /* =====================================================
+  /* =====================================================
         XRAY EXECUTION STATUS
         ===================================================== */
 
-    executionStatusCount:
-        'span.testexec-status-count',
+  executionStatusCount: 'span.testexec-status-count',
 
-    executionStatusName:
-        'span.testexec-status-name',
+  executionStatusName: 'span.testexec-status-name',
 
-
-    /* =====================================================
+  /* =====================================================
         ISSUE LINKS
         ===================================================== */
 
-    issueLinkKey:
-        'a.issue-link.link-title',
+  issueLinkKey: 'a.issue-link.link-title',
 
-    issueLinkSummary:
-        'span.link-summary',
+  issueLinkSummary: 'span.link-summary',
 
-    issueLinkStatus:
-        'span.jira-issue-status-lozenge',
+  issueLinkStatus: 'span.jira-issue-status-lozenge',
 
+  issueLinkPriorityCandidates: [
+    '.priority img',
 
-    issueLinkPriorityCandidates: [
+    '[class*="priority"] img',
 
-        '.priority img',
+    '[class*="priority"]',
 
-        '[class*="priority"] img',
+    'img[alt]',
 
-        '[class*="priority"]',
+    'img[title]',
 
-        'img[alt]',
+    '[data-priority]',
 
-        'img[title]',
+    '[aria-label]',
+  ],
 
-        '[data-priority]',
-
-        '[aria-label]'
-
-    ],
-
-
-    /* =====================================================
+  /* =====================================================
         LABELS
         ===================================================== */
 
-    labelCandidates: [
+  labelCandidates: [
+    '#labels-wrap a',
 
-        '#labels-wrap a',
+    '#labels-wrap .value',
 
-        '#labels-wrap .value',
+    '#labels-wrap span',
 
-        '#labels-wrap span',
+    '[data-field-id="labels"] a',
 
-        '[data-field-id="labels"] a',
+    '[data-field-id="labels"] span',
+  ],
 
-        '[data-field-id="labels"] span'
-
-    ],
-
-
-    /* =====================================================
+  /* =====================================================
         DASHBOARD
         ===================================================== */
 
-    dashboard: {
+  dashboard: {
+    /*
+     * Título do gadget.
+     */
+    gadgetTitle: 'h2.dashboard-item-title',
 
     /*
-    * Título do gadget.
-    */
-    gadgetTitle:
-        'h2.dashboard-item-title',
+     * A tabela será procurada SOMENTE
+     * dentro do dashboard-item-content
+     * correspondente ao título encontrado.
+     */
+    table: 'table.issue-table',
 
     /*
-    * A tabela será procurada SOMENTE
-    * dentro do dashboard-item-content
-    * correspondente ao título encontrado.
-    */
-    table:
-        'table.issue-table',
+     * Cada linha é uma issue Jira.
+     */
+    rows: 'tbody tr.issuerow',
 
     /*
-    * Cada linha é uma issue Jira.
-    */
-    rows:
-        'tbody tr.issuerow',
-
-    /*
-    * Células da issue.
-    */
-    cells:
-        'td'
-
-    }
-}
+     * Células da issue.
+     */
+    cells: 'td',
+  },
+};

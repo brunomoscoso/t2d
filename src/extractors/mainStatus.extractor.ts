@@ -1,165 +1,90 @@
-    import {
-    Page
-    } from 'playwright';
+import { Page } from 'playwright';
 
-    import {
-    SELECTORS
-    } from '../config/selectors';
+import { SELECTORS } from '../config/selectors';
 
-
-    /* =========================================================
+/* =========================================================
     LIMPA STATUS
     ========================================================= */
 
-    function cleanStatus(
-    status: string
-    ): string {
+function cleanStatus(status: string): string {
+  return status.replace(/\s+/g, ' ').trim().toUpperCase();
+}
 
-    return status
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toUpperCase();
-    }
-
-
-    /* =========================================================
+/* =========================================================
     EXTRAI STATUS PRINCIPAL
     ========================================================= */
 
-    export async function extractMainStatus(
-    page: Page
-    ): Promise<string> {
+export async function extractMainStatus(page: Page): Promise<string> {
+  console.log('Procurando status principal do PRIT...');
 
-    console.log(
-        'Procurando status principal do PRIT...'
-    );
+  for (const selector of SELECTORS.mainStatusCandidates) {
+    const elements = page.locator(selector);
 
+    const total = await elements.count();
 
-    for (
-        const selector
-        of SELECTORS.mainStatusCandidates
-    ) {
+    if (total === 0) {
+      continue;
+    }
 
-        const elements =
-        page.locator(
-            selector
-        );
+    for (let i = 0; i < total; i++) {
+      const element = elements.nth(i);
 
+      const visible = await element.isVisible().catch(() => false);
 
-        const total =
-        await elements.count();
-
-
-        if (total === 0) {
+      if (!visible) {
         continue;
-        }
+      }
 
+      const text = (await element.innerText().catch(() => '')).trim();
 
-        for (
-        let i = 0;
-        i < total;
-        i++
-        ) {
+      if (!text) {
+        continue;
+      }
 
-        const element =
-            elements.nth(i);
+      const status = cleanStatus(text);
 
+      /*
+       * Evita selecionar dropdowns
+       * que não sejam status.
+       */
 
-        const visible =
-            await element
-            .isVisible()
-            .catch(
-                () => false
-            );
+      const knownStatuses = [
+        'DONE',
 
+        'IN PROGRESS',
 
-        if (!visible) {
-            continue;
-        }
+        'TO DO',
 
+        'OPEN',
 
-        const text =
-            (
-            await element
-                .innerText()
-                .catch(
-                () => ''
-                )
-            )
-            .trim();
+        'CLOSED',
 
+        'RESOLVED',
 
-        if (!text) {
-            continue;
-        }
+        'BLOCKED',
 
+        'EXECUTING',
 
-        const status =
-            cleanStatus(
-            text
-            );
+        'ABORTED',
 
+        'FOR TESTING',
 
-        /*
-        * Evita selecionar dropdowns
-        * que não sejam status.
-        */
+        'FOR_TESTING',
 
-        const knownStatuses = [
+        'PENDING 3RD',
 
-            'DONE',
+        'PENDING_3RD',
+      ];
 
-            'IN PROGRESS',
+      if (knownStatuses.includes(status)) {
+        console.log(`Status principal: ${status}`);
 
-            'TO DO',
-
-            'OPEN',
-
-            'CLOSED',
-
-            'RESOLVED',
-
-            'BLOCKED',
-
-            'EXECUTING',
-
-            'ABORTED',
-
-            'FOR TESTING',
-
-            'FOR_TESTING',
-
-            'PENDING 3RD',
-
-            'PENDING_3RD'
-
-        ];
-
-
-        if (
-            knownStatuses.includes(
-            status
-            )
-        ) {
-
-            console.log(
-            `Status principal: ${status}`
-            );
-
-
-            return status;
-
-        }
-
-        }
-
+        return status;
+      }
     }
+  }
 
+  console.log('⚠️ Status principal não encontrado.');
 
-    console.log(
-        '⚠️ Status principal não encontrado.'
-    );
-
-
-    return 'UNKNOWN';
-    }
+  return 'UNKNOWN';
+}

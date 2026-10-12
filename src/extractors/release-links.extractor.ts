@@ -16,14 +16,18 @@ export async function extractReleaseLinks(
   const baseUrl = jiraUrl.replace(/\/+$/, '');
   const links = structuredClone(configured);
   const plans = Object.values(links.testPlans);
-  plans.forEach(plan => {
+  plans.forEach((plan) => {
     plan.prit = normalizeTestPlanPrit(plan.prit);
     delete plan.title;
   });
   links.dashboardPageId = links.dashboardPageId.trim();
   delete links.dashboardTitle;
 
-  async function readTitle(path: string, label: string, pick: (data: JiraTitleData) => unknown): Promise<string | undefined> {
+  async function readTitle(
+    path: string,
+    label: string,
+    pick: (data: JiraTitleData) => unknown,
+  ): Promise<string | undefined> {
     try {
       const response = await request.get(`${baseUrl}${path}`, {
         headers: { Accept: 'application/json' },
@@ -32,32 +36,44 @@ export async function extractReleaseLinks(
       try {
         if (!response.ok()) throw new Error(`HTTP ${response.status()}`);
         const title = pick(await response.json());
-        if (typeof title !== 'string' || !title.trim()) throw new Error('Título ausente na resposta do Jira');
+        if (typeof title !== 'string' || !title.trim())
+          throw new Error('Título ausente na resposta do Jira');
         return title.trim();
       } finally {
         await response.dispose();
       }
     } catch (error) {
-      console.warn(`⚠️ Não foi possível obter o título de ${label}; o link será mantido pelo identificador.`,
-        error instanceof Error ? error.message : String(error));
+      console.warn(
+        `⚠️ Não foi possível obter o título de ${label}; o link será mantido pelo identificador.`,
+        error instanceof Error ? error.message : String(error),
+      );
       return undefined;
     }
   }
 
   const titles = new Map<string, Promise<string | undefined>>();
   await Promise.all([
-    ...plans.map(async plan => {
+    ...plans.map(async (plan) => {
       if (!plan.prit) return;
       if (!titles.has(plan.prit)) {
-        titles.set(plan.prit, readTitle(`/rest/api/2/issue/${encodeURIComponent(plan.prit)}?fields=summary`,
-          plan.prit, data => data?.fields?.summary));
+        titles.set(
+          plan.prit,
+          readTitle(
+            `/rest/api/2/issue/${encodeURIComponent(plan.prit)}?fields=summary`,
+            plan.prit,
+            (data) => data?.fields?.summary,
+          ),
+        );
       }
       plan.title = await titles.get(plan.prit);
     }),
     (async () => {
       if (!links.dashboardPageId) return;
-      links.dashboardTitle = await readTitle(`/rest/api/2/dashboard/${encodeURIComponent(links.dashboardPageId)}`,
-        `Dashboard ${links.dashboardPageId}`, data => data?.name);
+      links.dashboardTitle = await readTitle(
+        `/rest/api/2/dashboard/${encodeURIComponent(links.dashboardPageId)}`,
+        `Dashboard ${links.dashboardPageId}`,
+        (data) => data?.name,
+      );
     })(),
   ]);
   return links;

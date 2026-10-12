@@ -1,59 +1,23 @@
-    import {
-    Page
-    } from 'playwright';
+import { Page } from 'playwright';
+// Lê o total apresentado pelo Jira; null indica que o campo não estava disponível.
+export async function extractTotalTests(page: Page): Promise<number | null> {
+  const locator = page.getByText(/Total Tests:\s*\d+/i).first();
 
+  const exists = await locator.isVisible().catch(() => false);
 
-    export async function extractTotalTests(
-    page: Page
-    ): Promise<number | null> {
+  if (!exists) {
+    console.log('⚠️ Total Tests não encontrado.');
 
-    const locator =
-        page
-        .getByText(
-            /Total Tests:\s*\d+/i
-        )
-        .first();
+    return null;
+  }
 
+  const text = await locator.innerText();
 
-    const exists =
-        await locator
-        .isVisible()
-        .catch(
-            () => false
-        );
+  const match = text.match(/Total Tests:\s*(\d+)/i);
 
+  if (!match) {
+    return null;
+  }
 
-    if (!exists) {
-
-        console.log(
-        '⚠️ Total Tests não encontrado.'
-        );
-
-        return null;
-
-    }
-
-
-    const text =
-        await locator
-        .innerText();
-
-
-    const match =
-        text.match(
-        /Total Tests:\s*(\d+)/i
-        );
-
-
-    if (!match) {
-
-        return null;
-
-    }
-
-
-    return Number(
-        match[1]
-    );
-
-    }
+  return Number(match[1]);
+}

@@ -3,7 +3,10 @@ import { POSITIONS } from '../config/positions.config';
 import type { IssueLink, PositionReport } from '../types/report.types';
 import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 
-const priorities: Record<string, { label: string; color: string; background: string; rank: number }> = {
+const priorities: Record<
+  string,
+  { label: string; color: string; background: string; rank: number }
+> = {
   highest: { label: 'Crítica', color: '#ae2e24', background: '#ffedeb', rank: 0 },
   high: { label: 'Alta', color: '#a54800', background: '#fff3eb', rank: 1 },
   medium: { label: 'Média', color: '#875e00', background: '#fff7d6', rank: 2 },
@@ -12,11 +15,17 @@ const priorities: Record<string, { label: string; color: string; background: str
 };
 const unknownPriority = { label: 'Não definida', color: '#5e6c84', background: '#f1f2f4', rank: 5 };
 const getPriority = (value: string) => priorities[value.trim().toLowerCase()] ?? unknownPriority;
-const displayPosition = (position: string) => position === 'Tangerina' ? 'Tangerina PT' : position;
+const displayPosition = (position: string) =>
+  position === 'Tangerina' ? 'Tangerina PT' : position;
 
 function normalize(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
-    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function titleDetails(title: string): { positions: string[]; summary: string } {
@@ -24,7 +33,9 @@ function titleDetails(title: string): { positions: string[]; summary: string } {
   const metadata = normalize(prefix.replace(/[\[\]]/g, ' '));
   const positions = new Set<string>();
   // Suporta tanto [COCO][PT][SP] como [COCO SP/PT] e [Cyber PT].
-  for (const match of metadata.matchAll(/\b(COCO|CYBER)\s+((?:PT|SP)(?:\s*(?:[/,&]|\bAND\b|\bE\b)?\s*(?:PT|SP))?)\b/g)) {
+  for (const match of metadata.matchAll(
+    /\b(COCO|CYBER)\s+((?:PT|SP)(?:\s*(?:[/,&]|\bAND\b|\bE\b)?\s*(?:PT|SP))?)\b/g,
+  )) {
     const name = match[1] === 'COCO' ? 'COCO' : 'Cyber';
     for (const country of match[2].match(/PT|SP/g) ?? []) positions.add(`${name} ${country}`);
   }
@@ -32,16 +43,22 @@ function titleDetails(title: string): { positions: string[]; summary: string } {
   if (tangerina) positions.add(`Tangerina ${tangerina[1] ?? 'PT'}`);
   for (const definition of POSITIONS) {
     if (/^(COCO|Cyber|Tangerina)\b/.test(definition.name)) continue;
-    if ([definition.name, ...definition.aliases].some(alias =>
-      ` ${metadata.replace(/[^A-Z0-9 ]/g, ' ')} `.includes(` ${normalize(alias)} `))) {
+    if (
+      [definition.name, ...definition.aliases].some((alias) =>
+        ` ${metadata.replace(/[^A-Z0-9 ]/g, ' ')} `.includes(` ${normalize(alias)} `),
+      )
+    ) {
       positions.add(definition.name);
     }
   }
   // PROD aparece também fora dos colchetes, entre os qualificadores do título.
   const productionTag = /(?:^|\s+[-–—]\s+)PROD(?=\s+[-–—]\s+|$)/gi;
   if (/\bPROD\b/.test(metadata) || productionTag.test(title)) positions.add('PROD');
-  const summary = title.slice(prefix.length).replace(productionTag, '')
-    .replace(/^\s*[-–—:]\s*/, '').trim();
+  const summary = title
+    .slice(prefix.length)
+    .replace(productionTag, '')
+    .replace(/^\s*[-–—:]\s*/, '')
+    .trim();
   return { positions: [...positions], summary };
 }
 
@@ -61,7 +78,12 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
         const key = issue.prit.trim().toUpperCase();
         if (!key || issue.relation.trim().toLowerCase() !== 'created') continue;
         if (!defects.has(key)) {
-          defects.set(key, { key, issue: { ...issue }, positions: new Set(), fallbackPositions: new Set() });
+          defects.set(key, {
+            key,
+            issue: { ...issue },
+            positions: new Set(),
+            fallbackPositions: new Set(),
+          });
         } else {
           const saved = defects.get(key)!.issue;
           if (!saved.titulo.trim()) saved.titulo = issue.titulo;
@@ -79,30 +101,41 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
       for (const issue of report.issueLinks) {
         const defect = defects.get(issue.prit.trim().toUpperCase());
         if (!defect) continue;
-        titleDetails(issue.titulo).positions.forEach(name => defect.positions.add(name));
+        titleDetails(issue.titulo).positions.forEach((name) => defect.positions.add(name));
         defect.fallbackPositions.add(displayPosition(position.position));
       }
     }
   }
 
-  const positionOrder = POSITIONS.map(position => displayPosition(position.name));
-  const sorted = [...defects.values()].sort((a, b) =>
-    getPriority(a.issue.priority).rank - getPriority(b.issue.priority).rank
-    || a.key.localeCompare(b.key, undefined, { numeric: true }));
-  const cellStyle = 'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
-  const badgeStyle = 'display:inline-block;box-sizing:border-box;max-width:100%;padding:4px;border-radius:6px;font-size:12px;font-weight:bold;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
-  const rows = sorted.map((defect, index) => {
-    const priority = getPriority(defect.issue.priority);
-    const statusColors = getIssueStatusColors(defect.issue.status);
-    const names = [...(defect.positions.size ? defect.positions : defect.fallbackPositions)]
-      .sort((a, b) => {
-        const index = (name: string) => positionOrder.includes(name) ? positionOrder.indexOf(name) : positionOrder.length;
-        return index(a) - index(b) || a.localeCompare(b);
-      });
-    const summary = titleDetails(defect.issue.titulo).summary || 'Sem resumo';
-    const status = defect.issue.status.trim().replace(/[_-]+/g, ' ').toLowerCase()
-      .replace(/\b\w/g, character => character.toUpperCase()) || 'Sem estado';
-    return `<tr data-sprint-defect="${escapeHtml(defect.key)}" style="background:${index % 2 ? '#f8faff' : '#ffffff'};">
+  const positionOrder = POSITIONS.map((position) => displayPosition(position.name));
+  const sorted = [...defects.values()].sort(
+    (a, b) =>
+      getPriority(a.issue.priority).rank - getPriority(b.issue.priority).rank ||
+      a.key.localeCompare(b.key, undefined, { numeric: true }),
+  );
+  const cellStyle =
+    'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+  const badgeStyle =
+    'display:inline-block;box-sizing:border-box;max-width:100%;padding:4px;border-radius:6px;font-size:12px;font-weight:bold;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+  const rows = sorted
+    .map((defect, index) => {
+      const priority = getPriority(defect.issue.priority);
+      const statusColors = getIssueStatusColors(defect.issue.status);
+      const names = [...(defect.positions.size ? defect.positions : defect.fallbackPositions)].sort(
+        (a, b) => {
+          const index = (name: string) =>
+            positionOrder.includes(name) ? positionOrder.indexOf(name) : positionOrder.length;
+          return index(a) - index(b) || a.localeCompare(b);
+        },
+      );
+      const summary = titleDetails(defect.issue.titulo).summary || 'Sem resumo';
+      const status =
+        defect.issue.status
+          .trim()
+          .replace(/[_-]+/g, ' ')
+          .toLowerCase()
+          .replace(/\b\w/g, (character) => character.toUpperCase()) || 'Sem estado';
+      return `<tr data-sprint-defect="${escapeHtml(defect.key)}" style="background:${index % 2 ? '#f8faff' : '#ffffff'};">
       <td data-defect-priority style="${cellStyle}"><span style="${badgeStyle}background:${priority.background};color:${priority.color};"><span aria-hidden="true">●</span> ${priority.label}</span></td>
       <td style="${cellStyle}"><a data-position-defect="${escapeHtml(defect.key)}"
         href="${escapeHtml(`${JIRA_URL.replace(/\/$/, '')}/browse/${encodeURIComponent(defect.key)}`)}"
@@ -111,7 +144,8 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
       <td data-defect-summary style="${cellStyle}">${escapeHtml(summary)}</td>
       <td data-defect-status style="${cellStyle}"><span style="${badgeStyle}background:${statusColors.background};color:${statusColors.color};border:1px solid ${statusColors.border};">${escapeHtml(status)}</span></td>
     </tr>`;
-  }).join('');
+    })
+    .join('');
   const headers = [
     { label: 'Prioridade', width: '13%' },
     { label: 'PRIT', width: '15%' },

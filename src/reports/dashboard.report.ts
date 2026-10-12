@@ -1,43 +1,21 @@
-    import {
-    JIRA_URL
-    } from '../config/jira.config';
+import { JIRA_URL } from '../config/jira.config';
 
-    import {
-    DashboardData
-    } from '../types/report.types';
+import { DashboardData } from '../types/report.types';
 
-    import {
-    escapeHtml,
-    getIssueStatusColors,
-    getPriorityMeta
-    } from '../utils/html.utils';
+import { escapeHtml, getIssueStatusColors, getPriorityMeta } from '../utils/html.utils';
 
-
-    /* =========================================================
+/* =========================================================
     LINHAS
     ========================================================= */
 
-    function createDashboardRows(
-    dashboard: DashboardData
-    ): string {
+function createDashboardRows(dashboard: DashboardData): string {
+  return dashboard.defects
+    .map((defect) => {
+      const priority = getPriorityMeta(defect.priority);
 
-    return dashboard.defects
-        .map(
-        defect => {
+      const status = getIssueStatusColors(defect.status);
 
-            const priority =
-            getPriorityMeta(
-                defect.priority
-            );
-
-
-            const status =
-            getIssueStatusColors(
-                defect.status
-            );
-
-
-            return `
+      return `
 
             <tr>
 
@@ -221,22 +199,16 @@
             </tr>
 
             `;
+    })
+    .join('');
+}
 
-        }
-        )
-        .join('');
-    }
-
-
-    /* =========================================================
+/* =========================================================
     BLOCO
     ========================================================= */
 
-    function createDashboardBlock(
-    dashboard: DashboardData
-    ): string {
-
-    return `
+function createDashboardBlock(dashboard: DashboardData): string {
+  return `
 
         <div class="dashboard-block"
         style="
@@ -388,9 +360,7 @@
 
             <tbody>
 
-            ${createDashboardRows(
-                dashboard
-            )}
+            ${createDashboardRows(dashboard)}
 
             </tbody>
 
@@ -403,32 +373,20 @@
         </div>
 
     `;
-    }
+}
 
-
-    /* =========================================================
+/* =========================================================
     REPORT.HTML
     ========================================================= */
 
-    export function createDashboardHtml(
-    dashboard: DashboardData
-    ): string {
+export function createDashboardHtml(dashboard: DashboardData): string {
+  return createDashboardBlock(dashboard);
+}
 
-    return createDashboardBlock(
-        dashboard
-    );
-    }
-
-
-    /* =========================================================
+/* =========================================================
     EMAIL.HTML
     ========================================================= */
 
-    export function createDashboardEmailHtml(
-    dashboard: DashboardData
-    ): string {
-
-    return createDashboardBlock(
-        dashboard
-    );
-    }
+export function createDashboardEmailHtml(dashboard: DashboardData): string {
+  return createDashboardBlock(dashboard);
+}

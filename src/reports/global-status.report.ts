@@ -14,29 +14,39 @@ const GLOBAL_STATUSES = [
 
 export function createGlobalStatusTable(positions: PositionReport[]): string {
   // Inclui o catálogo completo e eventuais posições adicionais identificadas no Jira.
-  const availablePositions = [...new Set([
-    ...POSITIONS.map(position => position.name),
-    ...positions.map(position => position.position),
-  ])];
+  const availablePositions = [
+    ...new Set([
+      ...POSITIONS.map((position) => position.name),
+      ...positions.map((position) => position.position),
+    ]),
+  ];
 
-  const options = GLOBAL_STATUSES.map(status => `
+  const options = GLOBAL_STATUSES.map(
+    (status) => `
     <option value="${status.value}" data-color="${status.color}">${escapeHtml(status.label)}</option>
-  `).join('');
+  `,
+  ).join('');
 
   // Mantém as escolhas ao reabrir o mesmo relatório, separando conjuntos de PRITs.
-  const reportKey = JSON.stringify(positions.flatMap(position =>
-    position.reports.map(report => report.prit)
-  ).sort());
+  const reportKey = JSON.stringify(
+    positions.flatMap((position) => position.reports.map((report) => report.prit)).sort(),
+  );
 
-  const choices = availablePositions.map((position, index) => `
+  const choices = availablePositions
+    .map(
+      (position, index) => `
     <label class="global-position-choice">
       <input type="checkbox" data-position-toggle value="${escapeHtml(position)}"
         aria-controls="global-status-row-${index}" />
       <span>${escapeHtml(position)}</span>
     </label>
-  `).join('');
+  `,
+    )
+    .join('');
 
-  const rows = availablePositions.map((position, index) => `
+  const rows = availablePositions
+    .map(
+      (position, index) => `
     <tr id="global-status-row-${index}" data-global-status-row data-position="${escapeHtml(position)}" hidden>
       <th scope="row" style="padding:12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;font-size:14px;color:#0747a6;">
         ${escapeHtml(position)}
@@ -64,7 +74,9 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
         </div>
       </td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 
   return `
     <div id="global-status-section" style="margin-bottom:32px;">

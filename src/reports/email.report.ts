@@ -1,61 +1,45 @@
-    import fs from 'node:fs';
-    import path from 'node:path';
-    import { createGlobalStatusTable } from './global-status.report';
-    import { createPositionDefectsSection } from './position-defects.report';
-    import { createPositionActivitiesTable } from './position-activities.report';
-    import { createMainBlockersTable } from './main-blockers.report';
-    import { createReleaseLinksSection } from './release-links.report';
-    import { createOverallResultsSection, overallResultsStyles, overallResultsScript } from './overall-results.report';
-    import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
-    import type { ReleaseLinks } from '../types/report.types';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createGlobalStatusTable } from './global-status.report';
+import { createPositionDefectsSection } from './position-defects.report';
+import { createPositionActivitiesTable } from './position-activities.report';
+import { createMainBlockersTable } from './main-blockers.report';
+import { createReleaseLinksSection } from './release-links.report';
+import {
+  createOverallResultsSection,
+  overallResultsStyles,
+  overallResultsScript,
+} from './overall-results.report';
+import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
+import type { ReleaseLinks } from '../types/report.types';
 
-    import {
-    JIRA_URL
-    } from '../config/jira.config';
+import { JIRA_URL } from '../config/jira.config';
 
-    import {
-    PositionReport,
-    Report
-    } from '../types/report.types';
+import { PositionReport, Report } from '../types/report.types';
 
-    import {
-    escapeHtml,
-    getIssueStatusColors,
-    getPriorityMeta,
-    getStatusColors
-    } from '../utils/html.utils';
+import {
+  escapeHtml,
+  getIssueStatusColors,
+  getPriorityMeta,
+  getStatusColors,
+} from '../utils/html.utils';
 
-
-    /* =========================================================
+/* =========================================================
     PRIT
     ========================================================= */
 
-    function createReportBlock(
-    report: Report
-    ): string {
+function createReportBlock(report: Report): string {
+  /* STATUS PRINCIPAL */
 
-    /* STATUS PRINCIPAL */
+  const mainStatusColors = getIssueStatusColors(report.mainStatus);
 
-    const mainStatusColors =
-        getIssueStatusColors(
-        report.mainStatus
-        );
+  /* EXECUTION STATUS */
 
+  const statuses = report.executionStatuses
+    .map((item) => {
+      const colors = getStatusColors(item.status);
 
-    /* EXECUTION STATUS */
-
-    const statuses =
-        report.executionStatuses
-        .map(
-            item => {
-
-            const colors =
-                getStatusColors(
-                item.status
-                );
-
-
-            return `
+      return `
 
                 <td
                 style="
@@ -95,57 +79,24 @@
                 </td>
 
             `;
+    })
+    .join('<td style="width:8px;"></td>');
 
-            }
-        )
-        .join(
-            '<td style="width:8px;"></td>'
-        );
+  /* ISSUE LINKS */
 
+  const relations = [...new Set(report.issueLinks.map((issue) => issue.relation))];
 
-    /* ISSUE LINKS */
+  const issueLinks = relations
+    .map((relation) => {
+      const issues = report.issueLinks.filter((issue) => issue.relation === relation);
 
-    const relations =
-        [
-        ...new Set(
-            report.issueLinks.map(
-            issue =>
-                issue.relation
-            )
-        )
-        ];
+      const rows = issues
+        .map((issue) => {
+          const priority = getPriorityMeta(issue.priority);
 
+          const statusColors = getIssueStatusColors(issue.status);
 
-    const issueLinks =
-        relations
-        .map(
-            relation => {
-
-            const issues =
-                report.issueLinks.filter(
-                issue =>
-                    issue.relation === relation
-                );
-
-
-            const rows =
-                issues
-                .map(
-                    issue => {
-
-                    const priority =
-                        getPriorityMeta(
-                        issue.priority
-                        );
-
-
-                    const statusColors =
-                        getIssueStatusColors(
-                        issue.status
-                        );
-
-
-                    return `
+          return `
 
                         <tr>
 
@@ -258,13 +209,10 @@
                         </tr>
 
                     `;
+        })
+        .join('');
 
-                    }
-                )
-                .join('');
-
-
-            return `
+      return `
 
                 <div
                 style="
@@ -304,17 +252,14 @@
                 </div>
 
             `;
+    })
+    .join('');
 
-            }
-        )
-        .join('');
-
-
-    /* =====================================================
+  /* =====================================================
         BLOCO
         ===================================================== */
 
-    return `
+  return `
 
         <div class="operation-card"
         style="
@@ -475,9 +420,8 @@
 
 
         ${
-            issueLinks ||
-
-            `
+          issueLinks ||
+          `
             <div
                 style="
                 margin-top:8px;
@@ -496,44 +440,29 @@
         </div>
 
     `;
+}
 
-    }
-
-
-    /* =========================================================
+/* =========================================================
     EMAIL
     ========================================================= */
 
-    export function createEmailReport(
-    positions: PositionReport[],
-    releaseLinks?: ReleaseLinks,
-    overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans)
-    ): string {
+export function createEmailReport(
+  positions: PositionReport[],
+  releaseLinks?: ReleaseLinks,
+  overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
+): string {
+  const reportDate = new Intl.DateTimeFormat('pt-PT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Europe/Lisbon',
+  }).format(new Date());
 
-    const reportDate = new Intl.DateTimeFormat('pt-PT', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'Europe/Lisbon',
-    }).format(new Date());
+  const reportsHtml = positions
+    .map((position) => {
+      const positionReports = position.reports.map((report) => createReportBlock(report)).join('');
 
-    const reportsHtml =
-        positions
-        .map(
-            position => {
-
-            const positionReports =
-                position.reports
-                .map(
-                    report =>
-                    createReportBlock(
-                        report
-                    )
-                )
-                .join('');
-
-
-            return `
+      return `
 
                 <div class="position-block"
                 style="
@@ -557,9 +486,7 @@
                     "
                 >
 
-                    ${escapeHtml(
-                    position.position
-                    )}
+                    ${escapeHtml(position.position)}
 
                 </div>
 
@@ -578,64 +505,30 @@
                 </div>
 
             `;
+    })
+    .join('');
 
-            }
-        )
-        .join('');
+  const templatePath = path.join(process.cwd(), 'src', 'templates', 'email-body.html');
 
+  if (!fs.existsSync(templatePath)) {
+    throw new Error(`Template não encontrado: ${templatePath}`);
+  }
 
-    const templatePath =
-        path.join(
-        process.cwd(),
-        'src',
-        'templates',
-        'email-body.html'
-        );
+  const template = fs.readFileSync(templatePath, 'utf-8');
 
+  if (!template.includes('<!-- REPORTS -->')) {
+    throw new Error('email-body.html não possui <!-- REPORTS -->');
+  }
 
-    if (
-        !fs.existsSync(
-        templatePath
-        )
-    ) {
-
-        throw new Error(
-        `Template não encontrado: ${templatePath}`
-        );
-
-    }
-
-
-    const template =
-        fs.readFileSync(
-        templatePath,
-        'utf-8'
-        );
-
-
-    if (
-        !template.includes(
-        '<!-- REPORTS -->'
-        )
-    ) {
-
-        throw new Error(
-        'email-body.html não possui <!-- REPORTS -->'
-        );
-
-    }
-
-
-    return template
-        .replace('<!-- REPORT DATE -->', reportDate)
-        .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
-        .replace('<!-- OVERALL RESULTS -->', () => createOverallResultsSection(overall))
-        .replace('/* OVERALL RESULTS STYLES */', () => overallResultsStyles)
-        .replace('/* OVERALL RESULTS SCRIPT */', () => overallResultsScript)
-        .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
-        .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
-        .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
-        .replace('<!-- RELEASE LINKS -->', () => createReleaseLinksSection(releaseLinks))
-        .replace('<!-- REPORTS -->', () => reportsHtml);
-
-    }
+  return template
+    .replace('<!-- REPORT DATE -->', reportDate)
+    .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
+    .replace('<!-- OVERALL RESULTS -->', () => createOverallResultsSection(overall))
+    .replace('/* OVERALL RESULTS STYLES */', () => overallResultsStyles)
+    .replace('/* OVERALL RESULTS SCRIPT */', () => overallResultsScript)
+    .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
+    .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
+    .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
+    .replace('<!-- RELEASE LINKS -->', () => createReleaseLinksSection(releaseLinks))
+    .replace('<!-- REPORTS -->', () => reportsHtml);
+}
