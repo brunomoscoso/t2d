@@ -46,7 +46,11 @@ test('extrai os títulos usando a sessão autenticada e entrega-os ao relatório
   const issuePath = (prit: string) => `/jira/rest/api/2/issue/${prit}?fields=summary`;
   const dashboardPath = '/jira/rest/api/2/dashboard/24419';
 
-  await t.test('consulta quatro planos e o nome do dashboard, preservando os títulos na cópia', async () => {
+  await t.test('consulta quatro planos e o nome do dashboard, preservando os títulos na cópia', async t => {
+    // Captura a saída do writer: também evita a falha de serialização de stdout
+    // com Unicode no runner do Node 22 (nodejs/node#65934).
+    t.mock.method(console, 'log', () => {});
+    const warn = t.mock.method(console, 'warn', () => {});
     const titles = [
       '[Passport X] Smoke <img src=x onerror=alert(1)> & "QA" $&',
       '[Passport X] Certification', '[Passport X] Regression PT & SP', '[Passport X] Defect Fixing',
@@ -72,6 +76,8 @@ test('extrai os títulos usando a sessão autenticada e entrega-os ao relatório
       fs.copyFileSync(path.join(cwd, 'src/templates/email-body.html'), path.join(directory, 'src/templates/email-body.html'));
       process.chdir(directory);
       writeReports([], undefined, links);
+      assert.equal(warn.mock.callCount(), 4, 'Sem consulta dos vínculos, o Overall sinaliza os quatro planos indisponíveis');
+      assert.ok(warn.mock.calls.every(call => String(call.arguments[0]).includes('indisponíveis')));
       const html = fs.readFileSync('output/email.html', 'utf8');
       assert.deepEqual(JSON.parse(fs.readFileSync('output/report.json', 'utf8')), []);
       assert.equal(fs.existsSync('output/dashboard.json'), false, 'O título não depende da coleta de defects');

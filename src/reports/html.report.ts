@@ -1,3 +1,6 @@
+    import { createOverallResultsSection, overallResultsStyles, overallResultsScript } from './overall-results.report';
+    import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
+    import type { ReleaseLinks } from '../types/report.types';
     import {
     JIRA_URL
     } from '../config/jira.config';
@@ -368,7 +371,9 @@
     ========================================================= */
 
     export function createHtmlReport(
-    positions: PositionReport[]
+    positions: PositionReport[],
+    releaseLinks?: ReleaseLinks,
+    overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans)
     ): string {
 
     const positionsHtml =
@@ -435,6 +440,8 @@
 
 
     <style>
+
+    ${overallResultsStyles}
 
 
     * {
@@ -942,11 +949,14 @@
 
     <div class="page">
 
+    ${createOverallResultsSection(overall)}
+
     ${positionsHtml}
 
     </div>
 
 
+    <script>${overallResultsScript}</script>
     </body>
 
 

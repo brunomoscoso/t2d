@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { createEmailReport } from '../src/reports/email.report';
 import { createHtmlReport } from '../src/reports/html.report';
 import { createDashboardEmailHtml, createDashboardHtml } from '../src/reports/dashboard.report';
+import { TEST_PLANS, DASHBOARD_PAGE_ID } from '../src/config/operations.config';
 import type { DashboardData, PositionReport } from '../src/types/report.types';
 
 const longText = 'ReferênciaSemEspaços'.repeat(12);
@@ -43,11 +44,19 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
     const page = await browser.newPage();
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
+    const releaseLinks = {
+      testPlans: {
+        ...TEST_PLANS,
+        smokes: { ...TEST_PLANS.smokes, executionPrits: ['PRIT-1234'] },
+      },
+      dashboardPageId: DASHBOARD_PAGE_ID,
+    };
     for (const format of ['email', 'report']) {
       const html = format === 'email'
-        ? createEmailReport(positions).replace('<!-- DASHBOARD -->', () => createDashboardEmailHtml(dashboard))
-        : createHtmlReport(positions).replace('</body>', () => createDashboardHtml(dashboard) + '</body>');
+        ? createEmailReport(positions, releaseLinks).replace('<!-- DASHBOARD -->', () => createDashboardEmailHtml(dashboard))
+        : createHtmlReport(positions, releaseLinks).replace('</body>', () => createDashboardHtml(dashboard) + '</body>');
       await page.setContent(html);
+      await page.locator('[data-test-plan-toggle][value="smokes"]').check();
       if (format === 'email') {
         await page.getByRole('checkbox', { name: 'COCO PT', exact: true }).check();
         await page.getByRole('checkbox', { name: 'VMPOS - ALGRAGIDE', exact: true }).check();
@@ -63,7 +72,7 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
           const pickerBounds = picker?.getBoundingClientRect();
           const sectionBounds = document.getElementById('global-status-section')?.getBoundingClientRect();
           const blocks = Array.from(document.querySelectorAll(
-            isEmail ? '#observations, #global-status-table, #position-activities-scroll, #position-defects-section, .position-block, .dashboard-block' : '.position-block, .dashboard-block',
+            isEmail ? '#observations, #global-status-table, #overall-results-section, #position-activities-scroll, #position-defects-section, .position-block, .dashboard-block' : '#overall-results-section, .position-block, .dashboard-block',
           ));
           return {
             pageWidth: document.documentElement.clientWidth,
@@ -127,7 +136,7 @@ test('aproveita a largura da página e mantém quadros alinhados sem deslocament
         assert.equal(copied.toolbar, 0);
         assert.equal(copied.dashboardCells, 7);
         assert.equal(copied.defects, 1);
-        assert.equal(copied.activityColumns, 5);
+        assert.equal(copied.activityColumns, 6);
         assert.equal(copied.activityEditors, 0);
         assert.ok(String(copied.executionText).includes('PENDING 3RD'));
         assert.ok(String(copied.text).includes(longText));
@@ -195,7 +204,7 @@ test('copia HTML fluido e mantém todas as colunas dentro de um editor de email 
       await preview.setContent('<div id="email-editor" contenteditable="true"></div>');
       await preview.locator('#email-editor').evaluate((editor, html) => { editor.innerHTML = html; }, copied.html);
       assert.equal(await preview.locator('style, script, textarea, input, select, [data-editor-only]').count(), 0);
-      assert.equal(await preview.locator('#position-activities-table thead th').count(), 5);
+      assert.equal(await preview.locator('#position-activities-table thead th').count(), 6);
       assert.deepEqual(await preview.locator('#position-defects-table thead th').allTextContents(),
         ['Prioridade', 'PRIT', 'Posto(s)', 'Resumo', 'Estado']);
       assert.equal(await preview.locator('#position-defects-table [data-position-defect]').count(), 30);

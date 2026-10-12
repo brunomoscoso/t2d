@@ -1,6 +1,8 @@
     export type TestPlanLink = {
     prit: string;
     title?: string;
+    // undefined: consulta indisponível; []: consulta concluída sem execuções.
+    executionPrits?: string[];
     };
 
     export type ReleaseLinks = {

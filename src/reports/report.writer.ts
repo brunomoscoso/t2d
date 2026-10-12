@@ -1,5 +1,6 @@
     import fs from 'node:fs';
     import path from 'node:path';
+    import { aggregateOverallResults } from '../utils/overall-results.utils';
 
     import {
     DashboardData,
@@ -130,6 +131,11 @@
     releaseLinks?: ReleaseLinks
     ): void {
 
+    const overall = aggregateOverallResults(positions, releaseLinks?.testPlans);
+    for (const warning of new Set([...overall.warnings, ...overall.plans.flatMap(plan => plan.warnings)])) {
+        console.warn(`⚠️ ${warning}`);
+    }
+
     const outputDirectory =
         path.join(
         process.cwd(),
@@ -194,7 +200,9 @@
 
     let reportHtml =
         createHtmlReport(
-        positions
+        positions,
+        releaseLinks,
+        overall
         );
 
 
@@ -205,7 +213,8 @@
     let emailHtml =
         createEmailReport(
         positions,
-        releaseLinks
+        releaseLinks,
+        overall
         );
 
 

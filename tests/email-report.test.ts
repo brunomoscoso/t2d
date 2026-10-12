@@ -41,7 +41,7 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
       contentType: 'text/html', body: createEmailReport([]),
     }));
     await page.goto('http://report.test/email.html');
-    assert.equal(await page.getByRole('checkbox').count(), POSITIONS.length);
+    assert.equal(await page.locator('#global-status-section').getByRole('checkbox').count(), POSITIONS.length);
     assert.equal(await page.locator('[data-global-status-row]:visible').count(), 0);
     assert.equal(await page.locator('#global-status-table').isVisible(), true, 'O quadro continua visível sem postos selecionados');
     assert.equal(await page.locator('#global-status-empty').isVisible(), true);

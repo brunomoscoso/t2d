@@ -21,6 +21,7 @@
     } from './extractors/dashboard.extractor';
 
     import { extractReleaseLinks } from './extractors/release-links.extractor';
+    import { extractTestPlanExecutions } from './extractors/test-plan-executions.extractor';
 
     import {
     groupReportsByPosition
@@ -30,6 +31,35 @@
     writeReports
     } from './reports/report.writer';
 
+    const MAX_PRIT_ATTEMPTS = 3;
+
+    async function extractPritWithRetry(
+        page: import('playwright').Page,
+        prit: string,
+    ): Promise<Report> {
+        let lastError: unknown;
+
+        for (let attempt = 1; attempt <= MAX_PRIT_ATTEMPTS; attempt++) {
+            try {
+                return await extractPrit(page, prit);
+            } catch (error) {
+                lastError = error;
+                console.error(
+                    `⚠️ Falha ao extrair ${prit} (tentativa ${attempt}/${MAX_PRIT_ATTEMPTS}).`,
+                    error,
+                );
+
+                if (attempt < MAX_PRIT_ATTEMPTS) {
+                    await page.waitForTimeout(1000 * attempt);
+                }
+            }
+        }
+
+        throw new Error(
+            `Não foi possível extrair ${prit} após ${MAX_PRIT_ATTEMPTS} tentativas; o relatório não será gerado.`,
+            { cause: lastError },
+        );
+    }
 
     async function main() {
 
@@ -87,10 +117,8 @@
         of PRITS
         ) {
 
-        try {
-
             const report =
-            await extractPrit(
+            await extractPritWithRetry(
                 page,
                 prit
             );
@@ -107,21 +135,6 @@
 
         }
 
-        catch (error) {
-
-            console.error(
-            `❌ Erro ao processar ${prit}`
-            );
-
-
-            console.error(
-            error
-            );
-
-        }
-
-        }
-
 
         /* ===================================================
         AGRUPAMENTO
@@ -134,6 +147,7 @@
 
         // Reutiliza o login para obter os nomes dos planos e do dashboard.
         const releaseLinks = await extractReleaseLinks(page.request);
+        releaseLinks.testPlans = await extractTestPlanExecutions(page.request, releaseLinks.testPlans);
 
 
         /* ===================================================

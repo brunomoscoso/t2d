@@ -62,12 +62,7 @@ As configurações funcionais ficam no código-fonte:
 
 - **Issues PRIT:** edite a lista `PRITS` em [`src/config/operations.config.ts`](src/config/operations.config.ts).
 - **Dashboard:** altere `DASHBOARD_PAGE_ID` no mesmo arquivo. Use o ID da página do dashboard, não a URL completa.
-<<<<<<< HEAD
-- **Grupos e nomes reconhecidos:** edite `POSITIONS` e `DEFAULT_POSITION` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Os aliases ajudam a associar os nomes encontrados nos títulos ou labels às posições do relatório.
-- **Estrutura e seletores do Jira:** se a interface do Jira mudar, os seletores usados na coleta ficam em [`src/config/selectors.ts`](src/config/selectors.ts).
-
-=======
-- **Links dos planos de teste:** preencha `TEST_PLANS` no mesmo arquivo com o PRIT de Smokes, Certificação, Regressão e Defect Fixing (por exemplo, `'8161'` ou `'PRIT-8161'`). Os títulos são extraídos automaticamente do Jira na sessão autenticada. Estes planos são apenas referências e não entram nos totais de execução.
+- **Planos de teste:** preencha `TEST_PLANS` no mesmo arquivo com o PRIT de Smokes, Certificação, Regressão e Defect Fixing (por exemplo, `'8161'` ou `'PRIT-8161'`). Os títulos e vínculos são consultados no Jira na sessão autenticada. Os planos identificam as tabelas do Overall; os totais usam apenas as execuções configuradas em `PRITS`.
 - **Texto do link do dashboard:** o nome é extraído automaticamente usando `DASHBOARD_PAGE_ID`, independentemente da coleta dos defects.
 - **Grupos e nomes reconhecidos:** edite `POSITIONS` e `DEFAULT_POSITION` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Os aliases ajudam a associar os nomes encontrados nos títulos ou labels às posições do relatório.
 - **Estrutura e seletores do Jira:** se a interface do Jira mudar, os seletores usados na coleta ficam em [`src/config/selectors.ts`](src/config/selectors.ts).
@@ -82,7 +77,10 @@ A caixa **Links da release** aparece no `email.html`, logo após **Principais bl
 
 Os títulos vêm dos endpoints de consulta de [issues e dashboards da API REST do Jira](https://docs.atlassian.com/software/jira/docs/api/REST/9.12.2/), usando a sessão já autenticada do navegador. Se uma consulta falhar, a automação registra um aviso e mantém o link com o PRIT ou ID, sem impedir a geração do relatório.
 
->>>>>>> a397f40 (Add titulo relatorio)
+Em **Overall Test Results**, selecione os planos que devem acompanhar o relatório. A seleção é guardada no navegador e os controles não aparecem na cópia para o e-mail. Consulte o [guia do Overall](docs/overall-results.md) para as regras de agregação e tratamento de avisos.
+
+A tabela **Atividades por posto** inclui a coluna **BLOCKED**, em rosa, para as atividades com esse status no Jira. A coluna **ON HOLD** permite acrescentar observações manualmente.
+
 ## Testes
 
 Para executar os testes existentes:
@@ -96,5 +94,5 @@ npm test
 - **Variáveis do Jira não configuradas:** confirme que existe um `.env` na raiz e que `JIRA_URL` e `JIRA_LOGIN_EMAIL` estão preenchidos.
 - **Edge não inicia:** instale o Microsoft Edge e tente executar novamente.
 - **A página não abre ou a coleta falha:** verifique a conexão à rede corporativa, o acesso ao Jira e as permissões para as issues e o dashboard configurados.
-- **Um PRIT apresenta erro durante a execução:** confira o terminal para identificar a issue. A automação registra a falha e continua processando as demais; portanto, os relatórios podem ser gerados mesmo que uma issue não tenha sido coletada.
+- **Um PRIT apresenta erro durante a execução:** confira o terminal para identificar a issue. A automação tenta a coleta até três vezes; se a falha persistir, encerra sem gerar novos relatórios. Os arquivos de uma execução anterior podem continuar em `output/`.
 - **O dashboard falha:** a coleta dos PRITs continua independente. Nesse caso, os relatórios principais ainda são gerados, mas `dashboard.json` não é criado e o dashboard não é incluído nos HTMLs.

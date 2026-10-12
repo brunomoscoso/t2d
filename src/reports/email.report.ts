@@ -5,6 +5,8 @@
     import { createPositionActivitiesTable } from './position-activities.report';
     import { createMainBlockersTable } from './main-blockers.report';
     import { createReleaseLinksSection } from './release-links.report';
+    import { createOverallResultsSection, overallResultsStyles, overallResultsScript } from './overall-results.report';
+    import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
     import type { ReleaseLinks } from '../types/report.types';
 
     import {
@@ -504,7 +506,8 @@
 
     export function createEmailReport(
     positions: PositionReport[],
-    releaseLinks?: ReleaseLinks
+    releaseLinks?: ReleaseLinks,
+    overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans)
     ): string {
 
     const reportDate = new Intl.DateTimeFormat('pt-PT', {
@@ -626,6 +629,9 @@
     return template
         .replace('<!-- REPORT DATE -->', reportDate)
         .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
+        .replace('<!-- OVERALL RESULTS -->', () => createOverallResultsSection(overall))
+        .replace('/* OVERALL RESULTS STYLES */', () => overallResultsStyles)
+        .replace('/* OVERALL RESULTS SCRIPT */', () => overallResultsScript)
         .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
         .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
         .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))

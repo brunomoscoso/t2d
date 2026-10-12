@@ -31,33 +31,16 @@
         .first();
 
 
-    const found =
-        await overallStatus
-        .waitFor({
-
-            state:
-            'visible',
-
-            timeout:
-            20000
-
-        })
-        .then(
-            () => true
-        )
-        .catch(
-            () => false
+    try {
+        await overallStatus.waitFor({
+            state: 'visible',
+            timeout: 20000,
+        });
+    } catch (error) {
+        throw new Error(
+            'Overall Execution Status não encontrado após 20 segundos.',
+            { cause: error },
         );
-
-
-    if (!found) {
-
-        console.log(
-        '⚠️ Overall Execution Status não encontrado.'
-        );
-
-        return [];
-
     }
 
 
@@ -113,16 +96,15 @@
         ExecutionStatus[] = [];
 
 
-        const total =
-        Math.min(
-            counts.length,
-            names.length
-        );
-
+        if (counts.length !== names.length) {
+            throw new Error(
+                `Overall Execution Status incompleto: foram encontrados ${names.length} status e ${counts.length} quantidades.`,
+            );
+        }
 
         for (
         let i = 0;
-        i < total;
+        i < counts.length;
         i++
         ) {
 
@@ -139,24 +121,25 @@
 
 
         if (
-            !Number.isNaN(
-            quantidade
-            )
+            !status ||
+            !Number.isSafeInteger(quantidade) ||
+            quantidade < 0
         ) {
+            throw new Error(
+                `Overall Execution Status contém dados inválidos na linha ${i + 1}.`,
+            );
+        }
 
-            statuses.push({
-
+        statuses.push({
             status,
-
-            quantidade
-
-            });
+            quantidade,
+        });
 
         }
 
+        if (statuses.length === 0) {
+            throw new Error('Overall Execution Status foi encontrado, mas não contém resultados.');
         }
-
-
         return statuses;
 
     }
@@ -208,9 +191,9 @@
 
 
     if (!summaryText) {
-
-        return [];
-
+        throw new Error(
+            'Overall Execution Status não contém dados nem o total de testes para validar o fallback.',
+        );
     }
 
 
@@ -235,7 +218,7 @@
 
 
     const regex =
-        /(\d+)\s+([A-Za-z][A-Za-z _-]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
+        /(\d+)\s+([A-Za-z][A-Za-z0-9 _-]*?)(?=\s+\d+\s+[A-Za-z]|\s*$)/g;
 
 
     let match:
@@ -267,6 +250,10 @@
 
     }
 
+
+    if (statuses.length === 0) {
+        throw new Error('Não foi possível extrair nenhum status de Overall Execution Status.');
+    }
 
     return statuses;
 

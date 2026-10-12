@@ -6,6 +6,7 @@
 <title>Jira / Xray Report</title>
 
 <style>
+    /* OVERALL RESULTS STYLES */
     *, *::before, *::after { box-sizing: border-box; }
 
     body {
@@ -194,7 +195,7 @@
     }
 
     #global-status-table { table-layout: fixed; }
-    #position-activities-table { min-width: 900px; overflow-wrap: anywhere; }
+    #position-activities-table { min-width: 1050px; overflow-wrap: anywhere; }
     [data-activity-note],
     [data-blocker-field] {
         display: block;
@@ -301,7 +302,6 @@
     <div class="report-toolbar-heading">
         <p class="report-eyebrow">QA · JIRA / XRAY</p>
         <h1>Relatório de testes</h1>
-        <p class="report-toolbar-description">Estado dos postos, atividades e defects num só lugar.</p>
     </div>
     <div class="report-toolbar-actions">
         <button id="copy-email-button" type="button" onclick="copyEmailReport()">
@@ -324,6 +324,8 @@
     ></div>
 
     <!-- GLOBAL STATUS -->
+
+    <!-- OVERALL RESULTS -->
 
     <!-- POSITION ACTIVITIES -->
 
@@ -356,6 +358,7 @@
      ========================================= -->
 
 <script>
+    /* OVERALL RESULTS SCRIPT */
 
     function initializeGlobalStatuses() {
         const table = document.getElementById('global-status-table');
@@ -666,6 +669,13 @@
             removeDuringCopy(globalStatusSection);
         }
 
+        const overallSection = report.querySelector('#overall-results-section');
+        if (overallSection && !overallSection.querySelector('[data-overall-plan]:not([hidden])')) {
+            removeDuringCopy(overallSection);
+        } else if (overallSection) {
+            overallSection.querySelectorAll('[data-overall-plan][hidden]').forEach(removeDuringCopy);
+        }
+
         report.querySelectorAll('[data-global-status-row]').forEach(row => {
             if (row.hidden) {
                 removeDuringCopy(row);
@@ -733,7 +743,7 @@
         clone.style.maxWidth = '100%';
         clone.style.minWidth = '0';
         clone.style.backgroundColor = '#ffffff';
-        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table, #release-links-table').forEach(table => {
+        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table, #release-links-table, .overall-results-table').forEach(table => {
             table.style.width = '100%';
             table.style.maxWidth = '100%';
             table.style.minWidth = '0';

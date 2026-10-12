@@ -35,7 +35,7 @@
     NORMALIZA STATUS
     ========================================================= */
 
-    function normalizeStatus(
+    export function normalizeStatus(
     status: string
     ): string {
 

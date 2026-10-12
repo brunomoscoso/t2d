@@ -1,13 +1,14 @@
 import { JIRA_URL } from '../config/jira.config';
 import type { PositionReport, Report } from '../types/report.types';
-import { escapeHtml } from '../utils/html.utils';
+import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 
-type ActivityColumn = 'done' | 'in-progress' | 'to-do' | 'other';
+type ActivityColumn = 'done' | 'in-progress' | 'to-do' | 'blocked' | 'other';
 const cellStyle = 'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
 const columns = {
   done: { symbol: '✓', color: '#00875a', background: '#f3fbf7' },
   'in-progress': { symbol: '↻', color: '#0052cc', background: '#f3f7ff' },
   'to-do': { symbol: '⌛', color: '#875e00', background: '#fffbef' },
+  blocked: { symbol: '⛔', ...getIssueStatusColors('BLOCKED') },
   other: { symbol: '•', color: '#6b778c', background: '#f4f5f7' },
 };
 
@@ -24,6 +25,8 @@ function getColumn(status: string): ActivityColumn {
       return 'in-progress';
     case 'OPEN': case 'TO DO': case 'TODO': case 'BACKLOG': case 'NEW':
       return 'to-do';
+    case 'BLOCKED':
+      return 'blocked';
     default:
       return 'other';
   }
@@ -80,7 +83,7 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
     </div>`);
     return `<tr data-activity-position="${escapeHtml(position)}">
       <th scope="row" style="${cellStyle}background:#edf3fc;color:#0747a6;text-align:left;">${escapeHtml(position)}</th>
-      ${(['done', 'in-progress', 'to-do'] as const).map(column => {
+      ${(['done', 'in-progress', 'to-do', 'blocked'] as const).map(column => {
         const activities = reports.filter(report => getColumn(report.mainStatus) === column);
         return `<td data-activity-column="${column}" style="${cellStyle}background:${columns[column].background};">${activities.length
           ? activities.map(report => renderActivity(report, column)).join('')
@@ -95,10 +98,11 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
 
   const headers = [
     { label: 'Postos', width: '12%', background: '#244779', color: '#ffffff' },
-    { label: 'DONE', width: '24%', background: '#00875a', color: '#ffffff' },
-    { label: 'IN PROGRESS', width: '23%', background: '#0052cc', color: '#ffffff' },
-    { label: 'TO DO', width: '18%', background: '#ffcb47', color: '#463000' },
-    { label: 'ON HOLD', width: '23%', background: '#c9372c', color: '#ffffff' },
+    { label: 'DONE', width: '20%', background: '#00875a', color: '#ffffff' },
+    { label: 'IN PROGRESS', width: '19%', background: '#0052cc', color: '#ffffff' },
+    { label: 'TO DO', width: '14%', background: '#ffcb47', color: '#463000' },
+    { label: 'BLOCKED', width: '15%', background: columns.blocked.background, color: columns.blocked.color },
+    { label: 'ON HOLD', width: '20%', background: '#c9372c', color: '#ffffff' },
   ];
   return `<section id="position-activities-section" aria-labelledby="position-activities-title" style="margin:0 0 32px;">
     <h2 id="position-activities-title" style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#142e57;">Atividades por posto</h2>
@@ -106,7 +110,7 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
       <table id="position-activities-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}" aria-label="Atividades por posto" width="100%" cellpadding="0" cellspacing="0"
         style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#172b4d;">
         <thead><tr>${headers.map(({ label, width, background, color }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};background:${background};color:${color};border-color:${background};text-align:left;">${label}</th>`).join('')}</tr></thead>
-        <tbody>${rows || `<tr><td colspan="5" style="${cellStyle}color:#5e6c84;">Nenhuma atividade extraída do Jira para este relatório.</td></tr>`}</tbody>
+        <tbody>${rows || `<tr><td colspan="${headers.length}" style="${cellStyle}color:#5e6c84;">Nenhuma atividade extraída do Jira para este relatório.</td></tr>`}</tbody>
       </table>
     </div>
     ${otherStates.length ? `<div data-other-activity-states style="margin-top:12px;font-size:14px;">

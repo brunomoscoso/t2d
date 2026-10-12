@@ -14,6 +14,7 @@ function task(prit: string, mainStatus: string, title: string): Report {
 
 function fixture(): PositionReport[] {
   const smoke = task('PRIT-1', 'done', '[Passport v1][COCO][PT] Installation Smoke Tests');
+  const blocked = task('PRIT-8', ' blocked ', '[COCO][PT] Certification bloqueada');
   return [
     { position: 'COCO PT', reports: [
       smoke,
@@ -22,10 +23,14 @@ function fixture(): PositionReport[] {
       task('PRIT-4', 'TO DO', '[COCO][PT] Validation Defect Fixing / SAFT File'),
       task('PRIT-5', 'ON HOLD', '[COCO][PT] Validação suspensa'),
       task('PRIT-6', '', '[COCO][PT] Atividade sem status'),
+      blocked,
     ] },
     { position: 'Marinas', reports: [] },
-    { position: 'Local <novo> & "A" $&', reports: [task('PRIT-7', 'IN REVIEW', '<img src=x onerror=alert(1)> & análise')] },
-    { position: 'COCO PT', reports: [smoke] },
+    { position: 'Local <novo> & "A" $&', reports: [
+      task('PRIT-7', 'IN REVIEW', '<img src=x onerror=alert(1)> & análise'),
+      task('PRIT-9', 'BLOCKED', '<img src=x onerror=alert(1)> & bloqueio'),
+    ] },
+    { position: 'COCO PT', reports: [smoke, blocked] },
   ];
 }
 
@@ -39,7 +44,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     await page.route('http://activities.test/**', route => route.fulfill({ contentType: 'text/html', body: html }));
     await page.goto('http://activities.test/email.html');
     const table = page.locator('#position-activities-table');
-    assert.deepEqual(await table.locator('thead th').allTextContents(), ['Postos', 'DONE', 'IN PROGRESS', 'TO DO', 'ON HOLD']);
+    assert.deepEqual(await table.locator('thead th').allTextContents(), ['Postos', 'DONE', 'IN PROGRESS', 'TO DO', 'BLOCKED', 'ON HOLD']);
     assert.equal(await table.locator('tbody tr').count(), 3);
     assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), ['Postos', 'Status de instalação', 'Estado Global']);
     assert.equal(await page.locator('#position-defects-table [data-sprint-defect]').count(), 1);
@@ -49,7 +54,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
         .compareDocumentPosition(document.getElementById(id)!) & Node.DOCUMENT_POSITION_FOLLOWING));
     }));
     const first = table.locator('[data-activity-position="COCO PT"]');
-    for (const [column, keys] of Object.entries({ done: ['PRIT-1'], 'in-progress': ['PRIT-2'], 'to-do': ['PRIT-3', 'PRIT-4'] })) {
+    for (const [column, keys] of Object.entries({ done: ['PRIT-1'], 'in-progress': ['PRIT-2'], 'to-do': ['PRIT-3', 'PRIT-4'], blocked: ['PRIT-8'] })) {
       assert.deepEqual(await first.locator(`[data-activity-column="${column}"] [data-position-activity]`).evaluateAll(nodes =>
         nodes.map(node => node.getAttribute('data-position-activity'))), keys);
     }
@@ -57,7 +62,10 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     assert.match(await first.locator('[data-position-activity="PRIT-2"]').innerText(), /Regressão Grupo 2.*PRIT-2/);
     assert.match(await first.locator('[data-position-activity="PRIT-3"]').innerText(), /Certificação Grupo 0 - Only Pricing Catalog/);
     assert.match((await first.locator('[data-position-activity="PRIT-1"] a').getAttribute('title'))!, /Passport v1/);
-    assert.equal(await page.locator('#position-activities-section [data-position-activity]').count(), 7, 'Todas as atividades aparecem uma vez por posto');
+    assert.equal(await page.locator('#position-activities-section [data-position-activity]').count(), 9, 'Todas as atividades aparecem uma vez por posto');
+    assert.match(await first.locator('[data-activity-column="blocked"]').innerText(), /Certification bloqueada.*PRIT-8/);
+    assert.equal(await table.locator('[data-activity-position="Marinas"] [data-activity-column="blocked"]').innerText(), '—');
+    assert.equal(await page.locator('[data-other-activity-states] [data-position-activity="PRIT-8"], [data-other-activity-states] [data-position-activity="PRIT-9"]').count(), 0);
     assert.match(await page.locator('[data-other-activity-states]').innerText(), /ON HOLD/);
     assert.match(await page.locator('[data-other-activity-states]').innerText(), /Sem status/);
     assert.equal(await table.locator('img').count(), 0, 'Os títulos são texto escapado');
@@ -98,8 +106,11 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
       await preview.setContent(copied);
       assert.equal(await preview.locator('textarea, input, select, [contenteditable], [data-editor-only]').count(), 0);
       const exported = preview.locator('#position-activities-table');
-      assert.equal(await exported.locator('thead th').count(), 5);
-      assert.equal(await exported.locator('[data-position-activity]').count(), 5);
+      assert.equal(await exported.locator('thead th').count(), 6);
+      assert.equal(await exported.locator('[data-position-activity]').count(), 7);
+      assert.deepEqual(await exported.locator('[data-activity-column="blocked"] [data-position-activity]').evaluateAll(nodes =>
+        nodes.map(node => node.getAttribute('data-position-activity'))), ['PRIT-8', 'PRIT-9']);
+      assert.match((await exported.locator('[data-position-activity="PRIT-8"] a').getAttribute('href'))!, /\/browse\/PRIT-8$/);
       const exportedNote = exported.locator('[data-activity-position="COCO PT"] td').last();
       assert.equal(await exportedNote.locator('br').count(), 2);
       assert.match(await exportedNote.innerText(), /Validar <img src=x onerror=alert\(1\)> & "certificação" \$&/);
@@ -144,6 +155,7 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     html = createEmailReport([]);
     await page.reload();
     assert.match(await table.innerText(), /Nenhuma atividade extraída/);
+    assert.equal(await table.locator('tbody td').getAttribute('colspan'), '6');
     assert.equal(await table.locator('textarea').count(), 0);
   } finally {
     await browser.close();
