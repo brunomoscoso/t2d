@@ -5,11 +5,12 @@ import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 type ActivityColumn = 'done' | 'in-progress' | 'to-do' | 'blocked' | 'other';
 const cellStyle =
   'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+const blockedColors = getIssueStatusColors('BLOCKED');
 const columns = {
   done: { symbol: '✓', color: '#00875a', background: '#f3fbf7' },
   'in-progress': { symbol: '↻', color: '#0052cc', background: '#f3f7ff' },
   'to-do': { symbol: '⌛', color: '#875e00', background: '#fffbef' },
-  blocked: { symbol: '⛔', ...getIssueStatusColors('BLOCKED') },
+  blocked: { symbol: '⛔', ...blockedColors, background: '#fff5fd' },
   other: { symbol: '•', color: '#6b778c', background: '#f4f5f7' },
 };
 
@@ -139,8 +140,8 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
     {
       label: 'BLOCKED',
       width: '15%',
-      background: columns.blocked.background,
-      color: columns.blocked.color,
+      background: blockedColors.background,
+      color: blockedColors.color,
     },
     { label: 'ON HOLD', width: '20%', background: '#c9372c', color: '#ffffff' },
   ];

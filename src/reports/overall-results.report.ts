@@ -79,6 +79,9 @@ function renderWarnings(warnings: string[]): string {
 }
 
 export function createOverallResultsSection(overall: OverallResults): string {
+  const editorWarnings = [
+    ...new Set([...overall.warnings, ...overall.plans.flatMap((plan) => plan.warnings)]),
+  ];
   const cellStyle =
     'padding:12px 8px;border:1px solid #dce5f0;text-align:center;vertical-align:middle;overflow-wrap:anywhere;';
   const choices = overall.plans
@@ -126,7 +129,6 @@ export function createOverallResultsSection(overall: OverallResults): string {
           <tbody>${rows}</tbody>
         </table>
       </div>
-      ${renderWarnings(plan.warnings)}
     </div>`;
     })
     .join('');
@@ -141,7 +143,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
         <button type="button" data-clear-test-plans>Limpar seleção de planos</button>
         <span id="overall-plan-count" role="status" aria-live="polite">0 planos selecionados</span>
       </div>
-      ${overall.warnings.length ? `<details><summary style="margin-top:12px;cursor:pointer;">Execuções sem vínculo confirmado (${overall.warnings.length})</summary>${renderWarnings(overall.warnings)}</details>` : ''}
+      ${editorWarnings.length ? `<details><summary style="margin-top:12px;cursor:pointer;">Execuções sem vínculo confirmado (${editorWarnings.length})</summary>${renderWarnings(editorWarnings)}</details>` : ''}
     </fieldset>
     <p id="overall-results-empty" data-editor-only style="color:#5e6c84;">Os Test Plans selecionados aparecerão aqui.</p>
     ${tables}
