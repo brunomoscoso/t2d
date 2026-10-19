@@ -55,12 +55,12 @@ export function createReleaseLinksSection(
   );
 
   return `<section id="release-links-section" data-position-section aria-labelledby="release-links-title" style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;color:#172b4d;">
-    <h2 id="release-links-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Links da release</h2>
+    <h2 id="release-links-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Links da Release</h2>
     <table id="release-links-table" class="report-summary-table" aria-label="Planos de teste e dashboard da release" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border:1px solid #dce5f0;border-spacing:0;border-collapse:separate;border-radius:10px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;">
       <thead><tr>
-        <th scope="col" width="28%" style="width:28%;padding:13px 16px;background:#244779;color:#ffffff;text-align:left;border-top-left-radius:9px;">Recurso</th>
-        <th scope="col" style="padding:13px 16px;background:#244779;color:#ffffff;text-align:left;border-top-right-radius:9px;">Referência no Jira</th>
+        <th scope="col" width="28%" style="width:28%;padding:13px 16px;background:#244779;color:#ffffff;text-align:left;border-top-left-radius:9px;">Descrição</th>
+        <th scope="col" style="padding:13px 16px;background:#244779;color:#ffffff;text-align:left;border-top-right-radius:9px;">Link de Acesso</th>
       </tr></thead>
       <tbody>${rows.join('\n')}</tbody>
     </table>

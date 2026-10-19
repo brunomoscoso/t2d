@@ -32,9 +32,9 @@ export function createMainBlockersTable(positions: PositionReport[]): string {
   `,
   ).join('');
   return `<section id="main-blockers-section" aria-labelledby="main-blockers-title" style="margin:0 0 20px;">
-    <h2 id="main-blockers-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Principais bloqueadores</h2>
+    <h2 id="main-blockers-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Principais Bloqueadores</h2>
     <table id="main-blockers-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}"
-      aria-label="Principais bloqueadores" width="100%" cellpadding="0" cellspacing="0"
+      aria-label="Principais Bloqueadores" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#172b4d;">
       <thead><tr>${columns.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;">${label}</th>`).join('')}</tr></thead>
       <tbody>${rows}</tbody>

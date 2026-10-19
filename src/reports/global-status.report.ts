@@ -38,7 +38,7 @@ export function createPositionPicker(positions: PositionReport[]): string {
   return `
     <div id="position-picker-section" data-editor-only>
       <fieldset class="global-position-picker" data-editor-only>
-        <legend>Selecione os postos</legend>
+        <legend>Selecione os Postos</legend>
         <p>Marque os postos que pretende incluir em todas as áreas do relatório.</p>
         <div class="global-position-options">${choices}</div>
         <div class="global-position-actions">

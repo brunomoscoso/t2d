@@ -18,7 +18,7 @@ export function createTxtReport(positions: PositionReport[]): string {
     for (const report of position.reports) {
       if (currentType !== report.testType) {
         currentType = report.testType;
-        txt += `\nTipo de teste: ${TEST_TYPE_LABELS[report.testType]}\n\n`;
+        txt += `\nGrupo de Testes: ${TEST_TYPE_LABELS[report.testType]}\n\n`;
       }
       txt += `--------------------------------------------------\n`;
 

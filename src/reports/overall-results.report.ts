@@ -54,7 +54,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-position-title-${index}" width="100%" cellpadding="0" cellspacing="0"
           style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;">
-          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Tipo de teste</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
+          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Grupo de Testes</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>

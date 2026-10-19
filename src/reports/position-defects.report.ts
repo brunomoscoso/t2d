@@ -99,7 +99,7 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
   const headers = [
     { label: 'Prioridade', width: '13%' },
     { label: 'PRIT', width: '15%' },
-    { label: 'Posições das execuções', width: '18%' },
+    { label: 'Posições das Execuções', width: '18%' },
     { label: 'Resumo', width: '41%' },
     { label: 'Estado', width: '13%' },
   ];
