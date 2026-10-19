@@ -9,7 +9,13 @@ export function createReleaseLinksSection(
 ): string {
   const baseUrl = JIRA_URL.replace(/\/+$/, '');
 
-  function row(label: string, href: string, text: string, index: number, position?: string): string {
+  function row(
+    label: string,
+    href: string,
+    text: string,
+    index: number,
+    position?: string,
+  ): string {
     const cellStyle =
       'padding:14px 16px;text-align:left;vertical-align:middle;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
     const border = index ? 'border-top:1px solid #dce5f0;' : '';
@@ -48,8 +54,8 @@ export function createReleaseLinksSection(
     ),
   );
 
-  return `<section id="release-links-section" data-position-section aria-labelledby="release-links-title" style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;color:#172b4d;">
-    <h2 id="release-links-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Links da release</h2>
+  return `<section id="release-links-section" data-position-section aria-labelledby="release-links-title" style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;color:#172b4d;">
+    <h2 id="release-links-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Links da release</h2>
     <table id="release-links-table" class="report-summary-table" aria-label="Planos de teste e dashboard da release" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border:1px solid #dce5f0;border-spacing:0;border-collapse:separate;border-radius:10px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;">
       <thead><tr>

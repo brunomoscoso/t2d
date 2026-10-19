@@ -1,7 +1,4 @@
-import {
-  createOverallResultsSection,
-  overallResultsStyles,
-} from './overall-results.report';
+import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
 import { JIRA_URL } from '../config/jira.config';
@@ -338,7 +335,10 @@ export function createHtmlReport(
     .map((position) => {
       const reportsHtml = groupReportsByTestType(position)
         .filter((group) => group.reports.length)
-        .map((group) => `<h3>${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`)
+        .map(
+          (group) =>
+            `<h3>${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`,
+        )
         .join('');
 
       return `
@@ -438,7 +438,7 @@ export function createHtmlReport(
 
     border-radius:10px;
 
-    margin-bottom:32px;
+    margin-bottom:20px;
 
     overflow:hidden;
 
@@ -481,7 +481,7 @@ export function createHtmlReport(
 
     padding:20px;
 
-    margin-bottom:22px;
+    margin-bottom:20px;
 
     background:#ffffff;
 
@@ -611,9 +611,9 @@ export function createHtmlReport(
 
     h4 {
 
-    margin-top:20px;
+    margin-top:16px;
 
-    margin-bottom:8px;
+    margin-bottom:10px;
 
     font-size:14px;
 

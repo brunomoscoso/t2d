@@ -1,10 +1,7 @@
 import { JIRA_URL } from '../config/jira.config';
 import { TEST_TYPE_LABELS } from '../config/test-types.config';
 import { escapeHtml, getStatusColors } from '../utils/html.utils';
-import {
-  overallPercentage,
-  type OverallResults,
-} from '../utils/overall-results.utils';
+import { overallPercentage, type OverallResults } from '../utils/overall-results.utils';
 
 export const overallResultsStyles = `
   .overall-results-table { min-width:720px; }
@@ -51,8 +48,8 @@ export function createOverallResultsSection(overall: OverallResults): string {
       const reference = plan.prit
         ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>`
         : 'PRIT não configurado';
-      return `<div id="overall-position-${encodeURIComponent(plan.key)}" data-overall-position="${escapeHtml(plan.key)}" data-report-position="${escapeHtml(plan.key)}" style="margin:0 0 24px;">
-      <h3 id="overall-position-title-${index}" style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)} — ${reference}</h3>
+      return `<div id="overall-position-${encodeURIComponent(plan.key)}" data-overall-position="${escapeHtml(plan.key)}" data-report-position="${escapeHtml(plan.key)}" style="margin:0 0 20px;">
+      <h3 id="overall-position-title-${index}" style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)} — ${reference}</h3>
       ${plan.title !== plan.label ? `<p style="font-size:11px;color:#5e6c84;">${escapeHtml(plan.title)}</p>` : ''}
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-position-title-${index}" width="100%" cellpadding="0" cellspacing="0"
@@ -65,8 +62,8 @@ export function createOverallResultsSection(overall: OverallResults): string {
     </div>`;
     })
     .join('');
-  return `<section id="overall-results-section" data-position-section ${tables ? '' : 'hidden'} aria-labelledby="overall-results-title" style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;">
-    <h2 id="overall-results-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Overall Test Results</h2>
+  return `<section id="overall-results-section" data-position-section ${tables ? '' : 'hidden'} aria-labelledby="overall-results-title" style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;">
+    <h2 id="overall-results-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Overall Test Results</h2>
     ${tables}
   </section>`;
 }

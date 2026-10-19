@@ -8,10 +8,10 @@ export const DASHBOARD_PAGE_ID = '24419';
 export const POSITIONS: PositionDefinition[] = [
   {
     name: 'COCO PT',
-    testPlanPrit: 'IERL-23569',
+    testPlanPrit: '',
     executions: {
-      smoke: ['IERL-23515'],
-      regression: ['IERL-23519', 'IERL-23518'],
+      smoke: [],
+      regression: [],
       certification: [],
       defectFixing: [],
     },
@@ -23,13 +23,13 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'OPT PT',
-    testPlanPrit: '',
-    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+    testPlanPrit: 'PRIT-8346',
+    executions: { smoke: [], regression: ['PRIT-8348'], certification: [], defectFixing: ['PRIT-8347'] },
   },
   {
     name: 'OPT SP',
-    testPlanPrit: '',
-    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+    testPlanPrit: 'PRIT-8346',
+    executions: { smoke: [], regression: ['PRIT-8349'], certification: [], defectFixing: ['PRIT-8350'] },
   },
   {
     name: 'Tangerina',

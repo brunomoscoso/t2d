@@ -343,6 +343,45 @@
         });
     }
 
+    function preserveReportSpacing(report) {
+        // O Outlook pode ignorar margens de section/div/h2. Células com altura
+        // explícita mantêm os intervalos mesmo ao colar o HTML no e-mail.
+        function spacer(height) {
+            const table = document.createElement('table');
+            table.setAttribute('role', 'presentation');
+            table.setAttribute('aria-hidden', 'true');
+            table.setAttribute('data-report-spacer', '');
+            table.setAttribute('width', '100%');
+            table.setAttribute('cellpadding', '0');
+            table.setAttribute('cellspacing', '0');
+            table.style.cssText = 'width:100%;border:0;border-collapse:collapse;margin:0;';
+            const cell = table.insertRow().insertCell();
+            cell.setAttribute('height', String(height));
+            cell.style.cssText = 'height:' + height + 'px;line-height:' + height + 'px;mso-line-height-rule:exactly;font-size:1px;padding:0;border:0;';
+            cell.textContent = '\u00a0';
+            return table;
+        }
+        report.querySelectorAll('h2, h3, [data-report-heading]').forEach(title => {
+            title.style.margin = '0';
+            if (title.dataset.reportHeading === 'execution') title.before(spacer(16));
+            title.after(spacer(10));
+        });
+        report.querySelectorAll('.operation-card').forEach(card => {
+            card.style.margin = '0';
+            if (card.nextElementSibling) card.after(spacer(20));
+        });
+        report.querySelectorAll('[data-overall-position]').forEach(group => {
+            group.style.margin = '0';
+            if (group.nextElementSibling?.matches('[data-overall-position]')) group.after(spacer(20));
+        });
+        report.querySelectorAll('#release-links-section, #overall-results-section, #main-blockers-section, #global-status-section, #position-defects-section, .position-block, .dashboard-block').forEach(section => {
+            section.style.margin = '0';
+            section.after(spacer(20));
+        });
+        const signature = report.querySelector('.signature');
+        if (signature) signature.style.marginTop = '0';
+    }
+
     function createEmailClipboardHtml(report) {
         const clone = report.cloneNode(true);
         const sourceElements = [report, ...report.querySelectorAll('*')];
@@ -389,6 +428,7 @@
             observations.appendChild(outlookWrapper);
         }
 
+        preserveReportSpacing(clone);
         return clone.outerHTML;
     }
 
@@ -408,6 +448,7 @@
             // Respeita a seleção atual e converte os valores editados em texto
             // apenas na cópia, sem alterar o editor.
             prepareReportForCopy(report, []);
+            preserveReportSpacing(report);
             report.querySelectorAll('script').forEach(script => script.remove());
             const snapshot = document.implementation.createHTMLDocument('Relatório de testes');
             snapshot.documentElement.lang = 'pt';

@@ -219,11 +219,11 @@ function createReportBlock(report: Report): string {
                 "
                 >
 
-                <div
+                <div data-report-heading="relation"
                     style="
                     font-size:11px;
                     font-weight:bold;
-                    margin-bottom:4px;
+                    margin-bottom:10px;
                     "
                 >
 
@@ -266,7 +266,7 @@ function createReportBlock(report: Report): string {
             border-radius:10px;
             background:#ffffff;
             padding:20px;
-            margin-bottom:16px;
+            margin-bottom:20px;
             font-family:Arial,sans-serif;
         "
         >
@@ -371,10 +371,10 @@ function createReportBlock(report: Report): string {
         <!-- STATUS -->
 
 
-        <div
+        <div data-report-heading="execution"
             style="
-            margin-top:18px;
-            margin-bottom:8px;
+            margin-top:16px;
+            margin-bottom:10px;
             font-size:14px;
             font-weight:bold;
             "
@@ -405,9 +405,10 @@ function createReportBlock(report: Report): string {
         <!-- DEFECTS -->
 
 
-        <div
+        <div data-report-heading="execution"
             style="
-            margin-top:20px;
+            margin-top:16px;
+            margin-bottom:10px;
             font-size:14px;
             font-weight:bold;
             "
@@ -475,7 +476,7 @@ export function createEmailReport(
                     border:1px solid #c4dfd4;
                     border-radius:14px;
                     background:#f3f9f6;
-                    margin-bottom:32px;
+                    margin-bottom:20px;
                     font-family:Arial,sans-serif;
                 "
                 >

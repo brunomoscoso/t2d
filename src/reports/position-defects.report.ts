@@ -103,8 +103,8 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     { label: 'Resumo', width: '41%' },
     { label: 'Estado', width: '13%' },
   ];
-  return `<section id="position-defects-section" data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-defects-title" style="margin:0 0 32px;">
-    <h2 id="position-defects-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
+  return `<section id="position-defects-section" data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-defects-title" style="margin:0 0 20px;">
+    <h2 id="position-defects-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
     <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
       <thead><tr>${headers.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;font-weight:bold;">${label}</th>`).join('')}</tr></thead>
