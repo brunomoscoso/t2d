@@ -1,5 +1,4 @@
 import { JIRA_URL } from '../config/jira.config';
-import { POSITIONS } from '../config/positions.config';
 import type { IssueLink, PositionReport } from '../types/report.types';
 import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 
@@ -15,58 +14,11 @@ const priorities: Record<
 };
 const unknownPriority = { label: 'Não definida', color: '#5e6c84', background: '#f1f2f4', rank: 5 };
 const getPriority = (value: string) => priorities[value.trim().toLowerCase()] ?? unknownPriority;
-const displayPosition = (position: string) =>
-  position === 'Tangerina' ? 'Tangerina PT' : position;
-
-function normalize(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function titleDetails(title: string): { positions: string[]; summary: string } {
-  const prefix = title.match(/^(?:\s*\[[^\]]*\])+/)?.[0] ?? '';
-  const metadata = normalize(prefix.replace(/[\[\]]/g, ' '));
-  const positions = new Set<string>();
-  // Suporta tanto [COCO][PT][SP] como [COCO SP/PT] e [Cyber PT].
-  for (const match of metadata.matchAll(
-    /\b(COCO|CYBER)\s+((?:PT|SP)(?:\s*(?:[/,&]|\bAND\b|\bE\b)?\s*(?:PT|SP))?)\b/g,
-  )) {
-    const name = match[1] === 'COCO' ? 'COCO' : 'Cyber';
-    for (const country of match[2].match(/PT|SP/g) ?? []) positions.add(`${name} ${country}`);
-  }
-  const tangerina = metadata.match(/\b(?:TANGERINA|TANG)(?:\s+(PT|SP))?\b/);
-  if (tangerina) positions.add(`Tangerina ${tangerina[1] ?? 'PT'}`);
-  for (const definition of POSITIONS) {
-    if (/^(COCO|Cyber|Tangerina)\b/.test(definition.name)) continue;
-    if (
-      [definition.name, ...definition.aliases].some((alias) =>
-        ` ${metadata.replace(/[^A-Z0-9 ]/g, ' ')} `.includes(` ${normalize(alias)} `),
-      )
-    ) {
-      positions.add(definition.name);
-    }
-  }
-  // PROD aparece também fora dos colchetes, entre os qualificadores do título.
-  const productionTag = /(?:^|\s+[-–—]\s+)PROD(?=\s+[-–—]\s+|$)/gi;
-  if (/\bPROD\b/.test(metadata) || productionTag.test(title)) positions.add('PROD');
-  const summary = title
-    .slice(prefix.length)
-    .replace(productionTag, '')
-    .replace(/^\s*[-–—:]\s*/, '')
-    .trim();
-  return { positions: [...positions], summary };
-}
 
 type SprintDefect = {
   key: string;
   issue: IssueLink;
   positions: Set<string>;
-  fallbackPositions: Set<string>;
 };
 
 export function createPositionDefectsSection(positions: PositionReport[]): string {
@@ -82,7 +34,6 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
             key,
             issue: { ...issue },
             positions: new Set(),
-            fallbackPositions: new Set(),
           });
         } else {
           const saved = defects.get(key)!.issue;
@@ -94,25 +45,26 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     }
   }
 
-  // Um PRIT partilhado aparece uma só vez. Os postos explícitos do defect
-  // prevalecem sobre o posto da execução que o criou (ex.: PROD).
+  // Um defect partilhado aparece uma só vez, com as posições configuradas das
+  // execuções que o referenciam. Tags do título (incluindo PROD) são só exibição.
   for (const position of positions) {
     for (const report of position.reports) {
       for (const issue of report.issueLinks) {
         const defect = defects.get(issue.prit.trim().toUpperCase());
         if (!defect) continue;
-        titleDetails(issue.titulo).positions.forEach((name) => defect.positions.add(name));
-        defect.fallbackPositions.add(displayPosition(position.position));
+        defect.positions.add(position.position);
       }
     }
   }
 
-  const positionOrder = POSITIONS.map((position) => displayPosition(position.name));
-  const sorted = [...defects.values()].sort(
-    (a, b) =>
-      getPriority(a.issue.priority).rank - getPriority(b.issue.priority).rank ||
-      a.key.localeCompare(b.key, undefined, { numeric: true }),
-  );
+  const positionOrder = positions.map((position) => position.position);
+  const sorted = [...defects.values()]
+    .filter((defect) => getPriority(defect.issue.priority).rank <= 1)
+    .sort(
+      (a, b) =>
+        getPriority(a.issue.priority).rank - getPriority(b.issue.priority).rank ||
+        a.key.localeCompare(b.key, undefined, { numeric: true }),
+    );
   const cellStyle =
     'padding:13px 12px;border:1px solid #dce5f0;vertical-align:top;text-align:left;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
   const badgeStyle =
@@ -121,21 +73,19 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     .map((defect, index) => {
       const priority = getPriority(defect.issue.priority);
       const statusColors = getIssueStatusColors(defect.issue.status);
-      const names = [...(defect.positions.size ? defect.positions : defect.fallbackPositions)].sort(
-        (a, b) => {
-          const index = (name: string) =>
-            positionOrder.includes(name) ? positionOrder.indexOf(name) : positionOrder.length;
-          return index(a) - index(b) || a.localeCompare(b);
-        },
-      );
-      const summary = titleDetails(defect.issue.titulo).summary || 'Sem resumo';
+      const names = [...defect.positions].sort((a, b) => {
+        const index = (name: string) =>
+          positionOrder.includes(name) ? positionOrder.indexOf(name) : positionOrder.length;
+        return index(a) - index(b) || a.localeCompare(b);
+      });
+      const summary = defect.issue.titulo.trim() || 'Sem resumo';
       const status =
         defect.issue.status
           .trim()
           .replace(/[_-]+/g, ' ')
           .toLowerCase()
           .replace(/\b\w/g, (character) => character.toUpperCase()) || 'Sem estado';
-      return `<tr data-sprint-defect="${escapeHtml(defect.key)}" style="background:${index % 2 ? '#f8faff' : '#ffffff'};">
+      return `<tr data-sprint-defect="${escapeHtml(defect.key)}" data-report-positions="${escapeHtml(JSON.stringify(names))}" style="background:${index % 2 ? '#f8faff' : '#ffffff'};">
       <td data-defect-priority style="${cellStyle}"><span style="${badgeStyle}background:${priority.background};color:${priority.color};"><span aria-hidden="true">●</span> ${priority.label}</span></td>
       <td style="${cellStyle}"><a data-position-defect="${escapeHtml(defect.key)}"
         href="${escapeHtml(`${JIRA_URL.replace(/\/$/, '')}/browse/${encodeURIComponent(defect.key)}`)}"
@@ -149,16 +99,16 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
   const headers = [
     { label: 'Prioridade', width: '13%' },
     { label: 'PRIT', width: '15%' },
-    { label: 'Posto(s)', width: '18%' },
+    { label: 'Posições das execuções', width: '18%' },
     { label: 'Resumo', width: '41%' },
     { label: 'Estado', width: '13%' },
   ];
-  return `<section id="position-defects-section" aria-labelledby="position-defects-title" style="margin:0 0 32px;">
+  return `<section id="position-defects-section" data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-defects-title" style="margin:0 0 32px;">
     <h2 id="position-defects-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
     <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"
       style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#172b4d;overflow-wrap:anywhere;">
       <thead><tr>${headers.map(({ label, width }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};border-color:#244779;background:#244779;color:#ffffff;font-weight:bold;">${label}</th>`).join('')}</tr></thead>
-      <tbody>${rows || `<tr data-defects-empty>${headers.map(() => `<td style="${cellStyle}color:#5e6c84;">--</td>`).join('')}</tr>`}</tbody>
+      <tbody>${rows}</tbody>
     </table>
   </section>`;
 }

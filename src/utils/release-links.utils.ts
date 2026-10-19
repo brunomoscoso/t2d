@@ -1,9 +1,15 @@
-export function normalizeTestPlanPrit(value: string): string {
-  const trimmed = value.trim().toUpperCase();
-  if (!trimmed) return '';
-  const prit = /^\d+$/.test(trimmed) ? `PRIT-${trimmed}` : trimmed;
-  if (!/^PRIT-\d+$/.test(prit)) {
-    throw new Error(`PRIT inválido no Test Plan: ${value}. Use 1234 ou PRIT-1234.`);
-  }
-  return prit;
+import { DASHBOARD_PAGE_ID, POSITIONS } from '../config/positions.config';
+import type { PositionDefinition, ReleaseLinks } from '../types/report.types';
+import { resolvePositions } from './position.utils';
+
+export function getConfiguredReleaseLinks(
+  configured: PositionDefinition[] = POSITIONS,
+): ReleaseLinks {
+  return {
+    testPlans: resolvePositions(configured).map((position) => ({
+      position: position.name,
+      prit: position.testPlanPrit,
+    })),
+    dashboardPageId: DASHBOARD_PAGE_ID,
+  };
 }

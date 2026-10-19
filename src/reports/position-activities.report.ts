@@ -1,6 +1,8 @@
 import { JIRA_URL } from '../config/jira.config';
+import { TEST_TYPE_LABELS } from '../config/test-types.config';
 import type { PositionReport, Report } from '../types/report.types';
 import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
+import { getPositionReportKey } from '../utils/position.utils';
 
 type ActivityColumn = 'done' | 'in-progress' | 'to-do' | 'blocked' | 'other';
 const cellStyle =
@@ -51,18 +53,8 @@ function getColumn(status: string): ActivityColumn {
 }
 
 function shortTitle(title: string): string {
-  // Conserva os qualificadores de grupo/release ao retirar os prefixos de versão e posto.
-  return (
-    title
-      .replace(/^(?:\s*\[[^\]]*\])+\s*[-–—:]?\s*/, '')
-      .replace(/Installation Smoke Tests?/gi, 'Smoke')
-      .replace(/Certification Group\s*["“]?(\d+)["”]?/gi, 'Certificação Grupo $1')
-      .replace(/Regression (?:Group|Grupo)\s*["“]?(\d+)["”]?/gi, 'Regressão Grupo $1')
-      .replace(/\bRegression\b/gi, 'Regressão')
-      .replace(/Validation of the defects delivered in release/gi, 'Defect Fixing — release')
-      .replace(/Validation Defect Fixing/gi, 'Defect Fixing')
-      .trim() || title
-  );
+  // Só abrevia a exibição; o tipo vem da configuração e o título completo fica no link.
+  return title.replace(/^(?:\s*\[[^\]]*\])+\s*[-–—:]?\s*/, '').trim() || title;
 }
 
 function renderActivity(report: Report, column: ActivityColumn): string {
@@ -70,6 +62,7 @@ function renderActivity(report: Report, column: ActivityColumn): string {
   const status = normalizeStatus(report.mainStatus);
   const showStatus = column === 'other' || (column === 'in-progress' && status !== 'IN PROGRESS');
   return `<div data-position-activity="${escapeHtml(report.prit)}" style="margin:0 0 8px;line-height:1.5;">
+    <strong style="color:#0747a6;">${escapeHtml(TEST_TYPE_LABELS[report.testType])}:</strong>
     <span aria-hidden="true" style="color:${columns[column].color};font-weight:bold;">${columns[column].symbol}</span>
     <a href="${escapeHtml(url)}" title="${escapeHtml(`${report.prit} — ${report.title}`)}"
       target="_blank" rel="noopener noreferrer" style="color:#172b4d;text-decoration:none;">${escapeHtml(shortTitle(report.title))}${column === 'done' ? '' : ` <span style="color:#0052cc;">(${escapeHtml(report.prit)})</span>`}</a>
@@ -78,41 +71,16 @@ function renderActivity(report: Report, column: ActivityColumn): string {
 }
 
 export function createPositionActivitiesTable(positions: PositionReport[]): string {
-  const grouped = new Map<string, Map<string, { report: Report; statuses: Set<string> }>>();
-  for (const position of positions) {
-    const reports =
-      grouped.get(position.position) ??
-      new Map<string, { report: Report; statuses: Set<string> }>();
-    grouped.set(position.position, reports);
-    for (const report of position.reports) {
-      const key = report.prit.trim().toUpperCase();
-      const existing = reports.get(key) ?? { report, statuses: new Set<string>() };
-      existing.statuses.add(normalizeStatus(report.mainStatus) || 'SEM STATUS');
-      reports.set(key, existing);
-    }
-  }
-  const reportKey = JSON.stringify(
-    [
-      ...new Set(positions.flatMap((position) => position.reports.map((report) => report.prit))),
-    ].sort(),
-  );
+  const reportKey = getPositionReportKey(positions);
   const otherStates: string[] = [];
-  const rows = [...grouped]
-    .map(([position, entries]) => {
-      const reports = [...entries.values()].map(({ report, statuses }) =>
-        statuses.size === 1
-          ? report
-          : {
-              ...report,
-              mainStatus: `Estados divergentes: ${[...statuses].sort().join(' / ')}`,
-            },
-      );
+  const rows = positions
+    .map(({ position, reports }) => {
       const other = reports.filter((report) => getColumn(report.mainStatus) === 'other');
       if (other.length)
-        otherStates.push(`<div style="margin:8px 0;">
+        otherStates.push(`<div data-report-position="${escapeHtml(position)}" style="margin:8px 0;">
       <strong>${escapeHtml(position)}</strong>${other.map((report) => renderActivity(report, 'other')).join('')}
     </div>`);
-      return `<tr data-activity-position="${escapeHtml(position)}">
+      return `<tr data-activity-position="${escapeHtml(position)}" data-report-position="${escapeHtml(position)}">
       <th scope="row" style="${cellStyle}background:#edf3fc;color:#0747a6;text-align:left;">${escapeHtml(position)}</th>
       ${(['done', 'in-progress', 'to-do', 'blocked'] as const)
         .map((column) => {
@@ -145,18 +113,18 @@ export function createPositionActivitiesTable(positions: PositionReport[]): stri
     },
     { label: 'ON HOLD', width: '20%', background: '#c9372c', color: '#ffffff' },
   ];
-  return `<section id="position-activities-section" aria-labelledby="position-activities-title" style="margin:0 0 32px;">
+  return `<section id="position-activities-section" data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-activities-title" style="margin:0 0 32px;">
     <h2 id="position-activities-title" style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Atividades por posto</h2>
     <div id="position-activities-scroll" class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="Atividades por posto; desloque para ver todas as colunas">
       <table id="position-activities-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}" aria-label="Atividades por posto" width="100%" cellpadding="0" cellspacing="0"
         style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#172b4d;">
         <thead><tr>${headers.map(({ label, width, background, color }) => `<th scope="col" width="${width}" style="${cellStyle}width:${width};background:${background};color:${color};border-color:${background};text-align:left;">${label}</th>`).join('')}</tr></thead>
-        <tbody>${rows || `<tr><td colspan="${headers.length}" style="${cellStyle}color:#5e6c84;">Nenhuma atividade extraída do Jira para este relatório.</td></tr>`}</tbody>
+        <tbody>${rows}</tbody>
       </table>
     </div>
     ${
       otherStates.length
-        ? `<div data-other-activity-states style="margin-top:12px;font-size:11px;">
+        ? `<div data-other-activity-states data-position-section style="margin-top:12px;font-size:11px;">
       <strong>Outros estados do Jira</strong>${otherStates.join('')}
     </div>`
         : ''

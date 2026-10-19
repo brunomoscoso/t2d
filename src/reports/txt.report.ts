@@ -1,21 +1,32 @@
 import { PositionReport } from '../types/report.types';
+import { JIRA_URL } from '../config/jira.config';
+import { TEST_TYPE_LABELS } from '../config/test-types.config';
 
 export function createTxtReport(positions: PositionReport[]): string {
   let txt = '';
 
   for (const position of positions) {
+    if (!position.reports.length) continue;
     txt += '==================================================\n';
 
     txt += `${position.position}\n`;
+    txt += `Test Plan: ${position.testPlanPrit ? `${position.testPlanPrit} — ${JIRA_URL}/browse/${position.testPlanPrit}` : 'Não informado'}\n`;
 
     txt += '==================================================\n\n';
 
+    let currentType = '';
     for (const report of position.reports) {
+      if (currentType !== report.testType) {
+        currentType = report.testType;
+        txt += `\nTipo de teste: ${TEST_TYPE_LABELS[report.testType]}\n\n`;
+      }
       txt += `--------------------------------------------------\n`;
 
       txt += `${report.prit}\n`;
 
       txt += `${report.title}\n`;
+      txt += `Status: ${report.mainStatus}\n`;
+      txt += `Labels: ${report.labels.join(', ') || '—'}\n`;
 
       txt += `--------------------------------------------------\n`;
 

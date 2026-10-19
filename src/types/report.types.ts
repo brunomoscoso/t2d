@@ -1,12 +1,25 @@
+export type TestType = 'smoke' | 'regression' | 'certification' | 'defectFixing';
+
+export type PositionDefinition = {
+  name: string;
+  testPlanPrit: string;
+  executions: Record<TestType, string[]>;
+};
+
+export type ConfiguredExecution = {
+  prit: string;
+  position: string;
+  testType: TestType;
+};
+
 export type TestPlanLink = {
+  position: string;
   prit: string;
   title?: string;
-  // undefined: consulta indisponível; []: consulta concluída sem execuções.
-  executionPrits?: string[];
 };
 
 export type ReleaseLinks = {
-  testPlans: Record<'smokes' | 'certification' | 'regression' | 'defectFixing', TestPlanLink>;
+  testPlans: TestPlanLink[];
   dashboardPageId: string;
   dashboardTitle?: string;
 };
@@ -36,7 +49,7 @@ export type IssueLink = {
     REPORT
     ========================================================= */
 
-export type Report = {
+export type ExecutionData = {
   prit: string;
 
   title: string;
@@ -45,8 +58,6 @@ export type Report = {
 
   labels: string[];
 
-  position: string;
-
   totalTests: number | null;
 
   executionStatuses: ExecutionStatus[];
@@ -54,12 +65,16 @@ export type Report = {
   issueLinks: IssueLink[];
 };
 
+// Posição e tipo são atribuídos exclusivamente pela configuração, após a coleta.
+export type Report = ExecutionData & ConfiguredExecution;
+
 /* =========================================================
     POSITION REPORT
     ========================================================= */
 
 export type PositionReport = {
   position: string;
+  testPlanPrit: string;
   reports: Report[];
 };
 

@@ -1,8 +1,8 @@
 import type { APIRequestContext } from 'playwright';
 import { JIRA_URL } from '../config/jira.config';
-import { DASHBOARD_PAGE_ID, TEST_PLANS } from '../config/operations.config';
 import type { ReleaseLinks } from '../types/report.types';
-import { normalizeTestPlanPrit } from '../utils/release-links.utils';
+import { getConfiguredReleaseLinks } from '../utils/release-links.utils';
+import { normalizePrit } from '../utils/prit.utils';
 
 type JiraTitleData = { fields?: { summary?: unknown }; name?: unknown } | null;
 
@@ -10,14 +10,14 @@ type JiraTitleData = { fields?: { summary?: unknown }; name?: unknown } | null;
 // O nome do dashboard é independente do título do gadget de Open Defects.
 export async function extractReleaseLinks(
   request: APIRequestContext,
-  configured: ReleaseLinks = { testPlans: TEST_PLANS, dashboardPageId: DASHBOARD_PAGE_ID },
+  configured: ReleaseLinks = getConfiguredReleaseLinks(),
   jiraUrl = JIRA_URL,
 ): Promise<ReleaseLinks> {
   const baseUrl = jiraUrl.replace(/\/+$/, '');
   const links = structuredClone(configured);
-  const plans = Object.values(links.testPlans);
+  const plans = links.testPlans;
   plans.forEach((plan) => {
-    plan.prit = normalizeTestPlanPrit(plan.prit);
+    plan.prit = plan.prit.trim() ? normalizePrit(plan.prit) : '';
     delete plan.title;
   });
   links.dashboardPageId = links.dashboardPageId.trim();

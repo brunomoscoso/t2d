@@ -1,37 +1,74 @@
-export type PositionDefinition = {
-  name: string;
-  aliases: string[];
-};
+import type { PositionDefinition } from '../types/report.types';
 
-export const DEFAULT_POSITION = 'Exploratory Testing';
+export const DASHBOARD_PAGE_ID = '24419';
 
-/**
- * Cola dos grupos do relatório.
- *
- * name: nome único que aparecerá no relatório.
- * aliases: nomes equivalentes encontrados no título ou nas labels.
- * Maiúsculas, acentos, espaços, colchetes, hífens e underscores são
- * normalizados: COCO PT também reconhece [COCO][PT] e COCO_PT.
- *
- * A ordem define a prioridade quando o texto contém mais de um nome.
- * Também define a ordem de exibição dos grupos no relatório.
- * Exploratory Testing fica sempre por último, antes do dashboard.
- * Os tipos vêm antes dos locais para manter, por exemplo, todas as
- * execuções explicitamente COCO PT juntas, independentemente do local.
- * Não usar PT/SP isolados como aliases: o país não identifica o tipo.
- */
+// Fonte de verdade da coleta e dos agrupamentos. A ordem das posições e dos
+// arrays de execução é preservada nos relatórios. Test Plans são apenas links.
+// Preencha o plano e os PRITs de execução diretamente em cada posição/tipo.
 export const POSITIONS: PositionDefinition[] = [
-  { name: 'COCO PT', aliases: ['COCO PT'] },
-  { name: 'COCO SP', aliases: ['COCO SP'] },
-  { name: 'Tangerina', aliases: ['Tangerina'] },
-  { name: 'Olivais', aliases: ['Olivais'] },
-  { name: 'Badajoz', aliases: ['Badajoz'] },
-  { name: 'Pontes', aliases: ['Pontes'] },
-  { name: 'Las Rosas', aliases: ['Las Rosas', 'Las Rozas'] },
-  { name: 'Cyber SP', aliases: ['Cyber SP'] },
-  { name: 'Cyber PT', aliases: ['Cyber PT'] },
-  { name: 'Marinas', aliases: ['Marinas'] },
-  { name: 'Arco do Cego', aliases: ['Arco do Cego'] },
-  { name: 'VMPOS - ALGRAGIDE', aliases: ['VMPOS - ALGRAGIDE'] },
-  { name: 'VMPOS - OEIRAS', aliases: ['VMPOS - OEIRAS'] },
+  {
+    name: 'COCO PT',
+    testPlanPrit: 'IERL-23569',
+    executions: { smoke: ['IERL-23515'], regression: ['IERL-23519', 'IERL-23518'], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'COCO SP',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Tangerina',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Olivais',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Badajoz',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Reseller',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Las Rosas',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Cyber SP',
+    testPlanPrit: 'PRIT-8328',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Cyber PT',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Marinas',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'Arco do Cego',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'VMPOS - ALGRAGIDE',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'VMPOS - OEIRAS',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
 ];

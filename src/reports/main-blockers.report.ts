@@ -1,10 +1,9 @@
 import type { PositionReport } from '../types/report.types';
 import { escapeHtml } from '../utils/html.utils';
+import { getPositionReportKey } from '../utils/position.utils';
 
 export function createMainBlockersTable(positions: PositionReport[]): string {
-  const reportKey = JSON.stringify(
-    positions.flatMap((position) => position.reports.map((report) => report.prit)).sort(),
-  );
+  const reportKey = getPositionReportKey(positions);
   const columns = [
     { field: 'theme', label: 'Tema', width: '45%' },
     { field: 'impact', label: 'Impacto', width: '55%' },

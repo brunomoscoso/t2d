@@ -1,28 +1,33 @@
-import { TEST_PLANS } from '../config/operations.config';
-import type { PositionReport, ReleaseLinks } from '../types/report.types';
+import { POSITIONS } from '../config/positions.config';
+import { TEST_TYPES, TEST_TYPE_LABELS } from '../config/test-types.config';
+import type {
+  PositionDefinition,
+  PositionReport,
+  TestPlanLink,
+  TestType,
+} from '../types/report.types';
 import { normalizeStatus } from './html.utils';
-import { normalizeTestPlanPrit } from './release-links.utils';
+import { groupReportsByPosition } from './groupReports.utils';
+import { resolvePositions } from './position.utils';
 
-export type Market = 'PT' | 'SP';
-export type MarketResults = { counts: Record<string, number>; total: number; executions: number };
+export type OverallTypeResults = {
+  testType: TestType;
+  counts: Record<string, number>;
+  total: number;
+  executions: number;
+  available: boolean;
+};
 export type OverallPlanResults = {
   key: string;
   prit: string;
   label: string;
   title: string;
-  available: boolean;
   statuses: string[];
-  markets: Record<Market, MarketResults>;
+  types: OverallTypeResults[];
   warnings: string[];
 };
-export type OverallResults = { reportKey: string; plans: OverallPlanResults[]; warnings: string[] };
+export type OverallResults = { plans: OverallPlanResults[] };
 
-const planLabels: Record<string, string> = {
-  smokes: 'Smokes',
-  certification: 'Certification',
-  regression: 'Regression',
-  defectFixing: 'Defect Fixing',
-};
 const standardStatuses = [
   'PASS',
   'TODO',
@@ -34,70 +39,55 @@ const standardStatuses = [
   'PENDING_3RD',
 ];
 
-export function getExecutionMarket(title: string): Market | undefined {
-  // Letras (incluindo acentos), marcas combinantes e números não são delimitadores.
-  const matches = [...title.matchAll(/(?:^|[^\p{L}\p{M}\p{N}])(PT|SP)(?=$|[^\p{L}\p{M}\p{N}])/giu)];
-  const markets = new Set(matches.map((match) => match[1].toUpperCase() as Market));
-  return markets.size === 1 ? [...markets][0] : undefined;
-}
-
-// Calcula o percentual sobre o total agregado do mesmo plano e mercado.
+// O denominador é a soma dos status da mesma posição e tipo, nunca uma média.
 export function overallPercentage(count: number, total: number): string {
   return `${total ? ((count * 100) / total).toFixed(1).replace(/\.0$/, '') : '0'}%`;
 }
 
 export function aggregateOverallResults(
   positions: PositionReport[],
-  configured: ReleaseLinks['testPlans'] = TEST_PLANS,
+  links: TestPlanLink[] = [],
+  configured: PositionDefinition[] = POSITIONS,
 ): OverallResults {
-  // O Overall considera apenas execuções coletadas e vinculadas; deduplica PRITs repetidos por grupo.
-  const reports = new Map(
-    positions
-      .flatMap((position) => position.reports)
-      .map((report) => [report.prit.trim().toUpperCase(), report]),
+  const definitions = resolvePositions(configured);
+  // Reaplica a configuração e rejeita dados repetidos ou fora do escopo.
+  const grouped = groupReportsByPosition(
+    positions.flatMap((position) => position.reports),
+    definitions,
   );
-  const linkedExecutions = new Set<string>();
-  const plans = Object.entries(configured).map(([key, plan]): OverallPlanResults => {
-    const prit = normalizeTestPlanPrit(plan.prit);
+  const reports = new Map(
+    grouped.flatMap((position) => position.reports).map((report) => [report.prit, report]),
+  );
+  const plans = definitions.map((position): OverallPlanResults => {
     const warnings: string[] = [];
-    const emptyMarket = (): MarketResults => ({
-      counts: Object.create(null),
-      total: 0,
-      executions: 0,
-    });
-    const markets = { PT: emptyMarket(), SP: emptyMarket() };
     const statuses = new Set(standardStatuses);
-    const available = Boolean(prit && plan.executionPrits);
-    if (!prit) warnings.push('PRIT do Test Plan não configurado.');
-    else if (!available)
-      warnings.push(
-        `Vínculos de ${prit} indisponíveis. Não foi possível calcular os resultados deste plano.`,
-      );
-
-    if (available)
-      for (const executionPrit of new Set(
-        plan.executionPrits!.map((value) => value.trim().toUpperCase()),
-      )) {
-        const report = reports.get(executionPrit);
-        if (!report) continue;
-        linkedExecutions.add(executionPrit);
-        const market = getExecutionMarket(report.title);
-        if (!market) {
-          warnings.push(
-            `${executionPrit}: título sem mercado PT/SP inequívoco; execução excluída do Overall.`,
-          );
-          continue;
-        }
-        const result = markets[market];
+    if (!position.testPlanPrit) warnings.push('Test Plan da posição ainda não configurado.');
+    const types = TEST_TYPES.map((testType): OverallTypeResults => {
+      const result: OverallTypeResults = {
+        testType,
+        counts: Object.create(null),
+        total: 0,
+        executions: 0,
+        available: true,
+      };
+      const expected = position.executions[testType];
+      const missing = expected.filter((prit) => !reports.has(prit));
+      if (missing.length) {
+        result.available = false;
+        warnings.push(
+          `${TEST_TYPE_LABELS[testType]}: execuções não coletadas (${missing.join(', ')}); agregado indisponível para evitar resultados parciais.`,
+        );
+        return result;
+      }
+      for (const prit of expected) {
+        const report = reports.get(prit)!;
         result.executions++;
         let executionTotal = 0;
         for (const item of report.executionStatuses) {
           const normalized = normalizeStatus(item.status);
           const status = normalized === 'TO_DO' ? 'TODO' : normalized;
           if (!status || !Number.isSafeInteger(item.quantidade) || item.quantidade < 0) {
-            warnings.push(
-              `${executionPrit}: status ou quantidade inválida; valor excluído do Overall.`,
-            );
+            warnings.push(`${prit}: status ou quantidade inválida; valor excluído do Overall.`);
             continue;
           }
           statuses.add(status);
@@ -106,38 +96,34 @@ export function aggregateOverallResults(
         }
         result.total += executionTotal;
         if (!report.executionStatuses.length && report.totalTests !== 0) {
+          result.available = false;
           warnings.push(
-            `${executionPrit}: status de execução não coletados; resultados deste mercado podem estar incompletos.`,
+            `${prit}: status de execução não coletados; agregado de ${TEST_TYPE_LABELS[testType]} indisponível.`,
           );
         } else if (report.totalTests !== null && report.totalTests !== executionTotal) {
           warnings.push(
-            `${executionPrit}: soma dos status (${executionTotal}) difere do total informado (${report.totalTests}); percentuais calculados sobre os status coletados.`,
+            `${prit}: soma dos status (${executionTotal}) difere do total informado (${report.totalTests}); percentuais calculados sobre os status coletados.`,
           );
         }
       }
+      return result;
+    });
+    // Metadados do Jira só enriquecem a exibição; não podem alterar o plano configurado.
+    const title = links.find(
+      (link) => link.position === position.name && link.prit === position.testPlanPrit,
+    )?.title;
     return {
-      key,
-      prit,
-      label: planLabels[key] ?? key,
-      title: plan.title?.trim() || planLabels[key] || key,
-      available,
+      key: position.name,
+      prit: position.testPlanPrit,
+      label: position.name,
+      title: title?.trim() || position.name,
       statuses: [
         ...standardStatuses,
         ...[...statuses].filter((status) => !standardStatuses.includes(status)).sort(),
       ],
-      markets,
+      types,
       warnings,
     };
   });
-  const warnings = [...reports.keys()]
-    .filter((prit) => !linkedExecutions.has(prit))
-    .map(
-      (prit) =>
-        `${prit}: nenhum vínculo confirmado com os Test Plans configurados; execução excluída do Overall.`,
-    );
-  const reportKey = JSON.stringify({
-    executions: [...reports.keys()].sort(),
-    plans: plans.map((plan) => [plan.key, plan.prit]).sort(([a], [b]) => a.localeCompare(b)),
-  });
-  return { reportKey, plans, warnings };
+  return { plans };
 }

@@ -1,50 +1,56 @@
-import { DEFAULT_POSITION, POSITIONS } from '../config/positions.config';
+import { POSITIONS } from '../config/positions.config';
+import { TEST_TYPES } from '../config/test-types.config';
+import type {
+  ExecutionData,
+  PositionDefinition,
+  PositionReport,
+  Report,
+} from '../types/report.types';
+import { getConfiguredExecutions, resolvePositions } from './position.utils';
+import { normalizePrit } from './prit.utils';
 
-import { PositionReport, Report } from '../types/report.types';
-
-// Prioridade de exibição dentro de cada posição, pelo título da execução.
-const EXECUTION_ORDER = [
-  /\b(?:smokes?|somokes?)\b/i,
-  /\bcertification\b/i,
-  /\bregressions?\b|\bregressio\b/i,
-];
-
-function getExecutionOrder(title: string): number {
-  const normalizedTitle = title.replace(/[_-]+/g, ' ');
-  const order = EXECUTION_ORDER.findIndex((pattern) => pattern.test(normalizedTitle));
-
-  return order === -1 ? EXECUTION_ORDER.length : order;
+// Atualiza a nomenclatura nos relatórios; a associação continua a vir de POSITIONS.
+function currentPositionNames(text: string): string {
+  return text.replace(/\bPontes\b/gi, 'Reseller');
 }
 
-export function groupReportsByPosition(reports: Report[]): PositionReport[] {
-  const positionOrder = new Map(POSITIONS.map((position, index) => [position.name, index]));
-
-  const getOrder = (position: string): number => {
-    if (position === DEFAULT_POSITION) {
-      return POSITIONS.length + 1;
-    }
-
-    // Posições não cadastradas ficam depois da cola e antes de Exploratory Testing.
-    return positionOrder.get(position) ?? POSITIONS.length;
-  };
-
-  const groups = new Map<string, Report[]>();
-
+export function groupReportsByPosition(
+  reports: ExecutionData[],
+  configured: PositionDefinition[] = POSITIONS,
+): PositionReport[] {
+  const positions = resolvePositions(configured);
+  const assignments = new Map(getConfiguredExecutions(positions).map((item) => [item.prit, item]));
+  const collected = new Map<string, Report>();
   for (const report of reports) {
-    const currentReports = groups.get(report.position) ?? [];
-
-    currentReports.push(report);
-
-    groups.set(report.position, currentReports);
+    const prit = normalizePrit(report.prit);
+    const assignment = assignments.get(prit);
+    if (!assignment) throw new Error(`${prit}: execução coletada sem posição/tipo configurados.`);
+    if (collected.has(prit)) throw new Error(`${prit}: execução repetida nos dados coletados.`);
+    collected.set(prit, {
+      ...report,
+      ...assignment,
+      title: currentPositionNames(report.title),
+      issueLinks: report.issueLinks.map((issue) => ({
+        ...issue,
+        titulo: currentPositionNames(issue.titulo),
+      })),
+    });
   }
+  return positions.map((position) => ({
+    position: position.name,
+    testPlanPrit: position.testPlanPrit,
+    reports: TEST_TYPES.flatMap((type) =>
+      position.executions[type].flatMap((prit) => {
+        const report = collected.get(prit);
+        return report ? [report] : [];
+      }),
+    ),
+  }));
+}
 
-  return Array.from(groups.entries())
-    .map(([position, groupedReports]) => ({
-      position,
-
-      reports: groupedReports.sort(
-        (a, b) => getExecutionOrder(a.title) - getExecutionOrder(b.title),
-      ),
-    }))
-    .sort((a, b) => getOrder(a.position) - getOrder(b.position));
+export function groupReportsByTestType(position: PositionReport) {
+  return TEST_TYPES.map((testType) => ({
+    testType,
+    reports: position.reports.filter((report) => report.testType === testType),
+  }));
 }

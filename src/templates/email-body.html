@@ -98,106 +98,16 @@
     .section-wrapper { width: 100%; margin: 0 auto 24px; }
     .signature { margin-top: 30px; line-height: 1.5; }
 
-    #global-status-section { position: relative; }
+    /* GLOBAL STATUS STYLES */
     .global-position-picker {
         position: absolute;
         top: 0;
         left: calc(100% + var(--picker-gap));
         width: var(--picker-width);
-        min-width: 0;
         margin: 0;
-        padding: 18px 16px;
-        border: 1px solid #cbd9ec;
-        border-radius: 14px;
-        background: #ffffff;
-        box-shadow: 0 6px 20px #172b4d08;
     }
-    .global-position-picker legend { padding: 0 6px; font-weight: bold; color: #0747a6; }
-    .global-position-picker p { margin: 0 0 12px; color: #5e6c84; font-size: 11px; line-height: 1.5; }
-    .global-position-options {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 5px 12px;
-    }
-    .global-position-choice {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px;
-        border-radius: 7px;
-        font-size: 11px;
-        cursor: pointer;
-        overflow-wrap: anywhere;
-    }
-    .global-position-choice:hover,
-    .global-position-choice:has(input:checked) { background: #eaf2ff; color: #0747a6; }
-    .global-position-choice input { margin: 0; width: 16px; height: 16px; flex-shrink: 0; accent-color: #0052cc; }
-    .global-position-actions {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 14px;
-        font-size: 11px;
-    }
-    .global-position-actions button {
-        padding: 8px 10px;
-        border: 1px solid #b8c9e2;
-        border-radius: 7px;
-        background: #ffffff;
-        color: #0052cc;
-        font: inherit;
-        cursor: pointer;
-    }
-    .global-position-actions button:hover { background: #eaf2ff; }
-    #global-position-count {
-        display: block;
-        width: 100%;
-        padding-top: 12px;
-        border-top: 1px solid #e1e9f4;
-        color: #0747a6;
-        font-size: 11px;
-        font-weight: bold;
-    }
-    .global-status-fields {
-        display: grid;
-        grid-template-columns: 16px minmax(0, 300px) minmax(0, 1fr);
-        align-items: center;
-        gap: 8px;
-    }
-    .global-status-fields select,
-    .global-status-fields input,
-    .installation-status-fields select {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        padding: 9px;
-        border: 1px solid #b8c9e2;
-        border-radius: 7px;
-        background: #ffffff;
-        color: #172b4d;
-        font: inherit;
-    }
-    .global-status-fields select,
-    .installation-status-fields select { font-weight: bold; cursor: pointer; }
-    .installation-status-fields {
-        display: grid;
-        grid-template-columns: 16px minmax(0, 1fr);
-        align-items: center;
-        gap: 8px;
-    }
-    .global-status-placeholder {
-        min-width: 0;
-        padding: 6px 10px;
-        border: 1px dashed #c1c7d0;
-        border-radius: 7px;
-        background: #ffffff;
-    }
-
-    #global-status-table { table-layout: fixed; }
     #position-activities-table { min-width: 1050px; overflow-wrap: anywhere; }
-    [data-activity-note],
-    [data-blocker-field] {
+    [data-activity-note] {
         display: block;
         width: 100%;
         max-width: 100%;
@@ -226,21 +136,7 @@
     .installation-status-fields select:focus,
     .global-status-fields input:focus { outline: 2px solid #0052cc; outline-offset: 1px; }
     .report-summary-table { box-shadow: 0 4px 16px #172b4d08; }
-    .blocker-actions { margin-top:12px; }
-    [data-add-blocker],
-    [data-remove-blocker] {
-        padding:8px 12px;
-        border:1px solid #b8c9e2;
-        border-radius:7px;
-        background:#ffffff;
-        color:#0052cc;
-        font:inherit;
-        cursor:pointer;
-    }
-    [data-add-blocker]:hover { background:#eaf2ff; }
-    [data-remove-blocker] { margin-top:8px; color:#ae2e24; border-color:#f1b5af; }
-    [data-remove-blocker]:hover:not(:disabled) { background:#ffedeb; }
-    [data-remove-blocker]:disabled { opacity:0.45; cursor:default; }
+    /* MAIN BLOCKERS STYLES */
     .report-summary-table thead th { letter-spacing: 0.3px; }
     .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
     .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
@@ -274,18 +170,11 @@
         .report-toolbar { gap: 18px; border-radius: 12px; }
         .report-toolbar-actions,
         #copy-email-button { width: 100%; }
-        .global-position-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         #position-defects-table th,
         #position-defects-table td { padding: 8px 6px !important; }
         #release-links-table th,
         #release-links-table td { padding: 10px 8px !important; }
         #release-links-table thead th:first-child { width: 35% !important; }
-        #global-status-table thead th:first-child { width: 28% !important; }
-        #global-status-table th,
-        #global-status-table td { padding:8px 6px !important; }
-        .global-status-fields { grid-template-columns: 16px minmax(0, 1fr); }
-        .global-status-fields input,
-        .global-status-placeholder-note { grid-column: 1 / -1; }
         .position-content,
         .operation-card { padding: 10px !important; }
     }
@@ -323,17 +212,19 @@
     data-placeholder="Clique aqui para adicionar comentários ou observações..."
     ></div>
 
-    <!-- GLOBAL STATUS -->
+    <!-- POSITION PICKER -->
+
+    <!-- RELEASE LINKS -->
 
     <!-- OVERALL RESULTS -->
+
+    <!-- MAIN BLOCKERS -->
+
+    <!-- GLOBAL STATUS -->
 
     <!-- POSITION ACTIVITIES -->
 
     <!-- POSITION DEFECTS -->
-
-    <!-- MAIN BLOCKERS -->
-
-    <!-- RELEASE LINKS -->
 
     <!-- REPORTS -->
 
@@ -358,111 +249,7 @@
      ========================================= -->
 
 <script>
-    /* OVERALL RESULTS SCRIPT */
-
-    function initializeGlobalStatuses() {
-        const table = document.getElementById('global-status-table');
-        if (!table) return;
-
-        const section = document.getElementById('global-status-section');
-        const rows = Array.from(table.querySelectorAll('[data-global-status-row]'));
-        const toggles = new Map(Array.from(section.querySelectorAll('[data-position-toggle]'))
-            .map(toggle => [toggle.value, toggle]));
-        const storageKey = 't2d:global-status:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
-        let savedRows = [];
-
-        try {
-            const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            if (Array.isArray(saved)) savedRows = saved;
-        } catch (error) {
-            // A edição continua disponível quando o armazenamento está bloqueado.
-        }
-
-        function save() {
-            try {
-                localStorage.setItem(storageKey, JSON.stringify(rows.map(row => ({
-                    position: row.dataset.position,
-                    selected: toggles.get(row.dataset.position).checked,
-                    status: row.querySelector('[data-status-select]').value,
-                    installation: row.querySelector('[data-installation-select]').value,
-                    note: row.querySelector('[data-status-note]').value,
-                }))));
-            } catch (error) {
-                // Não impede a edição nem a cópia em navegadores sem armazenamento.
-            }
-        }
-
-        function updateSelection() {
-            let count = 0;
-            rows.forEach(row => {
-                row.hidden = !toggles.get(row.dataset.position).checked;
-                if (!row.hidden) count++;
-            });
-            document.getElementById('global-status-empty').hidden = count !== 0;
-            document.getElementById('global-position-count').textContent = count === 1
-                ? '1 posto selecionado'
-                : count + ' postos selecionados';
-        }
-
-        rows.forEach(row => {
-            const toggle = toggles.get(row.dataset.position);
-            const select = row.querySelector('[data-status-select]');
-            const note = row.querySelector('[data-status-note]');
-            const dot = row.querySelector('[data-status-dot]');
-            const installation = row.querySelector('[data-installation-select]');
-            const installationDot = row.querySelector('[data-installation-dot]');
-            const saved = savedRows.find(item => item && item.position === row.dataset.position)
-                || savedRows.find(item => item && item.position === 'SEM POSIÇÃO'
-                    && row.dataset.position === 'Exploratory Testing');
-
-            if (saved) {
-                // As escolhas anteriores à seleção de postos continuam disponíveis.
-                toggle.checked = typeof saved.selected === 'boolean' ? saved.selected : true;
-                if (Array.from(select.options).some(option => option.value === saved.status)) {
-                    select.value = saved.status;
-                }
-                if (typeof saved.note === 'string') note.value = saved.note.slice(0, note.maxLength);
-                if (Array.from(installation.options).some(option => option.value === saved.installation)) {
-                    installation.value = saved.installation;
-                }
-            }
-
-            function updateDot() {
-                dot.style.color = select.selectedOptions[0].dataset.color;
-            }
-            function updateInstallation() {
-                const color = installation.selectedOptions[0].dataset.color;
-                installation.style.color = color;
-                installationDot.style.color = color;
-            }
-
-            updateDot();
-            updateInstallation();
-            installation.addEventListener('change', () => {
-                updateInstallation();
-                save();
-            });
-            toggle.addEventListener('change', () => {
-                updateSelection();
-                save();
-            });
-            select.addEventListener('change', () => {
-                updateDot();
-                save();
-            });
-            note.addEventListener('input', save);
-        });
-
-        function selectAll(selected) {
-            toggles.forEach(toggle => { toggle.checked = selected; });
-            updateSelection();
-            save();
-        }
-
-        section.querySelector('[data-select-all-positions]').addEventListener('click', () => selectAll(true));
-        section.querySelector('[data-clear-positions]').addEventListener('click', () => selectAll(false));
-        updateSelection();
-    }
+    /* GLOBAL STATUS SCRIPT */
 
     function initializeActivityNotes() {
         const table = document.getElementById('position-activities-table');
@@ -484,9 +271,7 @@
         }
 
         notes.forEach(note => {
-            const saved = savedNotes.find(item => item && item.position === note.dataset.position)
-                || savedNotes.find(item => item && item.position === 'SEM POSIÇÃO'
-                    && note.dataset.position === 'Exploratory Testing');
+            const saved = savedNotes.find(item => item && item.position === note.dataset.position);
             if (saved && typeof saved.note === 'string') note.value = saved.note;
             resizeNote(note);
             note.addEventListener('input', () => {
@@ -503,93 +288,7 @@
         window.addEventListener('resize', () => notes.forEach(resizeNote));
     }
 
-    function initializeBlockers() {
-        const table = document.getElementById('main-blockers-table');
-        if (!table) return;
-        const body = table.tBodies[0];
-        const rowTemplate = body.rows[0].cloneNode(true);
-        const rows = () => Array.from(body.querySelectorAll('[data-blocker-row]'));
-        const fields = () => Array.from(body.querySelectorAll('[data-blocker-field]'));
-        const storageKey = 't2d:main-blockers:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
-        let savedRows = [];
-        try {
-            const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-            if (Array.isArray(saved)) {
-                // O formato anterior tinha cinco linhas fixas. Migra apenas as
-                // preenchidas; as linhas vazias adicionadas agora são guardadas.
-                savedRows = saved.filter(row => row && (
-                    (typeof row.theme === 'string' && row.theme.trim())
-                    || (typeof row.impact === 'string' && row.impact.trim())
-                ));
-            } else if (saved && saved.version === 2 && Array.isArray(saved.rows)) {
-                savedRows = saved.rows;
-            }
-        } catch (error) {
-            // A edição continua disponível sem armazenamento.
-        }
-        function save() {
-            try {
-                localStorage.setItem(storageKey, JSON.stringify({
-                    version: 2,
-                    rows: rows().map(row => ({
-                        theme: row.querySelector('[data-blocker-field="theme"]').value,
-                        impact: row.querySelector('[data-blocker-field="impact"]').value,
-                    })),
-                }));
-            } catch (error) {
-                // Não bloqueia a edição nem a cópia.
-            }
-        }
-        function updateRows() {
-            const currentRows = rows();
-            currentRows.forEach((row, index) => {
-                row.dataset.blockerRow = index;
-                row.style.background = index % 2 ? '#f8faff' : '#ffffff';
-                row.querySelector('[data-blocker-field="theme"]').setAttribute('aria-label', 'Tema do bloqueador ' + (index + 1));
-                row.querySelector('[data-blocker-field="impact"]').setAttribute('aria-label', 'Impacto do bloqueador ' + (index + 1));
-                const remove = row.querySelector('[data-remove-blocker]');
-                remove.setAttribute('aria-label', 'Remover bloqueador ' + (index + 1));
-                remove.disabled = currentRows.length === 1;
-            });
-        }
-        function resize(field) {
-            if (!field.isConnected) return;
-            field.style.height = 'auto';
-            field.style.height = (field.scrollHeight + 2) + 'px';
-        }
-        function addRow(saved = {}, focus = false) {
-            const row = rowTemplate.cloneNode(true);
-            body.appendChild(row);
-            row.querySelectorAll('[data-blocker-field]').forEach(field => {
-                if (saved && typeof saved[field.dataset.blockerField] === 'string') {
-                    field.value = saved[field.dataset.blockerField];
-                }
-                resize(field);
-                field.addEventListener('input', () => {
-                    resize(field);
-                    save();
-                });
-            });
-            row.querySelector('[data-remove-blocker]').addEventListener('click', () => {
-                if (rows().length === 1) return;
-                const neighbor = row.nextElementSibling || row.previousElementSibling;
-                row.remove();
-                updateRows();
-                save();
-                neighbor.querySelector('[data-blocker-field="theme"]').focus();
-            });
-            updateRows();
-            if (focus) row.querySelector('[data-blocker-field="theme"]').focus();
-        }
-        body.replaceChildren();
-        (savedRows.length ? savedRows : [{}]).forEach(saved => addRow(saved));
-        document.querySelector('[data-add-blocker]').addEventListener('click', () => {
-            addRow({}, true);
-            save();
-        });
-        save();
-        window.addEventListener('resize', () => fields().forEach(resize));
-    }
+    /* MAIN BLOCKERS SCRIPT */
 
     function prepareBlockersForCopy(report, restoreActions) {
         report.querySelectorAll('[data-blocker-field]').forEach(field => {
@@ -632,6 +331,11 @@
             element.replaceWith(placeholder);
         }
 
+        // Remove conteúdos desmarcados, incluindo secções que ficaram vazias.
+        report.querySelectorAll('[hidden]').forEach(element => {
+            if (!element.parentElement.closest('[hidden]')) removeDuringCopy(element);
+        });
+
         prepareActivityTableForCopy(report, restoreActions);
         prepareBlockersForCopy(report, restoreActions);
 
@@ -664,35 +368,20 @@
             observations.replaceChildren(document.createTextNode('\u00a0'));
         }
 
-        const globalStatusSection = report.querySelector('#global-status-section');
-        if (globalStatusSection && !globalStatusSection.querySelector('[data-global-status-row]:not([hidden])')) {
-            removeDuringCopy(globalStatusSection);
-        }
-
-        const overallSection = report.querySelector('#overall-results-section');
-        if (overallSection && !overallSection.querySelector('[data-overall-plan]:not([hidden])')) {
-            removeDuringCopy(overallSection);
-        } else if (overallSection) {
-            overallSection.querySelectorAll('[data-overall-plan][hidden]').forEach(removeDuringCopy);
-        }
-
         report.querySelectorAll('[data-global-status-row]').forEach(row => {
-            if (row.hidden) {
-                removeDuringCopy(row);
-                return;
-            }
-
             const select = row.querySelector('[data-status-select]');
             const selected = select.selectedOptions[0];
             const note = row.querySelector('[data-status-note]').value.trim();
             const fields = row.querySelector('.global-status-fields');
             const summary = document.createElement('div');
-            const dot = row.querySelector('[data-status-dot]').cloneNode(true);
+            const dot = row.querySelector('[data-status-dot]');
             const label = document.createElement('strong');
 
-            dot.style.color = selected.dataset.color;
             label.textContent = select.value ? selected.textContent.trim() : 'Não definido';
-            summary.append(dot, document.createTextNode(' '), label);
+            if (dot && !dot.hidden) {
+                summary.append(dot.cloneNode(true), document.createTextNode(' '));
+            }
+            summary.append(label);
             if (note) summary.appendChild(document.createTextNode(' — ' + note));
 
             restoreActions.push(() => summary.replaceWith(fields));
@@ -747,8 +436,9 @@
             table.style.width = '100%';
             table.style.maxWidth = '100%';
             table.style.minWidth = '0';
+            const cellPadding = table.classList.contains('overall-results-table') ? '7px 6px' : '8px 6px';
             table.querySelectorAll('th, td').forEach(cell => {
-                cell.style.padding = '8px 6px';
+                cell.style.padding = cellPadding;
             });
         });
 
@@ -767,9 +457,7 @@
         return clone.outerHTML;
     }
 
-    initializeGlobalStatuses();
     initializeActivityNotes();
-    initializeBlockers();
 
     function copyEmailReport() {
 

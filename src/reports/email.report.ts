@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createGlobalStatusTable } from './global-status.report';
+import { createGlobalStatusTable, createPositionPicker } from './global-status.report';
+import { mainBlockersScript, mainBlockersStyles } from './main-blockers-editor.report';
+import { globalStatusScript, globalStatusStyles } from './global-status-editor.report';
 import { createPositionDefectsSection } from './position-defects.report';
 import { createPositionActivitiesTable } from './position-activities.report';
 import { createMainBlockersTable } from './main-blockers.report';
@@ -8,12 +10,13 @@ import { createReleaseLinksSection } from './release-links.report';
 import {
   createOverallResultsSection,
   overallResultsStyles,
-  overallResultsScript,
 } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
 
 import { JIRA_URL } from '../config/jira.config';
+import { TEST_TYPE_LABELS } from '../config/test-types.config';
+import { groupReportsByTestType } from '../utils/groupReports.utils';
 
 import { PositionReport, Report } from '../types/report.types';
 
@@ -459,12 +462,16 @@ export function createEmailReport(
   }).format(new Date());
 
   const reportsHtml = positions
+    .filter((position) => position.reports.length)
     .map((position) => {
-      const positionReports = position.reports.map((report) => createReportBlock(report)).join('');
+      const positionReports = groupReportsByTestType(position)
+        .filter((group) => group.reports.length)
+        .map((group) => `<h3 style="font-size:14px;color:#142e57;">${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`)
+        .join('');
 
       return `
 
-                <div class="position-block"
+                <div class="position-block" data-report-position="${escapeHtml(position.position)}"
                 style="
                     border:1px solid #c4dfd4;
                     border-radius:14px;
@@ -522,10 +529,14 @@ export function createEmailReport(
 
   return template
     .replace('<!-- REPORT DATE -->', reportDate)
+    .replace('<!-- POSITION PICKER -->', () => createPositionPicker(positions))
     .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
     .replace('<!-- OVERALL RESULTS -->', () => createOverallResultsSection(overall))
     .replace('/* OVERALL RESULTS STYLES */', () => overallResultsStyles)
-    .replace('/* OVERALL RESULTS SCRIPT */', () => overallResultsScript)
+    .replace('/* GLOBAL STATUS STYLES */', () => globalStatusStyles)
+    .replace('/* GLOBAL STATUS SCRIPT */', () => globalStatusScript)
+    .replace('/* MAIN BLOCKERS SCRIPT */', () => mainBlockersScript)
+    .replace('/* MAIN BLOCKERS STYLES */', () => mainBlockersStyles)
     .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
     .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
     .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))

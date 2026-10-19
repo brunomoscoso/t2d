@@ -1,6 +1,6 @@
 import type { PositionReport } from '../types/report.types';
-import { POSITIONS } from '../config/positions.config';
 import { escapeHtml } from '../utils/html.utils';
+import { getPositionReportKey } from '../utils/position.utils';
 
 const GLOBAL_STATUSES = [
   { value: 'completed', label: 'Concluído', color: '#22a06b' },
@@ -12,42 +12,56 @@ const GLOBAL_STATUSES = [
   { value: 'blocked', label: 'Bloqueado', color: '#de350b' },
 ];
 
-export function createGlobalStatusTable(positions: PositionReport[]): string {
-  // Inclui o catálogo completo e eventuais posições adicionais identificadas no Jira.
-  const availablePositions = [
-    ...new Set([
-      ...POSITIONS.map((position) => position.name),
-      ...positions.map((position) => position.position),
-    ]),
-  ];
-
-  const options = GLOBAL_STATUSES.map(
-    (status) => `
-    <option value="${status.value}" data-color="${status.color}">${escapeHtml(status.label)}</option>
-  `,
-  ).join('');
-
-  // Mantém as escolhas ao reabrir o mesmo relatório, separando conjuntos de PRITs.
-  const reportKey = JSON.stringify(
-    positions.flatMap((position) => position.reports.map((report) => report.prit)).sort(),
+function getDefaultSelection(positions: PositionReport[]): Set<string> {
+  return new Set(
+    positions
+      .filter((position) => position.testPlanPrit.trim() || position.reports.length)
+      .map((position) => position.position),
   );
+}
 
-  const choices = availablePositions
+export function createPositionPicker(positions: PositionReport[]): string {
+  const selected = getDefaultSelection(positions);
+  const choices = positions
+    .map((position) => position.position)
     .map(
       (position, index) => `
     <label class="global-position-choice">
-      <input type="checkbox" data-position-toggle value="${escapeHtml(position)}"
-        aria-controls="global-status-row-${index}" />
+      <input type="checkbox" data-position-toggle value="${escapeHtml(position)}" ${selected.has(position) ? 'checked' : ''}
+        aria-controls="global-status-row-${index} overall-position-${encodeURIComponent(position)}" />
       <span>${escapeHtml(position)}</span>
     </label>
   `,
     )
     .join('');
 
+  return `
+    <div id="position-picker-section" data-editor-only>
+      <fieldset class="global-position-picker" data-editor-only>
+        <legend>Selecione os postos</legend>
+        <p>Marque os postos que pretende incluir em todas as áreas do relatório.</p>
+        <div class="global-position-options">${choices}</div>
+        <div class="global-position-actions">
+          <button type="button" data-select-all-positions>Selecionar todos</button>
+          <button type="button" data-clear-positions>Limpar seleção</button>
+          <span id="global-position-count" role="status" aria-live="polite">${selected.size} ${selected.size === 1 ? 'posto selecionado' : 'postos selecionados'}</span>
+        </div>
+      </fieldset>
+    </div>`;
+}
+
+export function createGlobalStatusTable(positions: PositionReport[]): string {
+  const availablePositions = positions.map((position) => position.position);
+  const selected = getDefaultSelection(positions);
+  const reportKey = getPositionReportKey(positions);
+  const options = GLOBAL_STATUSES.map(
+    (status) =>
+      `<option value="${status.value}" data-color="${status.color}">${escapeHtml(status.label)}</option>`,
+  ).join('');
   const rows = availablePositions
     .map(
       (position, index) => `
-    <tr id="global-status-row-${index}" data-global-status-row data-position="${escapeHtml(position)}" hidden>
+    <tr id="global-status-row-${index}" data-global-status-row data-position="${escapeHtml(position)}" data-report-position="${escapeHtml(position)}" ${selected.has(position) ? '' : 'hidden'}>
       <th scope="row" style="padding:12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;font-size:11px;color:#0747a6;">
         ${escapeHtml(position)}
       </th>
@@ -79,17 +93,7 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
     .join('');
 
   return `
-    <div id="global-status-section" style="margin-bottom:32px;">
-      <fieldset class="global-position-picker" data-editor-only>
-        <legend>Selecione os postos</legend>
-        <p>Marque os postos que pretende incluir no estado global.</p>
-        <div class="global-position-options">${choices}</div>
-        <div class="global-position-actions">
-          <button type="button" data-select-all-positions>Selecionar todos</button>
-          <button type="button" data-clear-positions>Limpar seleção</button>
-          <span id="global-position-count" role="status">0 postos selecionados</span>
-        </div>
-      </fieldset>
+    <div id="global-status-section" data-position-section ${selected.size ? '' : 'hidden'} style="margin-bottom:32px;">
       <h2 style="margin:0 0 14px;font-size:14px;line-height:1.3;color:#142e57;">Estado global</h2>
       <table id="global-status-table" class="report-summary-table" data-report-key="${escapeHtml(reportKey)}"
         aria-label="Estado global por posto" cellpadding="0" cellspacing="0"
@@ -102,22 +106,6 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
           </tr>
         </thead>
         <tbody>
-          <tr id="global-status-empty" data-editor-only>
-            <th scope="row" style="padding:16px 12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;color:#42526e;">
-              Posto a selecionar
-            </th>
-            <td style="padding:16px 12px;border:1px solid #dce5f0;background:#f8faff;color:#5e6c84;">--</td>
-            <td style="padding:16px 12px;border:1px solid #dce5f0;background:#f8faff;color:#5e6c84;">
-              <div class="global-status-fields" aria-hidden="true">
-                <span style="color:#8993a4;font-size:14px;line-height:1;">●</span>
-                <span class="global-status-placeholder">Estado do posto</span>
-                <span class="global-status-placeholder global-status-placeholder-note">Observação curta...</span>
-              </div>
-              <p style="margin:8px 0 0;font-size:11px;">
-                Os postos selecionados na lista aparecerão aqui.
-              </p>
-            </td>
-          </tr>
           ${rows}
         </tbody>
       </table>

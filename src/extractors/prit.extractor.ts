@@ -4,7 +4,7 @@ import { JIRA_URL } from '../config/jira.config';
 
 import { SELECTORS } from '../config/selectors';
 
-import { Report } from '../types/report.types';
+import type { ExecutionData } from '../types/report.types';
 
 import { extractTotalTests } from './totalTests.extractor';
 
@@ -16,10 +16,8 @@ import { extractLabels } from './labels.extractor';
 
 import { extractMainStatus } from './mainStatus.extractor';
 
-import { getPosition } from '../utils/position.utils';
-
 // Extrai os dados usados pelos relatórios a partir de uma issue de execução.
-export async function extractPrit(page: Page, prit: string): Promise<Report> {
+export async function extractPrit(page: Page, prit: string): Promise<ExecutionData> {
   console.log('\n');
 
   console.log('========================================');
@@ -52,10 +50,6 @@ export async function extractPrit(page: Page, prit: string): Promise<Report> {
 
   console.log('Labels:', labels);
 
-  const position = getPosition(labels, title);
-
-  console.log(`Posição: ${position}`);
-
   const executionStatuses = await extractExecutionStatuses(page);
 
   const totalTests = await extractTotalTests(page);
@@ -76,8 +70,6 @@ export async function extractPrit(page: Page, prit: string): Promise<Report> {
     mainStatus,
 
     labels,
-
-    position,
 
     totalTests,
 

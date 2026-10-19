@@ -1,15 +1,15 @@
 # Automação de relatórios do Jira
 
-Esta automação acessa issues PRIT e um dashboard do Jira, coleta informações de execução e gera relatórios agrupados por posição. Também agrega resultados por Test Plan e mercado (PT/SP). O acesso é feito em uma janela do Microsoft Edge, com autenticação corporativa e MFA concluídos manualmente.
+Esta automação acessa issues PRIT e um dashboard do Jira, coleta informações de execução e gera relatórios agrupados por posição e tipo de teste. Cada posição referencia um Test Plan; suas execuções são configuradas explicitamente. O acesso é feito em uma janela do Microsoft Edge, com autenticação corporativa e MFA concluídos manualmente.
 
 ## Visão geral do projeto
 
 O fluxo principal segue estas etapas:
 
-1. Lê a configuração da release em `src/config/operations.config.ts` e a configuração do Jira em `.env`.
+1. Lê e valida as posições e o dashboard em `src/config/positions.config.ts` e a configuração do Jira em `.env`.
 2. Abre o Jira e aguarda a autenticação corporativa/MFA.
-3. Extrai cada PRIT configurado, incluindo título, posição, status e ligações.
-4. Agrupa as execuções por posição e consulta os vínculos dos Test Plans e os dados do dashboard.
+3. Extrai somente os PRITs dos arrays de execução, incluindo título, labels, status e ligações. Test Plans não são execuções.
+4. Atribui posição e tipo pela configuração, consulta os títulos dos Test Plans para exibição e coleta os dados do dashboard.
 5. Gera as versões HTML, texto e JSON na pasta `output/`.
 
 Pastas principais:
@@ -74,7 +74,7 @@ Ao terminar, os relatórios ficam na pasta `output/`:
 | ---------------- | --------------------------------------------------------------------------------- |
 | `report.html`    | Relatório HTML para visualização no navegador.                                    |
 | `report.txt`     | Relatório em texto.                                                               |
-| `report.json`    | Dados estruturados dos PRITs agrupados por posição.                               |
+| `report.json`    | Objeto com `positions` (posição, plano e execuções com `testType`) e `overall` (agregados por posição/tipo). |
 | `email.html`     | Versão HTML preparada para uso em e-mail.                                         |
 | `dashboard.json` | Dados extraídos do dashboard; gerado quando a coleta do dashboard é bem-sucedida. |
 
@@ -84,26 +84,49 @@ Uma execução nova substitui os arquivos de relatório anteriores. A pasta `out
 
 As configurações funcionais ficam no código-fonte:
 
-- **Issues PRIT da release:** edite a lista `PRITS` em [`src/config/operations.config.ts`](src/config/operations.config.ts). Inclua ali cada PRIT de execução que deve ser coletado; a consulta de um Test Plan, por si só, não adiciona execuções à coleta. Atualize a lista em cada release.
-- **Dashboard:** altere `DASHBOARD_PAGE_ID` no mesmo arquivo. Use o ID da página do dashboard, não a URL completa.
-- **Planos de teste:** preencha `TEST_PLANS` no mesmo arquivo com o PRIT de Smokes, Certificação, Regressão e Defect Fixing (por exemplo, `'8161'` ou `'PRIT-8161'`). Os títulos e vínculos são consultados no Jira na sessão autenticada. Os planos identificam as tabelas do Overall; os totais usam apenas as execuções configuradas em `PRITS`.
+- **Posições, planos e execuções:** edite `POSITIONS` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Cada posição tem `name`, `testPlanPrit` e os arrays `executions.smoke`, `executions.regression`, `executions.certification` e `executions.defectFixing`. Esta é a única fonte da associação entre PRIT, posição e tipo.
+- **Dashboard:** altere `DASHBOARD_PAGE_ID` em [`src/config/positions.config.ts`](src/config/positions.config.ts), junto de `POSITIONS`. Use o ID da página, não a URL completa.
+- **Planos de teste:** `testPlanPrit` é apenas referência/link. Seu título é consultado no Jira, sem consultar vínculos para descobrir ou classificar execuções. Preencha o plano antes de adicionar execuções à posição. Uma posição ainda sem plano pode permanecer como rascunho, com todos os arrays vazios.
 - **Texto do link do dashboard:** o nome é extraído automaticamente usando `DASHBOARD_PAGE_ID`, independentemente da coleta dos defects.
-- **Grupos e nomes reconhecidos:** edite `POSITIONS` e `DEFAULT_POSITION` em [`src/config/positions.config.ts`](src/config/positions.config.ts). Os aliases ajudam a associar os nomes encontrados nos títulos ou labels às posições do relatório. Títulos sem posição reconhecida são agrupados como `Exploratory Testing`.
+- **Ordem e nomes:** a ordem de `POSITIONS` define a apresentação dos postos. Os tipos seguem `TEST_TYPES` em [`src/config/test-types.config.ts`](src/config/test-types.config.ts); dentro de cada tipo, vale a ordem do array de PRITs. Títulos e labels não classificam nem ordenam execuções.
 - **Estrutura e seletores do Jira:** se a interface do Jira mudar, os seletores usados na coleta ficam em [`src/config/selectors.ts`](src/config/selectors.ts).
 
-Por exemplo, para configurar o link de Smokes:
+Formato de uma posição (substitua os marcadores por PRITs confirmados; este exemplo não atribui nenhum PRIT existente):
 
 ```typescript
-smokes: { prit: 'PRIT-8161' },
+{
+  name: 'COCO PT',
+  testPlanPrit: 'PRIT-<plano-confirmado>',
+  executions: {
+    smoke: ['PRIT-<execução-smoke>'],
+    regression: ['PRIT-<execução-regressão>'],
+    certification: [],
+    defectFixing: [],
+  },
+},
 ```
 
-A caixa **Links da release** aparece no `email.html`, logo após **Principais bloqueadores**, e acompanha a cópia para o e-mail. As URLs usam `JIRA_URL`: `/browse/<PRIT>` para os planos e `/secure/Dashboard.jspa?selectPageId=<ID>` para o dashboard. Planos com `prit` vazio aparecem como **Não informado**. O link do dashboard continua disponível mesmo se a coleta dos seus dados falhar.
+PRITs aceitam o formato `PRIT-1234` ou somente o número; espaços externos e maiúsculas/minúsculas são normalizados. Uma execução só pode ocorrer uma vez na configuração, inclusive dentro do mesmo array. Duplicidades entre posições/tipos interrompem a coleta com o PRIT e os dois locais em conflito. Um Test Plan configurado não pode constar em nenhum array de execução.
+
+A caixa **Links da release** lista um Test Plan por posição nos dois HTMLs e é a primeira tabela do relatório. É seguida por **Overall Test Results**, **Principais bloqueadores**, **Estado global** e os restantes conteúdos. As URLs usam `JIRA_URL`: `/browse/<PRIT>` para os planos e `/secure/Dashboard.jspa?selectPageId=<ID>` para o dashboard. Planos vazios aparecem como **Não informado** quando o posto é selecionado manualmente. O link do dashboard continua disponível mesmo se a coleta dos seus dados falhar.
 
 Os títulos vêm dos endpoints de consulta de [issues e dashboards da API REST do Jira](https://docs.atlassian.com/software/jira/docs/api/REST/9.12.2/), usando a sessão já autenticada do navegador. Se uma consulta falhar, a automação registra um aviso e mantém o link com o PRIT ou ID, sem impedir a geração do relatório.
 
-Em **Overall Test Results**, selecione os planos que devem acompanhar o relatório. A seleção é guardada no navegador e os controles não aparecem na cópia para o e-mail. Consulte o [guia do Overall](docs/overall-results.md) para as regras de agregação e tratamento de avisos.
+Use **Selecione os postos** para controlar todos os conteúdos associados a posições em `email.html` e `report.html`: Estado global, Overall Test Results, atividades, defects da sprint, links dos Test Plans e detalhes das execuções. A lista segue `POSITIONS`, incluindo posições sem execuções. Inicialmente, apenas os postos com PRIT de Test Plan ou execuções associados ficam marcados; os restantes podem ser selecionados manualmente. Desmarcar um posto oculta os seus conteúdos; secções sem conteúdos selecionados desaparecem por completo, sem tabelas vazias. **Selecionar todos** e **Limpar seleção** aplicam-se ao relatório inteiro. As escolhas manuais são guardadas no navegador junto dos estados e notas. A cópia para e-mail e a impressão incluem apenas os conteúdos selecionados, sem os controles. No Estado global, **Concluído** aparece sem a bolinha verde. Consulte o [guia do Overall](docs/overall-results.md) para as regras de agregação e tratamento de avisos.
 
 A tabela **Atividades por posto** inclui a coluna **BLOCKED**, em rosa, para as atividades com esse status no Jira. A coluna **ON HOLD** permite acrescentar observações manualmente.
+
+O posto **Reseller** usa a nova designação também nos títulos de execuções e resumos de defects apresentados nos relatórios; as issues no Jira não são alteradas.
+
+As atividades mostram o tipo configurado junto do título. A tabela **Defects criados na sprint** inclui apenas a relação `created` e as prioridades **Alta** (`High`) e **Crítica** (`Highest`). Um defect partilhado aparece uma vez, associado às posições configuradas das execuções que o referenciam. O título completo é preservado, inclusive tags como `PROD`, mas essas tags não determinam o agrupamento. O estado global, as notas e os bloqueadores manuais continuam disponíveis.
+
+## Preenchimento das posições
+
+Configure os planos e as execuções diretamente em `POSITIONS`; confirme a posição e o tipo de cada execução antes de adicioná-la. Os identificadores da configuração anterior estão preservados apenas como [referência histórica](docs/overall-results.md#referência-da-configuração-anterior), sem alimentar a coleta, gerar avisos ou bloquear atribuições.
+
+Enquanto nenhuma execução estiver atribuída, o comando encerra antes de abrir o navegador ou gerar relatórios. Arquivos antigos em `output/` não são substituídos nesse caso.
+
+O JSON é um objeto com `positions` e `overall`; consumidores do antigo array na raiz precisam passar a ler `positions`.
 
 ## Desenvolvimento
 
@@ -117,13 +140,15 @@ Instale as dependências com `npm ci`. Use os comandos seguintes a partir da rai
 | `npm run format:check` | Verifica a formatação sem modificar arquivos.                                           |
 | `npx tsc --noEmit`     | Verifica os tipos do código TypeScript.                                                 |
 
-Ao alterar uma extração, mantenha o seletor em `src/config/selectors.ts` e cubra os casos relevantes nos testes. Ao adicionar uma posição, atualize `POSITIONS` e seus aliases. Ao adicionar um Test Plan, atualize `TEST_PLANS` e os tipos correspondentes em `src/types/report.types.ts`.
+Ao alterar uma extração, mantenha o seletor em `src/config/selectors.ts` e cubra os casos relevantes nos testes. Ao adicionar uma posição ou mudar seu Test Plan, atualize somente `POSITIONS`. Um novo tipo de teste exige atualizar `TestType`, a configuração de tipos e os arrays de todas as posições.
 
-Antes de enviar alterações, execute `npm run format`, `npm run format:check`, `npm test` e `npx tsc --noEmit`.
+A suíte ainda contém testes com imports e expectativas do modelo anterior e precisa de adaptação ao agrupamento explícito por posição/tipo. Consulte as [validações pendentes](docs/overall-results.md#validações-pendentes).
 
 ## Solução de problemas
 
 - **Variáveis do Jira não configuradas:** confirme que existe um `.env` na raiz e que `JIRA_URL` e `JIRA_LOGIN_EMAIL` estão preenchidos.
+- **Nenhuma execução atribuída:** preencha os arrays de PRITs por posição e tipo em `POSITIONS`.
+- **Configuração inválida:** corrija os PRITs duplicados, o plano ausente de uma posição com execuções ou um Test Plan usado como execução. O erro informa o conflito antes da coleta.
 - **Edge não inicia:** instale o Microsoft Edge e tente executar novamente.
 - **A página não abre ou a coleta falha:** verifique a conexão à rede corporativa, o acesso ao Jira e as permissões para as issues e o dashboard configurados.
 - **Um PRIT apresenta erro durante a execução:** confira o terminal para identificar a issue. A automação tenta a coleta até três vezes; se a falha persistir, encerra sem gerar novos relatórios. Os arquivos de uma execução anterior podem continuar em `output/`.

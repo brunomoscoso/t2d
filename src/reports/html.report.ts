@@ -1,11 +1,17 @@
 import {
   createOverallResultsSection,
   overallResultsStyles,
-  overallResultsScript,
 } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
 import { JIRA_URL } from '../config/jira.config';
+import { TEST_TYPE_LABELS } from '../config/test-types.config';
+import { groupReportsByTestType } from '../utils/groupReports.utils';
+import { createReleaseLinksSection } from './release-links.report';
+import { createGlobalStatusTable, createPositionPicker } from './global-status.report';
+import { globalStatusScript, globalStatusStyles } from './global-status-editor.report';
+import { createMainBlockersTable } from './main-blockers.report';
+import { mainBlockersScript, mainBlockersStyles } from './main-blockers-editor.report';
 
 import { PositionReport, Report } from '../types/report.types';
 
@@ -328,12 +334,16 @@ export function createHtmlReport(
   overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
 ): string {
   const positionsHtml = positions
+    .filter((position) => position.reports.length)
     .map((position) => {
-      const reportsHtml = position.reports.map((report) => createReportBlock(report)).join('');
+      const reportsHtml = groupReportsByTestType(position)
+        .filter((group) => group.reports.length)
+        .map((group) => `<h3>${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`)
+        .join('');
 
       return `
 
-                <section class="position-block">
+                <section class="position-block" data-report-position="${escapeHtml(position.position)}">
 
 
                 <div class="position-title">
@@ -378,6 +388,8 @@ export function createHtmlReport(
     <style>
 
     ${overallResultsStyles}
+    ${globalStatusStyles}
+    ${mainBlockersStyles}
 
 
     * {
@@ -885,14 +897,22 @@ export function createHtmlReport(
 
     <div class="page">
 
+    ${createPositionPicker(positions)}
+
+    ${createReleaseLinksSection(releaseLinks)}
+
     ${createOverallResultsSection(overall)}
+
+    ${createMainBlockersTable(positions)}
+
+    ${createGlobalStatusTable(positions)}
 
     ${positionsHtml}
 
     </div>
 
 
-    <script>${overallResultsScript}</script>
+    <script>${globalStatusScript}\n${mainBlockersScript}</script>
     </body>
 
 

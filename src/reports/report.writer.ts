@@ -67,10 +67,9 @@ export function writeReports(
   releaseLinks?: ReleaseLinks,
 ): void {
   const overall = aggregateOverallResults(positions, releaseLinks?.testPlans);
-  for (const warning of new Set([
-    ...overall.warnings,
-    ...overall.plans.flatMap((plan) => plan.warnings),
-  ])) {
+  for (const warning of new Set(
+    overall.plans.flatMap((plan) => plan.warnings.map((warning) => `${plan.label}: ${warning}`)),
+  )) {
     console.warn(`⚠️ ${warning}`);
   }
 
@@ -87,7 +86,7 @@ export function writeReports(
   fs.writeFileSync(
     path.join(outputDirectory, 'report.json'),
 
-    JSON.stringify(positions, null, 2),
+    JSON.stringify({ positions, overall }, null, 2),
 
     'utf-8',
   );
