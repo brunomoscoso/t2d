@@ -4,13 +4,9 @@ import { createGlobalStatusTable, createPositionPicker } from './global-status.r
 import { mainBlockersScript, mainBlockersStyles } from './main-blockers-editor.report';
 import { globalStatusScript, globalStatusStyles } from './global-status-editor.report';
 import { createPositionDefectsSection } from './position-defects.report';
-import { createPositionActivitiesTable } from './position-activities.report';
 import { createMainBlockersTable } from './main-blockers.report';
 import { createReleaseLinksSection } from './release-links.report';
-import {
-  createOverallResultsSection,
-  overallResultsStyles,
-} from './overall-results.report';
+import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
 
@@ -466,7 +462,10 @@ export function createEmailReport(
     .map((position) => {
       const positionReports = groupReportsByTestType(position)
         .filter((group) => group.reports.length)
-        .map((group) => `<h3 style="font-size:14px;color:#142e57;">${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`)
+        .map(
+          (group) =>
+            `<h3 style="font-size:14px;color:#142e57;">${escapeHtml(TEST_TYPE_LABELS[group.testType])}</h3>${group.reports.map(createReportBlock).join('')}`,
+        )
         .join('');
 
       return `
@@ -537,7 +536,6 @@ export function createEmailReport(
     .replace('/* GLOBAL STATUS SCRIPT */', () => globalStatusScript)
     .replace('/* MAIN BLOCKERS SCRIPT */', () => mainBlockersScript)
     .replace('/* MAIN BLOCKERS STYLES */', () => mainBlockersStyles)
-    .replace('<!-- POSITION ACTIVITIES -->', () => createPositionActivitiesTable(positions))
     .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
     .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
     .replace('<!-- RELEASE LINKS -->', () => createReleaseLinksSection(releaseLinks))

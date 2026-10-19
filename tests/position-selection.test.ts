@@ -1,13 +1,26 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from 'playwright';
 import { createEmailReport } from '../src/reports/email.report';
 import { createHtmlReport } from '../src/reports/html.report';
 import { groupReportsByPosition } from '../src/utils/groupReports.utils';
 import { aggregateOverallResults } from '../src/utils/overall-results.utils';
 import type { IssueLink, PositionDefinition } from '../src/types/report.types';
+import { POSITIONS } from '../src/config/positions.config';
 
 const names = ['Posto <A> "PT" & $&', 'Posto B', 'Posto sem execuções'];
+
+test('OPT PT e OPT SP estão disponíveis no seletor dos dois relatórios', () => {
+  const positions = groupReportsByPosition([], POSITIONS);
+  const overall = aggregateOverallResults(positions, [], POSITIONS);
+  for (const render of [createEmailReport, createHtmlReport]) {
+    const html = render(positions, undefined, overall);
+    assert.match(html, /data-position-toggle[^>]*value="OPT PT"/);
+    assert.match(html, /data-position-toggle[^>]*value="OPT SP"/);
+    assert.ok(!html.includes('Atividades por posto'));
+  }
+});
 
 function fixture(kind: 'email' | 'html', empty = false, planOnly = false): string {
   const configured: PositionDefinition[] = empty
@@ -76,18 +89,13 @@ async function checkSelection(page: Page, expected: string[], kind: 'email' | 'h
     '[data-overall-position]',
     '.position-block',
     '#release-links-table [data-report-position]',
-    ...(kind === 'email' ? ['[data-activity-position]'] : []),
   ]) {
     assert.deepEqual(
       await visiblePositions(page, selector, 'data-report-position'),
       selector === '.position-block' ? expected.filter((name) => name !== names[2]) : expected,
     );
   }
-  for (const selector of [
-    '#global-status-section',
-    '#overall-results-section',
-    ...(kind === 'email' ? ['#position-activities-section'] : []),
-  ]) {
+  for (const selector of ['#global-status-section', '#overall-results-section']) {
     assert.equal(await page.locator(selector).isVisible(), expected.length > 0, selector);
   }
   assert.equal(await page.locator('.global-position-picker').isVisible(), true);
@@ -120,6 +128,195 @@ async function captureCopy(page: Page) {
     text: (window as CopyWindow).copiedText,
   }));
 }
+
+test('download abre offline apenas com os postos selecionados e valores editados', async () => {
+  const browser = await chromium.launch({
+    channel: process.platform === 'win32' ? 'msedge' : undefined,
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('http://download.test/**', (route) =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: fixture('email').replace(
+          '<!-- DASHBOARD -->',
+          '<section id="dashboard-test">Dashboard completo</section>',
+        ),
+      }),
+    );
+    // Em Lisboa já é dia 20, embora ainda seja dia 19 em UTC.
+    await page.clock.setFixedTime(new Date('2026-10-19T23:30:00Z'));
+    await page.goto('http://download.test/email.html');
+    await page.locator('#observations').fill('Observações com acentos & <texto>');
+    await page
+      .getByLabel(`Estado global de ${names[0]}`, { exact: true })
+      .selectOption('completed');
+    await page
+      .getByLabel(`Status de instalação de ${names[0]}`, { exact: true })
+      .selectOption('ok');
+    await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).fill('Nota do posto selecionado');
+    await page
+      .getByLabel(`Versão instalada de ${names[0]}`, { exact: true })
+      .fill('2.4.1 <QA> & build');
+    await page.getByLabel('Tema do bloqueador 1', { exact: true }).fill('Falha & <detalhes>');
+    await page
+      .getByLabel('Impacto do bloqueador 1', { exact: true })
+      .fill('Primeira linha\nSegunda linha');
+    await page.getByRole('button', { name: 'Adicionar bloqueador', exact: true }).click();
+    await page.getByLabel('Tema do bloqueador 2', { exact: true }).fill('Segundo bloqueador');
+    await page.getByRole('checkbox', { name: names[1], exact: true }).uncheck();
+    let before = await page.locator('.email-container').evaluate((element) => element.outerHTML);
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Baixar relatório completo' }).click();
+    const download = await downloadPromise;
+    assert.equal(download.suggestedFilename(), 'P23002 - Retail 4.0 - 2026-10-20.html');
+    const downloadedPath = await download.path();
+    assert.ok(downloadedPath);
+    assert.equal(
+      await page.locator('.email-container').evaluate((element) => element.outerHTML),
+      before,
+    );
+    assert.equal(await page.locator('[data-position-toggle]:checked').count(), 1);
+    assert.equal(
+      await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).inputValue(),
+      'Nota do posto selecionado',
+    );
+
+    const context = await browser.newContext({ offline: true });
+    const saved = await context.newPage();
+    saved.on('pageerror', (error) => errors.push(error.message));
+    const htmlPath = downloadedPath + '.html';
+    await download.saveAs(htmlPath);
+    await saved.goto(pathToFileURL(htmlPath).href);
+    assert.deepEqual(
+      await visiblePositions(saved, '[data-global-status-row]', 'data-report-position'),
+      [names[0]],
+    );
+    assert.deepEqual(await visiblePositions(saved, '.position-block', 'data-report-position'), [
+      names[0],
+    ]);
+    assert.equal(
+      await saved.locator('#observations').innerText(),
+      'Observações com acentos & <texto>',
+    );
+    assert.match(
+      await saved.locator('[data-global-status-row]').first().innerText(),
+      /Concluído.*Nota do posto selecionado/s,
+    );
+    assert.match(await saved.locator('[data-global-status-row]').first().innerText(), /OK/);
+    assert.match(
+      await saved.locator('[data-global-status-row]').first().innerText(),
+      /Versão: 2\.4\.1 <QA> & build/,
+    );
+    assert.equal(
+      await saved.locator('[data-global-status-row]').first().locator('[data-status-dot]').count(),
+      0,
+    );
+    assert.match(
+      await saved.locator('#main-blockers-section').innerText(),
+      /Falha & <detalhes>.*Primeira linha\nSegunda linha.*Segundo bloqueador/s,
+    );
+    assert.equal(
+      await saved.locator('[data-sprint-defect="PRIT-900"] [data-defect-positions]').innerText(),
+      names[0],
+    );
+    assert.equal(await saved.locator('[data-sprint-defect]').count(), 2);
+    assert.equal(await saved.locator('[data-sprint-defect="PRIT-902"]').count(), 0);
+    for (const selector of [
+      '[data-overall-position]',
+      '#release-links-table [data-report-position]',
+    ]) {
+      assert.deepEqual(await visiblePositions(saved, selector, 'data-report-position'), [names[0]]);
+    }
+    assert.ok(!(await saved.locator('body').innerText()).includes(names[1]));
+    assert.ok(!(await saved.locator('body').innerText()).includes(names[2]));
+    assert.equal(await saved.locator('#dashboard-test').innerText(), 'Dashboard completo');
+    assert.equal(await saved.locator('#overall-results-section').isVisible(), true);
+    assert.equal(await saved.locator('#release-links-section').isVisible(), true);
+    assert.equal(
+      await saved
+        .locator(
+          'script, input, select, textarea, [contenteditable], [data-editor-only], #position-activities-section',
+        )
+        .count(),
+      0,
+    );
+    assert.equal(await saved.locator('head style').count(), 1);
+    await saved.reload();
+    assert.match(await saved.locator('#main-blockers-section').innerText(), /Segundo bloqueador/);
+
+    // Um relatório aberto no dia anterior usa a data atual no próximo download.
+    await page.clock.setFixedTime(new Date('2026-10-20T23:30:00Z'));
+    // Cada download reflete a seleção no momento do clique, inclusive a seleção vazia.
+    for (const selected of [[names[1]], []]) {
+      await page.getByRole('button', { name: 'Limpar seleção', exact: true }).click();
+      for (const name of selected) {
+        await page.getByRole('checkbox', { name, exact: true }).check();
+      }
+      before = await page.locator('.email-container').evaluate((element) => element.outerHTML);
+      const nextDownloadPromise = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Baixar relatório completo' }).click();
+      const nextDownload = await nextDownloadPromise;
+      assert.equal(nextDownload.suggestedFilename(), 'P23002 - Retail 4.0 - 2026-10-21.html');
+      const nextPath = (await nextDownload.path()) + '.html';
+      await nextDownload.saveAs(nextPath);
+      await saved.goto(pathToFileURL(nextPath).href);
+      for (const selector of [
+        '[data-global-status-row]',
+        '.position-block',
+        '[data-overall-position]',
+        '#release-links-table [data-report-position]',
+      ]) {
+        assert.deepEqual(await visiblePositions(saved, selector, 'data-report-position'), selected);
+      }
+      assert.equal(await saved.locator('[data-sprint-defect]').count(), selected.length ? 2 : 0);
+      if (selected.length) {
+        assert.equal(
+          await saved
+            .locator('[data-sprint-defect="PRIT-900"] [data-defect-positions]')
+            .innerText(),
+          names[1],
+        );
+      } else {
+        assert.equal(
+          await saved
+            .locator('#global-status-section, #overall-results-section, #position-defects-section')
+            .count(),
+          0,
+        );
+      }
+      assert.equal(
+        await saved.locator('#observations').innerText(),
+        'Observações com acentos & <texto>',
+      );
+      assert.match(await saved.locator('#main-blockers-section').innerText(), /Segundo bloqueador/);
+      assert.equal(await saved.locator('#dashboard-test').innerText(), 'Dashboard completo');
+      assert.equal(
+        await page.locator('.email-container').evaluate((element) => element.outerHTML),
+        before,
+      );
+    }
+    await context.close();
+
+    await page.evaluate(() => {
+      URL.createObjectURL = () => {
+        throw new Error('Download indisponível');
+      };
+    });
+    await page.getByRole('button', { name: 'Baixar relatório completo' }).click();
+    assert.match(await page.locator('#copy-email-status').innerText(), /Não foi possível baixar/);
+    assert.equal(
+      await page.locator('.email-container').evaluate((element) => element.outerHTML),
+      before,
+    );
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+  }
+});
 
 for (const kind of ['email', 'html'] as const) {
   test(`${kind}: seleção configura todas as áreas, persiste e omite secções vazias`, async () => {
@@ -165,6 +362,18 @@ for (const kind of ['email', 'html'] as const) {
         await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).inputValue(),
         'Nota anterior',
       );
+      const version = page.getByLabel(`Versão instalada de ${names[0]}`, { exact: true });
+      assert.equal(await version.inputValue(), '', 'Dados anteriores sem versão continuam válidos');
+      await version.fill('3.2.0-rc1');
+      const selectBox = await page
+        .getByLabel(`Status de instalação de ${names[0]}`, { exact: true })
+        .boundingBox();
+      const versionBox = await version.boundingBox();
+      assert.ok(selectBox && versionBox);
+      assert.ok(selectBox.width <= 70, 'O seletor de instalação é compacto');
+      assert.ok(versionBox.width >= 90, 'A versão tem espaço para digitação');
+      assert.ok(versionBox.x >= selectBox.x + selectBox.width, 'A versão fica ao lado do seletor');
+      assert.ok(Math.abs(versionBox.y - selectBox.y) < 2);
       assert.deepEqual(
         await page
           .locator(
@@ -194,9 +403,7 @@ for (const kind of ['email', 'html'] as const) {
       await page
         .getByLabel(`Status de instalação de ${names[0]}`, { exact: true })
         .selectOption('ok');
-      if (kind === 'email') {
-        await page.getByLabel(`ON HOLD de ${names[0]}`, { exact: true }).fill('Aguardar validação');
-      }
+      assert.equal(await page.locator('#position-activities-section').count(), 0);
 
       await page.getByRole('checkbox', { name: names[1], exact: true }).uncheck();
       await checkSelection(page, [names[0]], kind);
@@ -216,6 +423,7 @@ for (const kind of ['email', 'html'] as const) {
         );
         const copy = await captureCopy(page);
         assert.ok(!copy.text.includes(names[1]));
+        assert.match(copy.text, /Versão: 3\.2\.0-rc1/);
         const preview = await browser.newPage();
         await preview.setContent(copy.html);
         assert.equal(
@@ -244,15 +452,13 @@ for (const kind of ['email', 'html'] as const) {
             .innerText(),
           /^Concluído/,
         );
-        assert.match(
-          await preview.locator('#position-activities-section').innerText(),
-          /Aguardar validação/,
-        );
+        assert.equal(await preview.locator('#position-activities-section').count(), 0);
         await preview.close();
       }
 
       await page.reload();
       await checkSelection(page, [names[0]], kind);
+      assert.equal(await version.inputValue(), '3.2.0-rc1');
       assert.equal(
         await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
         'Bloqueador preservado',
@@ -304,6 +510,14 @@ for (const kind of ['email', 'html'] as const) {
       await checkSelection(page, [], kind);
       // A seleção vazia mantém o controlo disponível, inclusive em ecrãs estreitos.
       await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole('button', { name: 'Selecionar todos', exact: true }).click();
+      const mobileVersionBox = await version.boundingBox();
+      const mobileCellBox = await version.locator('..').locator('..').boundingBox();
+      assert.ok(mobileVersionBox && mobileCellBox);
+      assert.ok(mobileVersionBox.x >= mobileCellBox.x);
+      assert.ok(
+        mobileVersionBox.x + mobileVersionBox.width <= mobileCellBox.x + mobileCellBox.width + 1,
+      );
       await page.getByRole('button', { name: 'Selecionar todos', exact: true }).click();
       await checkSelection(page, names, kind);
       await page.getByRole('checkbox', { name: names[1], exact: true }).focus();

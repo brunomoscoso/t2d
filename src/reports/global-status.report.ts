@@ -73,6 +73,9 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
             <option value="ok" data-color="#22a06b">OK</option>
             <option value="nok" data-color="#de350b">NOK</option>
           </select>
+          <input data-installation-version type="text" maxlength="100"
+            aria-label="Versão instalada de ${escapeHtml(position)}"
+            placeholder="Versão instalada" title="Versão instalada (opcional)" />
         </div>
       </td>
       <td style="padding:10px 12px;border:1px solid #dce5f0;background:#ffffff;">
@@ -100,8 +103,8 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
         style="width:100%;border-collapse:collapse;background:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#172b4d;">
         <thead>
           <tr>
-            <th scope="col" width="22%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:22%;text-align:left;overflow-wrap:anywhere;">Postos</th>
-            <th scope="col" width="20%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:20%;text-align:left;overflow-wrap:anywhere;">Status de instalação</th>
+            <th scope="col" width="16%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:16%;text-align:left;overflow-wrap:anywhere;">Postos</th>
+            <th scope="col" width="34%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:34%;text-align:left;overflow-wrap:anywhere;">Status de instalação</th>
             <th scope="col" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;text-align:left;">Estado Global</th>
           </tr>
         </thead>

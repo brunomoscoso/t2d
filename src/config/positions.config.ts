@@ -9,10 +9,25 @@ export const POSITIONS: PositionDefinition[] = [
   {
     name: 'COCO PT',
     testPlanPrit: 'IERL-23569',
-    executions: { smoke: ['IERL-23515'], regression: ['IERL-23519', 'IERL-23518'], certification: [], defectFixing: [] },
+    executions: {
+      smoke: ['IERL-23515'],
+      regression: ['IERL-23519', 'IERL-23518'],
+      certification: [],
+      defectFixing: [],
+    },
   },
   {
     name: 'COCO SP',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'OPT PT',
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
+  },
+  {
+    name: 'OPT SP',
     testPlanPrit: '',
     executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
   },
@@ -43,7 +58,7 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'Cyber SP',
-    testPlanPrit: 'PRIT-8328',
+    testPlanPrit: '',
     executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
   },
   {

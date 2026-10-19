@@ -25,7 +25,7 @@
         flex-wrap: wrap;
         gap: 24px;
         margin-bottom: 28px;
-        padding: clamp(22px, 3vw, 36px);
+        padding: clamp(22px, 3vw, 15px);
         border-radius: 18px;
         background: linear-gradient(115deg, #142e57, #0052cc);
         color: #ffffff;
@@ -53,7 +53,9 @@
         line-height: 1.5;
     }
     .report-toolbar-actions { max-width: 100%; }
-    #copy-email-button {
+    .report-toolbar-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+    #copy-email-button,
+    #download-report-button {
         max-width: 100%;
         padding: 14px 20px;
         border: 1px solid #ffffff;
@@ -65,7 +67,8 @@
         cursor: pointer;
         box-shadow: 0 4px 12px #091e4233;
     }
-    #copy-email-button:hover { background: #eaf2ff; }
+    #copy-email-button:hover,
+    #download-report-button:hover { background: #eaf2ff; }
     #copy-email-status {
         margin-top: 10px;
         min-height: 18px;
@@ -106,32 +109,15 @@
         width: var(--picker-width);
         margin: 0;
     }
-    #position-activities-table { min-width: 1050px; overflow-wrap: anywhere; }
-    [data-activity-note] {
-        display: block;
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        min-height: 84px;
-        padding: 10px;
-        border: 1px solid #cbd9ec;
-        border-radius: 8px;
-        background: #ffffff;
-        color: #172b4d;
-        font: inherit;
-        line-height: 1.5;
-        resize: vertical;
-    }
-    [data-activity-note]::placeholder,
     [data-blocker-field]::placeholder,
     .global-status-fields input::placeholder { color: #5e6c84; }
-    [data-activity-note]:focus-visible,
     [data-blocker-field]:focus-visible,
     #observations:focus-visible,
     button:focus-visible,
     a:focus-visible,
     .report-table-scroll:focus-visible { outline: 2px solid #0052cc; outline-offset: 3px; }
-    #copy-email-button:focus-visible { outline-color: #ffffff; }
+    #copy-email-button:focus-visible,
+    #download-report-button:focus-visible { outline-color: #ffffff; }
     .global-status-fields select:focus,
     .installation-status-fields select:focus,
     .global-status-fields input:focus { outline: 2px solid #0052cc; outline-offset: 1px; }
@@ -140,8 +126,6 @@
     .report-summary-table thead th { letter-spacing: 0.3px; }
     .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
     .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
-    [data-position-activity]:last-child { margin-bottom: 0 !important; }
-    [data-position-activity] a:hover { color: #0052cc !important; text-decoration: underline !important; }
     [data-position-defect]:hover { color: #0052cc !important; }
     #release-links-table a:hover { color: #0747a6 !important; text-decoration: underline !important; }
     #release-links-table tbody tr:last-child th { border-bottom-left-radius: 9px; }
@@ -169,7 +153,8 @@
     @media (max-width: 700px) {
         .report-toolbar { gap: 18px; border-radius: 12px; }
         .report-toolbar-actions,
-        #copy-email-button { width: 100%; }
+        #copy-email-button,
+        #download-report-button { width: 100%; }
         #position-defects-table th,
         #position-defects-table td { padding: 8px 6px !important; }
         #release-links-table th,
@@ -193,9 +178,14 @@
         <h1>Relatório de testes</h1>
     </div>
     <div class="report-toolbar-actions">
+        <div class="report-toolbar-buttons">
         <button id="copy-email-button" type="button" onclick="copyEmailReport()">
             Copiar relatório para o e-mail
         </button>
+        <button id="download-report-button" type="button" onclick="downloadReport()">
+            Baixar relatório completo
+        </button>
+        </div>
         <div id="copy-email-status" role="status" aria-live="polite"></div>
     </div>
 </header>
@@ -221,8 +211,6 @@
     <!-- MAIN BLOCKERS -->
 
     <!-- GLOBAL STATUS -->
-
-    <!-- POSITION ACTIVITIES -->
 
     <!-- POSITION DEFECTS -->
 
@@ -251,43 +239,6 @@
 <script>
     /* GLOBAL STATUS SCRIPT */
 
-    function initializeActivityNotes() {
-        const table = document.getElementById('position-activities-table');
-        if (!table) return;
-        const notes = Array.from(table.querySelectorAll('[data-activity-note]'));
-        const storageKey = 't2d:position-activities:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
-        let savedNotes = [];
-        try {
-            const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            if (Array.isArray(saved)) savedNotes = saved;
-        } catch (error) {
-            // A edição funciona mesmo quando o armazenamento está indisponível.
-        }
-
-        function resizeNote(note) {
-            if (!note.isConnected) return;
-            note.style.height = 'auto';
-            note.style.height = (note.scrollHeight + 2) + 'px';
-        }
-
-        notes.forEach(note => {
-            const saved = savedNotes.find(item => item && item.position === note.dataset.position);
-            if (saved && typeof saved.note === 'string') note.value = saved.note;
-            resizeNote(note);
-            note.addEventListener('input', () => {
-                resizeNote(note);
-                try {
-                    localStorage.setItem(storageKey, JSON.stringify(notes.map(input => ({
-                        position: input.dataset.position, note: input.value,
-                    }))));
-                } catch (error) {
-                    // Não bloqueia a edição nem a cópia para o e-mail.
-                }
-            });
-        });
-        window.addEventListener('resize', () => notes.forEach(resizeNote));
-    }
-
     /* MAIN BLOCKERS SCRIPT */
 
     function prepareBlockersForCopy(report, restoreActions) {
@@ -304,25 +255,6 @@
         });
     }
 
-    function prepareActivityTableForCopy(report, restoreActions) {
-        const table = report.querySelector('#position-activities-table');
-        if (!table) return;
-        const originalStyle = table.getAttribute('style');
-        restoreActions.push(() => table.setAttribute('style', originalStyle));
-        table.style.minWidth = '0';
-        table.querySelectorAll('[data-activity-note]').forEach(note => {
-            const text = document.createElement('div');
-            text.style.cssText = 'line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
-            const value = note.value.trim() ? note.value : '\u00a0';
-            value.split('\n').forEach((line, index) => {
-                if (index) text.appendChild(document.createElement('br'));
-                text.appendChild(document.createTextNode(line || '\u00a0'));
-            });
-            restoreActions.push(() => text.replaceWith(note));
-            note.replaceWith(text);
-        });
-    }
-
     function prepareReportForCopy(report, restoreActions) {
         // Substitui os controlos por texto durante a cópia síncrona.
         function removeDuringCopy(element) {
@@ -336,7 +268,6 @@
             if (!element.parentElement.closest('[hidden]')) removeDuringCopy(element);
         });
 
-        prepareActivityTableForCopy(report, restoreActions);
         prepareBlockersForCopy(report, restoreActions);
 
         // A cópia inclui as tabelas completas, sem as áreas de deslocamento da página.
@@ -391,8 +322,12 @@
             const installationLabel = document.createElement('strong');
             installationLabel.style.color = installationSelect.selectedOptions[0].dataset.color;
             installationLabel.textContent = installationSelect.selectedOptions[0].textContent;
-            restoreActions.push(() => installationLabel.replaceWith(installationFields));
-            installationFields.replaceWith(installationLabel);
+            const installationSummary = document.createElement('div');
+            installationSummary.appendChild(installationLabel);
+            const version = row.querySelector('[data-installation-version]').value.trim();
+            if (version) installationSummary.appendChild(document.createTextNode(' — Versão: ' + version));
+            restoreActions.push(() => installationSummary.replaceWith(installationFields));
+            installationFields.replaceWith(installationSummary);
         });
 
         report.querySelectorAll('[data-editor-only]').forEach(removeDuringCopy);
@@ -432,7 +367,7 @@
         clone.style.maxWidth = '100%';
         clone.style.minWidth = '0';
         clone.style.backgroundColor = '#ffffff';
-        clone.querySelectorAll('#position-activities-table, #position-defects-table, #main-blockers-table, #release-links-table, .overall-results-table').forEach(table => {
+        clone.querySelectorAll('#position-defects-table, #main-blockers-table, #release-links-table, .overall-results-table').forEach(table => {
             table.style.width = '100%';
             table.style.maxWidth = '100%';
             table.style.minWidth = '0';
@@ -457,7 +392,53 @@
         return clone.outerHTML;
     }
 
-    initializeActivityNotes();
+    function downloadReport() {
+        const status = document.getElementById('copy-email-status');
+        let url;
+        let link;
+        try {
+            const source = document.querySelector('.email-container');
+            const report = source.cloneNode(true);
+            // cloneNode não preserva a seleção atual de todos os controlos.
+            const fields = source.querySelectorAll('input, select, textarea');
+            report.querySelectorAll('input, select, textarea').forEach((field, index) => {
+                field.value = fields[index].value;
+            });
+
+            // Respeita a seleção atual e converte os valores editados em texto
+            // apenas na cópia, sem alterar o editor.
+            prepareReportForCopy(report, []);
+            report.querySelectorAll('script').forEach(script => script.remove());
+            const snapshot = document.implementation.createHTMLDocument('Relatório de testes');
+            snapshot.documentElement.lang = 'pt';
+            const charset = snapshot.createElement('meta');
+            charset.setAttribute('charset', 'UTF-8');
+            snapshot.head.prepend(charset);
+            document.querySelectorAll('meta[name="viewport"], head style').forEach(element => {
+                snapshot.head.appendChild(element.cloneNode(true));
+            });
+            snapshot.body.appendChild(report);
+            const blob = new Blob(['<!DOCTYPE html>\n', snapshot.documentElement.outerHTML], {
+                type: 'text/html;charset=utf-8',
+            });
+            url = URL.createObjectURL(blob);
+            link = document.createElement('a');
+            link.href = url;
+            const dateParts = Object.fromEntries(new Intl.DateTimeFormat('pt-PT', {
+                timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit',
+            }).formatToParts(new Date()).map(part => [part.type, part.value]));
+            link.download = 'P23002 - Retail 4.0 - ' + dateParts.year + '-' + dateParts.month + '-' + dateParts.day + '.html';
+            document.body.appendChild(link);
+            link.click();
+            status.textContent = '✓ Download do relatório completo iniciado.';
+        } catch (error) {
+            console.error('Erro ao baixar relatório:', error);
+            status.textContent = 'Não foi possível baixar o relatório. Tente novamente.';
+        } finally {
+            if (link) link.remove();
+            if (url) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+    }
 
     function copyEmailReport() {
 

@@ -70,13 +70,13 @@ A automação abre o Microsoft Edge na primeira issue configurada. O e-mail é p
 
 Ao terminar, os relatórios ficam na pasta `output/`:
 
-| Arquivo          | Conteúdo                                                                          |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `report.html`    | Relatório HTML para visualização no navegador.                                    |
-| `report.txt`     | Relatório em texto.                                                               |
+| Arquivo          | Conteúdo                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `report.html`    | Relatório HTML para visualização no navegador.                                                               |
+| `report.txt`     | Relatório em texto.                                                                                          |
 | `report.json`    | Objeto com `positions` (posição, plano e execuções com `testType`) e `overall` (agregados por posição/tipo). |
-| `email.html`     | Versão HTML preparada para uso em e-mail.                                         |
-| `dashboard.json` | Dados extraídos do dashboard; gerado quando a coleta do dashboard é bem-sucedida. |
+| `email.html`     | Versão HTML preparada para uso em e-mail.                                                                    |
+| `dashboard.json` | Dados extraídos do dashboard; gerado quando a coleta do dashboard é bem-sucedida.                            |
 
 Uma execução nova substitui os arquivos de relatório anteriores. A pasta `output/` também é ignorada pelo Git.
 
@@ -106,19 +106,23 @@ Formato de uma posição (substitua os marcadores por PRITs confirmados; este ex
 },
 ```
 
-PRITs aceitam o formato `PRIT-1234` ou somente o número; espaços externos e maiúsculas/minúsculas são normalizados. Uma execução só pode ocorrer uma vez na configuração, inclusive dentro do mesmo array. Duplicidades entre posições/tipos interrompem a coleta com o PRIT e os dois locais em conflito. Um Test Plan configurado não pode constar em nenhum array de execução.
+As chaves de issues aceitam o formato `PROJETO-1234` (por exemplo, `PRIT-1234` ou `IERL-23569`) ou somente o número, que é convertido para `PRIT-1234`; espaços externos e maiúsculas/minúsculas são normalizados. Uma execução só pode ocorrer uma vez na configuração, inclusive dentro do mesmo array. Duplicidades entre posições/tipos interrompem a coleta com a chave e os dois locais em conflito. Um Test Plan configurado não pode constar em nenhum array de execução.
 
 A caixa **Links da release** lista um Test Plan por posição nos dois HTMLs e é a primeira tabela do relatório. É seguida por **Overall Test Results**, **Principais bloqueadores**, **Estado global** e os restantes conteúdos. As URLs usam `JIRA_URL`: `/browse/<PRIT>` para os planos e `/secure/Dashboard.jspa?selectPageId=<ID>` para o dashboard. Planos vazios aparecem como **Não informado** quando o posto é selecionado manualmente. O link do dashboard continua disponível mesmo se a coleta dos seus dados falhar.
 
 Os títulos vêm dos endpoints de consulta de [issues e dashboards da API REST do Jira](https://docs.atlassian.com/software/jira/docs/api/REST/9.12.2/), usando a sessão já autenticada do navegador. Se uma consulta falhar, a automação registra um aviso e mantém o link com o PRIT ou ID, sem impedir a geração do relatório.
 
-Use **Selecione os postos** para controlar todos os conteúdos associados a posições em `email.html` e `report.html`: Estado global, Overall Test Results, atividades, defects da sprint, links dos Test Plans e detalhes das execuções. A lista segue `POSITIONS`, incluindo posições sem execuções. Inicialmente, apenas os postos com PRIT de Test Plan ou execuções associados ficam marcados; os restantes podem ser selecionados manualmente. Desmarcar um posto oculta os seus conteúdos; secções sem conteúdos selecionados desaparecem por completo, sem tabelas vazias. **Selecionar todos** e **Limpar seleção** aplicam-se ao relatório inteiro. As escolhas manuais são guardadas no navegador junto dos estados e notas. A cópia para e-mail e a impressão incluem apenas os conteúdos selecionados, sem os controles. No Estado global, **Concluído** aparece sem a bolinha verde. Consulte o [guia do Overall](docs/overall-results.md) para as regras de agregação e tratamento de avisos.
+Use **Selecione os postos** para controlar todos os conteúdos associados a posições em `email.html` e `report.html`: Estado global, Overall Test Results, defects da sprint, links dos Test Plans e detalhes das execuções. A lista segue `POSITIONS`, incluindo posições sem execuções, como **OPT PT** e **OPT SP**, disponíveis para configurar. Inicialmente, apenas os postos com PRIT de Test Plan ou execuções associados ficam marcados; os restantes podem ser selecionados manualmente. Desmarcar um posto oculta os seus conteúdos; secções sem conteúdos selecionados desaparecem por completo, sem tabelas vazias. **Selecionar todos** e **Limpar seleção** aplicam-se ao relatório inteiro. As escolhas manuais são guardadas no navegador junto dos estados e notas. A cópia para e-mail e a impressão incluem apenas os conteúdos selecionados, sem os controles. No Estado global, **Concluído** aparece sem a bolinha verde. Consulte o [guia do Overall](docs/overall-results.md) para as regras de agregação e tratamento de avisos.
 
-A tabela **Atividades por posto** inclui a coluna **BLOCKED**, em rosa, para as atividades com esse status no Jira. A coluna **ON HOLD** permite acrescentar observações manualmente.
+A tabela **Atividades por posto** foi removida. Os detalhes das execuções continuam disponíveis por posição e tipo de teste.
+
+Em **Estado global**, a coluna **Status de instalação** inclui um seletor compacto (`--`, `OK`, `NOK`) e o campo opcional **Versão instalada** ao lado. A versão é guardada por posição junto dos restantes estados e acompanha a cópia para e-mail e o download dos postos selecionados. Em telas estreitas, o campo aparece abaixo do seletor.
+
+Em `email.html`, **Baixar relatório completo**, ao lado de copiar, salva `P23002 - Retail 4.0 - AAAA-MM-DD.html`, usando a data do download no fuso `Europe/Lisbon`: uma cópia para consulta no navegador, inclusive offline, com apenas os postos selecionados no momento do download, seus resultados, links, defects, notas, estados e instalação. As observações gerais, os bloqueadores preenchidos e o dashboard disponível também são incluídos, mesmo com a seleção vazia. Os valores editados ficam incorporados no arquivo, sem depender do armazenamento do navegador. O download preserva a seleção e as edições do relatório aberto.
 
 O posto **Reseller** usa a nova designação também nos títulos de execuções e resumos de defects apresentados nos relatórios; as issues no Jira não são alteradas.
 
-As atividades mostram o tipo configurado junto do título. A tabela **Defects criados na sprint** inclui apenas a relação `created` e as prioridades **Alta** (`High`) e **Crítica** (`Highest`). Um defect partilhado aparece uma vez, associado às posições configuradas das execuções que o referenciam. O título completo é preservado, inclusive tags como `PROD`, mas essas tags não determinam o agrupamento. O estado global, as notas e os bloqueadores manuais continuam disponíveis.
+A tabela **Defects criados na sprint** inclui apenas a relação `created` e as prioridades **Alta** (`High`) e **Crítica** (`Highest`). Um defect partilhado aparece uma vez, associado às posições configuradas das execuções que o referenciam. O título completo é preservado, inclusive tags como `PROD`, mas essas tags não determinam o agrupamento. O estado global, as notas e os bloqueadores manuais continuam disponíveis.
 
 ## Preenchimento das posições
 

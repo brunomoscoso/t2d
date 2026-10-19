@@ -62,16 +62,17 @@ export const globalStatusStyles = `
     }
     .global-status-fields {
         display: grid;
-        grid-template-columns: 16px minmax(0, 300px) minmax(0, 1fr);
+        grid-template-columns: 16px minmax(0, 240px) minmax(0, 1fr);
         align-items: center;
         gap: 8px;
     }
     .global-status-fields:has([data-status-dot][hidden]) {
-        grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
     }
     .global-status-fields select,
     .global-status-fields input,
-    .installation-status-fields select {
+    .installation-status-fields select,
+    .installation-status-fields input {
         width: 100%;
         max-width: 100%;
         min-width: 0;
@@ -86,21 +87,25 @@ export const globalStatusStyles = `
     .installation-status-fields select { font-weight: bold; cursor: pointer; }
     .installation-status-fields {
         display: grid;
-        grid-template-columns: 16px minmax(0, 1fr);
+        grid-template-columns: 12px 68px minmax(0, 1fr);
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
+    .installation-status-fields select { padding-inline: 6px; }
+    .installation-status-fields input:focus-visible { outline: 2px solid #0052cc; outline-offset: 1px; }
     #global-status-table { table-layout: fixed; }
     #global-status-section [hidden] { display: none !important; }
     .global-position-picker :focus-visible { outline: 2px solid #0052cc; outline-offset: 3px; }
     @media (max-width: 700px) {
         .global-position-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        #global-status-table thead th:first-child { width: 28% !important; }
+        #global-status-table thead th:first-child { width: 20% !important; }
         #global-status-table th,
         #global-status-table td { padding: 8px 6px !important; }
         .global-status-fields { grid-template-columns: 16px minmax(0, 1fr); }
         .global-status-fields:has([data-status-dot][hidden]) { grid-template-columns: minmax(0, 1fr); }
         .global-status-fields input { grid-column: 1 / -1; }
+        .installation-status-fields { grid-template-columns: 12px minmax(0, 68px); }
+        .installation-status-fields input { grid-column: 1 / -1; }
     }
     @media print {
         [data-editor-only] { display: none !important; }
@@ -134,6 +139,7 @@ export const globalStatusScript = `
                     selectionVersion: 2,
                     status: row.querySelector('[data-status-select]').value,
                     installation: row.querySelector('[data-installation-select]').value,
+                    installationVersion: row.querySelector('[data-installation-version]').value,
                     note: row.querySelector('[data-status-note]').value,
                 }))));
             } catch (error) {
@@ -173,6 +179,7 @@ export const globalStatusScript = `
             const note = row.querySelector('[data-status-note]');
             const dot = row.querySelector('[data-status-dot]');
             const installation = row.querySelector('[data-installation-select]');
+            const installationVersion = row.querySelector('[data-installation-version]');
             const installationDot = row.querySelector('[data-installation-dot]');
             const saved = savedRows.find(item => item && item.position === row.dataset.position);
 
@@ -186,6 +193,9 @@ export const globalStatusScript = `
                     select.value = saved.status;
                 }
                 if (typeof saved.note === 'string') note.value = saved.note.slice(0, note.maxLength);
+                if (typeof saved.installationVersion === 'string') {
+                    installationVersion.value = saved.installationVersion.slice(0, installationVersion.maxLength);
+                }
                 if (Array.from(installation.options).some(option => option.value === saved.installation)) {
                     installation.value = saved.installation;
                 }
@@ -216,6 +226,7 @@ export const globalStatusScript = `
                 save();
             });
             note.addEventListener('input', save);
+            installationVersion.addEventListener('input', save);
         });
 
         function selectAll(selected) {
