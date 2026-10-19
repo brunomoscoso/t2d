@@ -844,7 +844,7 @@ export function createHtmlReport(
 
     padding:2px 6px;
 
-    font-size:11px;
+    font-size:10px;
 
     font-weight:bold;
 

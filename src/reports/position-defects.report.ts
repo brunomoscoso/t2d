@@ -92,7 +92,7 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
         target="_blank" rel="noopener noreferrer" style="color:#0747a6;font-weight:bold;text-decoration:underline;">${escapeHtml(defect.key)}</a></td>
       <td data-defect-positions style="${cellStyle}background:#edf3fc;color:#0747a6;font-weight:bold;">${escapeHtml(names.join(', '))}</td>
       <td data-defect-summary style="${cellStyle}">${escapeHtml(summary)}</td>
-      <td data-defect-status style="${cellStyle}"><span style="${badgeStyle}background:${statusColors.background};color:${statusColors.color};border:1px solid ${statusColors.border};">${escapeHtml(status)}</span></td>
+      <td data-defect-status style="${cellStyle}"><span style="${badgeStyle}font-size:10px;background:${statusColors.background};color:${statusColors.color};border:1px solid ${statusColors.border};">${escapeHtml(status)}</span></td>
     </tr>`;
     })
     .join('');

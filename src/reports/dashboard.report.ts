@@ -145,7 +145,7 @@ function createDashboardRows(dashboard: DashboardData): string {
                     color:${status.color};
                     border:1px solid ${status.border};
                     padding:2px 6px;
-                    font-size:11px;
+                    font-size:10px;
                     font-weight:bold;
                     text-transform:uppercase;
                     border-radius:3px;

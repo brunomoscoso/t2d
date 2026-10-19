@@ -194,7 +194,7 @@ function createReportBlock(report: Report): string {
                                 color:${statusColors.color};
                                 border:1px solid ${statusColors.border};
                                 padding:2px 6px;
-                                font-size:11px;
+                                font-size:10px;
                                 font-weight:bold;
                             "
                             >
