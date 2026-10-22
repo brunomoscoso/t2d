@@ -98,6 +98,11 @@ export async function createBrowserSession(firstPrit: string): Promise<BrowserSe
 
   const context = await browser.newContext();
 
+  let contextClosed = false;
+  context.once('close', () => {
+    contextClosed = true;
+  });
+
   const page = await context.newPage();
 
   console.log('\nAbrindo Jira...');
@@ -136,8 +141,24 @@ export async function createBrowserSession(firstPrit: string): Promise<BrowserSe
 
   rl.close();
 
+  if (!browser.isConnected() || contextClosed) {
+    throw new Error(
+      'O navegador ou o contexto autenticado foi fechado. Não é possível iniciar a extração.',
+    );
+  }
+
+  let extractionPage: Page;
+  try {
+    extractionPage = await context.newPage();
+  } catch (error) {
+    throw new Error(
+      'Não foi possível abrir a página de extração no contexto autenticado. Verifique se o navegador e o contexto continuam abertos.',
+      { cause: error },
+    );
+  }
+
   return {
     browser,
-    page,
+    page: extractionPage,
   };
 }
