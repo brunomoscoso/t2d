@@ -8,9 +8,9 @@ export const DASHBOARD_PAGE_ID = '24419';
 export const POSITIONS: PositionDefinition[] = [
   {
     name: 'COCO PT',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8161',
     executions: {
-      smoke: [],
+      smoke: ['PRIT-8311'],
       regression: [],
       certification: [],
       defectFixing: [],
@@ -23,13 +23,13 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'OPT PT',
-    testPlanPrit: 'PRIT-8346',
-    executions: { smoke: [], regression: ['PRIT-8348'], certification: [], defectFixing: ['PRIT-8347'] },
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
   },
   {
     name: 'OPT SP',
-    testPlanPrit: 'PRIT-8346',
-    executions: { smoke: [], regression: ['PRIT-8349'], certification: [], defectFixing: ['PRIT-8350'] },
+    testPlanPrit: '',
+    executions: { smoke: [], regression: [], certification: [], defectFixing: [] },
   },
   {
     name: 'Tangerina',

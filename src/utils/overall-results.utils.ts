@@ -61,7 +61,6 @@ export function aggregateOverallResults(
   const plans = definitions.map((position): OverallPlanResults => {
     const warnings: string[] = [];
     const statuses = new Set(standardStatuses);
-    if (!position.testPlanPrit) warnings.push('Test Plan da posição ainda não configurado.');
     const types = TEST_TYPES.map((testType): OverallTypeResults => {
       const result: OverallTypeResults = {
         testType,

@@ -19,9 +19,7 @@ export function resolvePositions(
     if (!name) errors.push('Posição sem nome.');
     if (names.has(name.toUpperCase())) errors.push(`Nome de posição repetido: ${name}.`);
     names.add(name.toUpperCase());
-    const testPlanPrit = position.testPlanPrit.trim()
-      ? normalizePrit(position.testPlanPrit)
-      : '';
+    const testPlanPrit = position.testPlanPrit.trim() ? normalizePrit(position.testPlanPrit) : '';
     const executions: PositionDefinition['executions'] = {
       smoke: [],
       regression: [],
@@ -48,9 +46,6 @@ export function resolvePositions(
         return prit;
       });
     }
-    if (!testPlanPrit && TEST_TYPES.some((type) => executions[type].length)) {
-      errors.push(`${name}: informe o Test Plan antes de configurar execuções.`);
-    }
     return { name, testPlanPrit, executions };
   });
   for (const position of positions) {
@@ -61,7 +56,8 @@ export function resolvePositions(
       );
     }
   }
-  if (errors.length) throw new Error(`Configuração de posições inválida:\n- ${errors.join('\n- ')}`);
+  if (errors.length)
+    throw new Error(`Configuração de posições inválida:\n- ${errors.join('\n- ')}`);
   return positions;
 }
 
