@@ -214,10 +214,9 @@
 
     <!-- POSITION DEFECTS -->
 
-    <!-- REPORTS -->
-
-
     <!-- DASHBOARD -->
+
+    <!-- REPORTS -->
 
 
     <!-- SIGNATURE -->
@@ -240,6 +239,8 @@
     /* GLOBAL STATUS SCRIPT */
 
     /* MAIN BLOCKERS SCRIPT */
+
+    /* TABLE STRIPING SCRIPT */
 
     function prepareBlockersForCopy(report, restoreActions) {
         report.querySelectorAll('[data-blocker-field]').forEach(field => {
@@ -429,6 +430,7 @@
         }
 
         preserveReportSpacing(clone);
+        applyTableStriping(clone);
         return clone.outerHTML;
     }
 
@@ -449,6 +451,7 @@
             // apenas na cópia, sem alterar o editor.
             prepareReportForCopy(report, []);
             preserveReportSpacing(report);
+            applyTableStriping(report);
             report.querySelectorAll('script').forEach(script => script.remove());
             const snapshot = document.implementation.createHTMLDocument('Relatório de testes');
             snapshot.documentElement.lang = 'pt';

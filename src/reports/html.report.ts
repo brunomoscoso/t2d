@@ -9,6 +9,7 @@ import { createGlobalStatusTable, createPositionPicker } from './global-status.r
 import { globalStatusScript, globalStatusStyles } from './global-status-editor.report';
 import { createMainBlockersTable } from './main-blockers.report';
 import { mainBlockersScript, mainBlockersStyles } from './main-blockers-editor.report';
+import { tableStripingScript } from './table-striping.report';
 
 import { PositionReport, Report } from '../types/report.types';
 
@@ -912,7 +913,7 @@ export function createHtmlReport(
     </div>
 
 
-    <script>${globalStatusScript}\n${mainBlockersScript}</script>
+    <script>${globalStatusScript}\n${mainBlockersScript}\n${tableStripingScript}</script>
     </body>
 
 

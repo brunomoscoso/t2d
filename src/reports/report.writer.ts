@@ -143,7 +143,7 @@ export function writeReports(
     );
 
     /*
-     * Dashboard por último no email.
+     * Dashboard após os defects criados na sprint, conforme o template.
      */
 
     emailHtml = injectDashboardIntoEmail(

@@ -4,6 +4,7 @@ import { createGlobalStatusTable, createPositionPicker } from './global-status.r
 import { mainBlockersScript, mainBlockersStyles } from './main-blockers-editor.report';
 import { globalStatusScript, globalStatusStyles } from './global-status-editor.report';
 import { createPositionDefectsSection } from './position-defects.report';
+import { tableStripingScript } from './table-striping.report';
 import { createMainBlockersTable } from './main-blockers.report';
 import { createReleaseLinksSection } from './release-links.report';
 import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
@@ -536,6 +537,7 @@ export function createEmailReport(
     .replace('/* GLOBAL STATUS STYLES */', () => globalStatusStyles)
     .replace('/* GLOBAL STATUS SCRIPT */', () => globalStatusScript)
     .replace('/* MAIN BLOCKERS SCRIPT */', () => mainBlockersScript)
+    .replace('/* TABLE STRIPING SCRIPT */', () => tableStripingScript)
     .replace('/* MAIN BLOCKERS STYLES */', () => mainBlockersStyles)
     .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
     .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
