@@ -229,9 +229,11 @@ function createDashboardBlock(dashboard: DashboardData): string {
         <div class="dashboard-header"
             style="
             background:#c9372c;
+            border-radius:13px 13px 0 0;
             color:#ffffff;
-            padding:16px 20px;
-            font-size:14px;
+            padding:8px 12px;
+            font-size:12px;
+            line-height:1.4;
             font-weight:bold;
             "
         >
@@ -242,10 +244,10 @@ function createDashboardBlock(dashboard: DashboardData): string {
             <span
             style="
                 float:right;
-                padding:5px 10px;
+                padding:2px 6px;
                 border-radius:6px;
                 background:#a7251d;
-                font-size:11px;
+                font-size:10px;
                 font-weight:normal;
             "
             >
