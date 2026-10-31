@@ -10,7 +10,7 @@ export const POSITIONS: PositionDefinition[] = [
     name: 'COCO PT',
     testPlanPrit: 'PRIT-8161',
     executions: {
-      smoke: ['PRIT-8311'],
+      smoke: ['PRIT-8311','PRIT-8163'],
       regression: [],
       certification: [],
       defectFixing: [],

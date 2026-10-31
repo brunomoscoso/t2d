@@ -18,7 +18,7 @@ export function createMainBlockersTable(positions: PositionReport[]): string {
         .map(
           ({ field, label }) => `<td style="${cellStyle}">
         <textarea data-blocker-field="${field}" rows="2" placeholder="--"
-          aria-label="${label} do bloqueador ${index + 1}" style="min-height:64px;"></textarea>
+        aria-label="${label} do bloqueador ${index + 1}"></textarea>
         ${
           field === 'theme'
             ? `<button type="button" data-remove-blocker data-editor-only

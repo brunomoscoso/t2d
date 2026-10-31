@@ -48,6 +48,46 @@ async function copyAndCheckDom(page: Page) {
   return page.evaluate(() => (window as CopyWindow).copiedHtml);
 }
 
+test('compacta os campos de bloqueadores e as linhas das tabelas do email', async () => {
+  const browser = await chromium.launch({
+    channel: process.platform === 'win32' ? 'msedge' : undefined,
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await page.setContent(
+      createEmailReport([{ position: 'COCO PT', testPlanPrit: '', reports: [] }], undefined, {
+        plans: [],
+      }),
+    );
+
+    const themeField = page.getByLabel('Tema do bloqueador 1', { exact: true });
+    const removeButton = page.getByRole('button', { name: 'Remover bloqueador 1', exact: true });
+    assert.ok((await themeField.evaluate((field) => field.clientHeight)) <= 55);
+    const [themeBox, removeBox] = await Promise.all([
+      themeField.boundingBox(),
+      removeButton.boundingBox(),
+    ]);
+    assert.ok(themeBox && removeBox);
+    assert.ok(
+      Math.abs(themeBox.y + themeBox.height / 2 - (removeBox.y + removeBox.height / 2)) <= 2,
+      'O botão Remover deve ficar alinhado ao lado da caixa Tema',
+    );
+
+    for (const selector of ['#global-status-table td', '#release-links-table td']) {
+      assert.equal(
+        await page
+          .locator(selector)
+          .first()
+          .evaluate((cell) => getComputedStyle(cell).padding),
+        '6px 8px',
+      );
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test('status de instalação migra dados anteriores, guarda OK/NOK e copia as três colunas', async () => {
   const browser = await chromium.launch({
     channel: process.platform === 'win32' ? 'msedge' : undefined,

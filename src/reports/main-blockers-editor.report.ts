@@ -4,8 +4,8 @@ export const mainBlockersStyles = `
         width: 100%;
         max-width: 100%;
         min-width: 0;
-        min-height: 84px;
-        padding: 10px;
+        min-height: 46px;
+        padding: 7px 8px;
         border: 1px solid #cbd9ec;
         border-radius: 8px;
         background: #ffffff;
@@ -13,6 +13,11 @@ export const mainBlockersStyles = `
         font: inherit;
         line-height: 1.5;
         resize: vertical;
+    }
+    [data-blocker-field="theme"] {
+        display: inline-block;
+        width: calc(100% - 82px);
+        vertical-align: middle;
     }
     .blocker-actions { margin-top:12px; }
     [data-add-blocker],
@@ -26,7 +31,13 @@ export const mainBlockersStyles = `
         cursor:pointer;
     }
     [data-add-blocker]:hover { background:#eaf2ff; }
-    [data-remove-blocker] { margin-top:8px; color:#ae2e24; border-color:#f1b5af; }
+    [data-remove-blocker] {
+        margin-left: 6px;
+        padding: 6px 8px;
+        color: #ae2e24;
+        border-color: #f1b5af;
+        vertical-align: middle;
+    }
     [data-remove-blocker]:hover:not(:disabled) { background:#ffedeb; }
     [data-remove-blocker]:disabled { opacity:0.45; cursor:default; }
     [data-blocker-field]::placeholder { color: #5e6c84; }
