@@ -121,19 +121,55 @@ export const globalStatusScript = `
         const rows = Array.from(table.querySelectorAll('[data-global-status-row]'));
         const toggles = new Map(Array.from(picker.querySelectorAll('[data-position-toggle]'))
             .map(toggle => [toggle.value, toggle]));
-        const storageKey = 't2d:global-status:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
+        const storageKey = 't2d:global-status:v2:' + window.location.pathname;
+        const legacyStoragePrefix = 't2d:global-status:v1:' + window.location.pathname + ':';
         let savedRows = [];
 
         try {
-            const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            if (Array.isArray(saved)) savedRows = saved;
+            const saved = localStorage.getItem(storageKey);
+            if (saved !== null) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) savedRows = parsed;
+            } else {
+                const legacyKeys = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const key = localStorage.key(index);
+                    if (key && key.startsWith(legacyStoragePrefix)) legacyKeys.push(key);
+                }
+                const currentLegacyKey = legacyStoragePrefix + table.dataset.reportKey;
+                const orderedLegacyKeys = legacyKeys
+                    .filter(key => key !== currentLegacyKey)
+                    .concat(legacyKeys.includes(currentLegacyKey) ? [currentLegacyKey] : []);
+                const rowsByPosition = new Map();
+                orderedLegacyKeys.forEach(key => {
+                    try {
+                        const legacy = JSON.parse(localStorage.getItem(key) || '[]');
+                        if (Array.isArray(legacy)) {
+                            legacy.forEach(row => {
+                                if (row && typeof row.position === 'string') {
+                                    rowsByPosition.set(row.position, {
+                                        ...rowsByPosition.get(row.position),
+                                        ...row,
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        // Ignora entradas antigas inválidas e tenta as restantes.
+                    }
+                });
+                savedRows = Array.from(rowsByPosition.values());
+            }
         } catch (error) {
             // A edição continua disponível quando o armazenamento está bloqueado.
         }
 
         function save() {
             try {
-                localStorage.setItem(storageKey, JSON.stringify(rows.map(row => ({
+                const rowsByPosition = new Map(savedRows
+                    .filter(row => row && typeof row.position === 'string')
+                    .map(row => [row.position, row]));
+                rows.forEach(row => rowsByPosition.set(row.dataset.position, {
                     position: row.dataset.position,
                     selected: toggles.get(row.dataset.position).checked,
                     selectionVersion: 2,
@@ -141,7 +177,9 @@ export const globalStatusScript = `
                     installation: row.querySelector('[data-installation-select]').value,
                     installationVersion: row.querySelector('[data-installation-version]').value,
                     note: row.querySelector('[data-status-note]').value,
-                }))));
+                }));
+                savedRows = Array.from(rowsByPosition.values());
+                localStorage.setItem(storageKey, JSON.stringify(savedRows));
             } catch (error) {
                 // Não impede a edição nem a cópia em navegadores sem armazenamento.
             }

@@ -41,19 +41,42 @@ export const mainBlockersScript = `
         const rowTemplate = body.rows[0].cloneNode(true);
         const rows = () => Array.from(body.querySelectorAll('[data-blocker-row]'));
         const fields = () => Array.from(body.querySelectorAll('[data-blocker-field]'));
-        const storageKey = 't2d:main-blockers:v1:' + window.location.pathname + ':' + table.dataset.reportKey;
+        const storageKey = 't2d:main-blockers:v2:' + window.location.pathname;
+        const legacyStoragePrefix = 't2d:main-blockers:v1:' + window.location.pathname + ':';
         let savedRows = [];
         try {
-            const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-            if (Array.isArray(saved)) {
-                // O formato anterior tinha cinco linhas fixas. Migra apenas as
-                // preenchidas; as linhas vazias adicionadas agora são guardadas.
-                savedRows = saved.filter(row => row && (
-                    (typeof row.theme === 'string' && row.theme.trim())
-                    || (typeof row.impact === 'string' && row.impact.trim())
-                ));
-            } else if (saved && saved.version === 2 && Array.isArray(saved.rows)) {
-                savedRows = saved.rows;
+            const saved = localStorage.getItem(storageKey);
+            if (saved !== null) {
+                const parsed = JSON.parse(saved);
+                if (parsed && parsed.version === 2 && Array.isArray(parsed.rows)) {
+                    savedRows = parsed.rows;
+                }
+            } else {
+                const legacyKeys = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const key = localStorage.key(index);
+                    if (key && key.startsWith(legacyStoragePrefix)) legacyKeys.push(key);
+                }
+                const currentLegacyKey = legacyStoragePrefix + table.dataset.reportKey;
+                const orderedLegacyKeys = legacyKeys
+                    .filter(key => key !== currentLegacyKey)
+                    .concat(legacyKeys.includes(currentLegacyKey) ? [currentLegacyKey] : []);
+                orderedLegacyKeys.forEach(key => {
+                    try {
+                        const legacy = JSON.parse(localStorage.getItem(key) || 'null');
+                        if (Array.isArray(legacy)) {
+                            // O formato antigo tinha cinco linhas fixas; migra apenas as preenchidas.
+                            savedRows = legacy.filter(row => row && (
+                                (typeof row.theme === 'string' && row.theme.trim())
+                                || (typeof row.impact === 'string' && row.impact.trim())
+                            ));
+                        } else if (legacy && legacy.version === 2 && Array.isArray(legacy.rows)) {
+                            savedRows = legacy.rows;
+                        }
+                    } catch (error) {
+                        // Ignora entradas antigas inválidas e tenta as restantes.
+                    }
+                });
             }
         } catch (error) {
             // A edição continua disponível sem armazenamento.

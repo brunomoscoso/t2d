@@ -496,26 +496,20 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     assert.equal(await selects.nth(0).inputValue(), 'blocked');
     assert.equal(await notes.nth(0).inputValue(), 'Nota após copiar');
 
-    // Outro conjunto de PRITs não herda estados de uma execução anterior.
+    // Os estados editoriais são independentes dos PRITs recolhidos pelo Jira.
     const otherReport = fixture();
     otherReport[0].reports[0].prit = 'PRIT-99';
     html = createEmailReport(otherReport);
     await page.reload();
-    assert.equal(await rows.count(), 0);
-    await selectPositions(page);
-    assert.equal(await selects.nth(0).inputValue(), '');
-    assert.equal(await notes.nth(1).inputValue(), '');
+    assert.equal(await selects.nth(0).inputValue(), 'blocked');
+    assert.equal(await notes.nth(0).inputValue(), 'Nota após copiar');
 
     // Armazenamento corrompido ou indisponível não impede a edição.
     await page.evaluate(() => {
-      const table = document.getElementById('global-status-table')!;
-      localStorage.setItem(
-        't2d:global-status:v1:' + location.pathname + ':' + table.dataset.reportKey,
-        '{invalid',
-      );
+      localStorage.setItem('t2d:global-status:v2:' + location.pathname, '{invalid');
     });
     await page.reload();
-    assert.equal(await rows.count(), 0);
+    assert.equal(await rows.count(), 4);
     await selectPositions(page, ['COCO PT']);
     assert.equal(await selects.nth(0).inputValue(), '');
     await page.addInitScript(() => {

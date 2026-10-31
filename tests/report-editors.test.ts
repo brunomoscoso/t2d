@@ -285,13 +285,12 @@ test('bloqueadores são editáveis, persistentes e copiáveis mesmo sem defects 
     otherReport[0].reports[0].prit = 'PRIT-99';
     html = createEmailReport(otherReport);
     await page.reload();
-    assert.equal(await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(), '');
+    assert.equal(
+      await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
+      'Tema atualizado',
+    );
     await page.evaluate(() => {
-      const table = document.getElementById('main-blockers-table')!;
-      localStorage.setItem(
-        't2d:main-blockers:v1:' + location.pathname + ':' + table.dataset.reportKey,
-        '{invalid',
-      );
+      localStorage.setItem('t2d:main-blockers:v2:' + location.pathname, '{invalid');
     });
     await page.reload();
     assert.equal(await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(), '');
@@ -317,6 +316,100 @@ test('bloqueadores são editáveis, persistentes e copiáveis mesmo sem defects 
     );
     assert.equal(await preview.locator('#position-defects-table').count(), 1);
     assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+  }
+});
+
+test('preserva tabelas entre execuções e limpa os dados quando solicitado', async () => {
+  const browser = await chromium.launch({
+    channel: process.platform === 'win32' ? 'msedge' : undefined,
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage();
+    let reportKey = 'PRIT-TEST-1';
+    await page.route('http://clear-report.test/**', (route) =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: createEmailReport(
+          [{ position: 'COCO PT', testPlanPrit: reportKey, reports: [] }],
+          undefined,
+          { plans: [] },
+        ),
+      }),
+    );
+    await page.goto('http://clear-report.test/email.html');
+    await page.evaluate(() => {
+      const globalStatus = document.getElementById('global-status-table')!;
+      const blockers = document.getElementById('main-blockers-table')!;
+      localStorage.removeItem('t2d:global-status:v2:' + location.pathname);
+      localStorage.removeItem('t2d:main-blockers:v2:' + location.pathname);
+      localStorage.setItem(
+        't2d:global-status:v1:' + location.pathname + ':' + globalStatus.dataset.reportKey,
+        JSON.stringify([
+          {
+            position: 'COCO PT',
+            selected: true,
+            selectionVersion: 2,
+            status: 'completed',
+            note: 'Estado migrado',
+          },
+        ]),
+      );
+      localStorage.setItem(
+        't2d:main-blockers:v1:' + location.pathname + ':' + blockers.dataset.reportKey,
+        JSON.stringify({ version: 2, rows: [{ theme: 'Bloqueador migrado', impact: 'Impacto' }] }),
+      );
+    });
+    await page.reload();
+    assert.equal(
+      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
+      'completed',
+    );
+    assert.equal(
+      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
+      'Estado migrado',
+    );
+    assert.equal(
+      await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
+      'Bloqueador migrado',
+    );
+
+    await page.getByLabel('Estado global de COCO PT', { exact: true }).selectOption('blocked');
+    await page.getByLabel('Nota de COCO PT', { exact: true }).fill('Nota da sprint');
+    await page.getByLabel('Tema do bloqueador 1', { exact: true }).fill('Bloqueador da sprint');
+
+    reportKey = 'PRIT-TEST-2';
+    await page.reload();
+    assert.equal(
+      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
+      'blocked',
+    );
+    assert.equal(
+      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
+      'Nota da sprint',
+    );
+    assert.equal(
+      await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
+      'Bloqueador da sprint',
+    );
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page
+      .getByRole('button', {
+        name: 'Limpar dados de Estado global e Principais Bloqueadores',
+        exact: true,
+      })
+      .click();
+
+    assert.equal(
+      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
+      '',
+    );
+    assert.equal(await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(), '');
+    assert.equal(await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(), '');
+    assert.equal(await page.locator('#main-blockers-table [data-blocker-row]').count(), 1);
   } finally {
     await browser.close();
   }

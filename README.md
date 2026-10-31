@@ -85,6 +85,8 @@ No fim, os ficheiros são gravados em `output/`:
 
 Uma nova execução substitui os relatórios anteriores. A pasta `output/` não é incluída no repositório.
 
+As edições das tabelas **Estado global** e **Principais Bloqueadores** são guardadas automaticamente no armazenamento local do navegador. Elas continuam disponíveis quando executar `npm run report` novamente, mesmo que os PRITs recolhidos mudem. No final de `email.html`, use **Limpar dados de Estado global e Principais Bloqueadores** para apagar essas edições no navegador atual, por exemplo, no início de uma nova release. Os dados ficam associados ao navegador/perfil e ao caminho do relatório; não são gravados nos ficheiros de saída nem partilhados com outros navegadores ou computadores.
+
 ## Comandos úteis
 
 | Comando                | Descrição                                                 |
