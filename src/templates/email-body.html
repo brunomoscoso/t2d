@@ -306,7 +306,7 @@
         });
     }
 
-    function prepareReportForCopy(report, restoreActions) {
+    function prepareReportForCopy(report, restoreActions, omitMissingReleaseLinks = false) {
         // Substitui os controlos por texto durante a cópia síncrona.
         function removeDuringCopy(element) {
             const placeholder = document.createComment('editor-only');
@@ -318,6 +318,18 @@
         report.querySelectorAll('[hidden]').forEach(element => {
             if (!element.parentElement.closest('[hidden]')) removeDuringCopy(element);
         });
+
+        if (omitMissingReleaseLinks) {
+            const releaseLinks = report.querySelector('#release-links-section');
+            if (releaseLinks) {
+                releaseLinks.querySelectorAll('tbody tr').forEach(row => {
+                    const hasLink = Array.from(row.querySelectorAll('a[href]'))
+                        .some(link => link.getAttribute('href').trim());
+                    if (!hasLink) removeDuringCopy(row);
+                });
+                if (!releaseLinks.querySelector('tbody tr')) removeDuringCopy(releaseLinks);
+            }
+        }
 
         prepareBlockersForCopy(report, restoreActions);
 
@@ -499,7 +511,7 @@
 
             // Respeita a seleção atual e converte os valores editados em texto
             // apenas na cópia, sem alterar o editor.
-            prepareReportForCopy(report, []);
+            prepareReportForCopy(report, [], true);
             preserveReportSpacing(report);
             applyTableStriping(report);
             report.querySelectorAll('script').forEach(script => script.remove());
@@ -576,7 +588,7 @@
         const restoreActions = [];
 
         try {
-            prepareReportForCopy(report, restoreActions);
+            prepareReportForCopy(report, restoreActions, true);
             range.selectNodeContents(report);
             selection.removeAllRanges();
             selection.addRange(range);

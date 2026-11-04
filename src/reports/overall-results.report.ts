@@ -5,6 +5,9 @@ import { overallPercentage, type OverallResults } from '../utils/overall-results
 
 export const overallResultsStyles = `
   .overall-results-table { min-width:720px; }
+  .remove-overall-table { margin-left:8px;padding:4px;border:1px solid #dce5f0;border-radius:5px;background:#fff;color:#5e6c84;cursor:pointer;vertical-align:middle;line-height:1; }
+  .remove-overall-table:hover { color:#de350b;background:#ffebe6; }
+  .remove-overall-table:focus-visible { outline:2px solid #0052cc;outline-offset:2px; }
   #overall-results-section [hidden] { display:none !important; }
   @media print {
     .overall-results-table { min-width:0; }
@@ -14,7 +17,7 @@ export const overallResultsStyles = `
 
 function renderWarnings(warnings: string[]): string {
   return warnings.length
-    ? `<ul style="margin:12px 0;padding-left:22px;color:#875e00;font-size:11px;line-height:1.5;">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>`
+    ? `<ul data-editor-only style="margin:12px 0;padding-left:22px;color:#875e00;font-size:11px;line-height:1.5;">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul>`
     : '';
 }
 
@@ -49,7 +52,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
         ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>`
         : 'PRIT não configurado';
       return `<div id="overall-position-${encodeURIComponent(plan.key)}" data-overall-position="${escapeHtml(plan.key)}" data-report-position="${escapeHtml(plan.key)}" style="margin:0 0 20px;">
-      <h3 id="overall-position-title-${index}" style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)} — ${reference}</h3>
+      <h3 id="overall-position-title-${index}" style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)} — ${reference}<button type="button" class="remove-overall-table" data-remove-overall data-editor-only aria-label="Remover tabela de resultados de ${escapeHtml(plan.label)}" title="Remover apenas esta tabela de resultados"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg></button></h3>
       ${plan.title !== plan.label ? `<p style="font-size:11px;color:#5e6c84;">${escapeHtml(plan.title)}</p>` : ''}
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-position-title-${index}" width="100%" cellpadding="0" cellspacing="0"

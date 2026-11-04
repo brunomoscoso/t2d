@@ -129,6 +129,57 @@ async function captureCopy(page: Page) {
   }));
 }
 
+test('remove só a tabela de resultados, preserva a posição e permite restaurar', async () => {
+  const browser = await chromium.launch({
+    channel: process.platform === 'win32' ? 'msedge' : undefined,
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage();
+    await page.route('http://remove-table.test/**', (route) =>
+      route.fulfill({ contentType: 'text/html; charset=utf-8', body: fixture('email') }),
+    );
+    await page.goto('http://remove-table.test/report.html');
+    const table = page.locator('[data-overall-position]').first();
+    await table.locator('[data-remove-overall]').click();
+    assert.equal(await table.isVisible(), false);
+    assert.equal(
+      await page.getByRole('checkbox', { name: names[0], exact: true }).isChecked(),
+      true,
+    );
+    assert.equal(await page.locator('[data-global-status-row]').first().isVisible(), true);
+    assert.equal(
+      await page.locator('#release-links-table [data-report-position]').first().isVisible(),
+      true,
+    );
+    assert.equal(await page.locator('.position-block').first().isVisible(), true);
+    await page.getByRole('button', { name: 'Selecionar todos', exact: true }).click();
+    assert.equal(await table.isVisible(), false);
+    await page.reload();
+    assert.equal(await table.isVisible(), false);
+    const copy = await captureCopy(page);
+    const preview = await browser.newPage();
+    await preview.setContent(copy.html);
+    assert.ok(
+      !(
+        await visiblePositions(preview, '[data-overall-position]', 'data-report-position')
+      ).includes(names[0]),
+    );
+    assert.ok(
+      (
+        await visiblePositions(preview, '[data-global-status-row]', 'data-report-position')
+      ).includes(names[0]),
+    );
+    assert.equal(await preview.locator('[data-remove-overall]').count(), 0);
+    await page.getByRole('button', { name: 'Restaurar tabelas removidas' }).click();
+    assert.equal(await table.isVisible(), true);
+    await page.reload();
+    assert.equal(await table.isVisible(), true);
+  } finally {
+    await browser.close();
+  }
+});
+
 test('download abre offline apenas com os postos selecionados e valores editados', async () => {
   const browser = await chromium.launch({
     channel: process.platform === 'win32' ? 'msedge' : undefined,

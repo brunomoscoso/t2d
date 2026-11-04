@@ -121,6 +121,8 @@ export const globalStatusScript = `
         const rows = Array.from(table.querySelectorAll('[data-global-status-row]'));
         const toggles = new Map(Array.from(picker.querySelectorAll('[data-position-toggle]'))
             .map(toggle => [toggle.value, toggle]));
+        const excludedOverall = new Set();
+        const restoreOverall = picker.querySelector('[data-restore-overall]');
         const storageKey = 't2d:global-status:v2:' + window.location.pathname;
         const legacyStoragePrefix = 't2d:global-status:v1:' + window.location.pathname + ':';
         let savedRows = [];
@@ -174,6 +176,7 @@ export const globalStatusScript = `
                     selected: toggles.get(row.dataset.position).checked,
                     selectionVersion: 3,
                     selectionKey: picker.dataset.selectionKey,
+                    overallExcluded: excludedOverall.has(row.dataset.position),
                     status: row.querySelector('[data-status-select]').value,
                     installation: row.querySelector('[data-installation-select]').value,
                     installationVersion: row.querySelector('[data-installation-version]').value,
@@ -190,8 +193,11 @@ export const globalStatusScript = `
             const selected = new Set(Array.from(toggles.values())
                 .filter(toggle => toggle.checked).map(toggle => toggle.value));
             document.querySelectorAll('[data-report-position]').forEach(element => {
-                element.hidden = !selected.has(element.dataset.reportPosition);
+                element.hidden = !selected.has(element.dataset.reportPosition)
+                    || (element.hasAttribute('data-overall-position')
+                        && excludedOverall.has(element.dataset.reportPosition));
             });
+            restoreOverall.hidden = excludedOverall.size === 0;
             document.querySelectorAll('[data-report-positions]').forEach(element => {
                 const names = JSON.parse(element.dataset.reportPositions)
                     .filter(position => selected.has(position));
@@ -223,6 +229,9 @@ export const globalStatusScript = `
             const saved = savedRows.find(item => item && item.position === row.dataset.position);
 
             if (saved) {
+                if (saved.selectionKey === picker.dataset.selectionKey && saved.overallExcluded === true) {
+                    excludedOverall.add(row.dataset.position);
+                }
                 // Restaura escolhas apenas para a mesma configuração de Test Plans.
                 // Notas e estados continuam disponíveis quando a configuração muda.
                 if (saved.selectionVersion === 3 && saved.selectionKey === picker.dataset.selectionKey
@@ -277,6 +286,21 @@ export const globalStatusScript = `
 
         picker.querySelector('[data-select-all-positions]').addEventListener('click', () => selectAll(true));
         picker.querySelector('[data-clear-positions]').addEventListener('click', () => selectAll(false));
+        document.querySelectorAll('[data-remove-overall]').forEach(button => {
+            button.addEventListener('click', () => {
+                const position = button.closest('[data-overall-position]').dataset.reportPosition;
+                excludedOverall.add(position);
+                updateSelection();
+                save();
+                restoreOverall.focus();
+            });
+        });
+        restoreOverall.addEventListener('click', () => {
+            excludedOverall.clear();
+            updateSelection();
+            save();
+            picker.querySelector('[data-select-all-positions]').focus();
+        });
         updateSelection();
     }
     initializeGlobalStatuses();

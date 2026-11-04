@@ -47,6 +47,7 @@ export function createPositionPicker(positions: PositionReport[]): string {
         <div class="global-position-actions">
           <button type="button" data-select-all-positions>Selecionar todos</button>
           <button type="button" data-clear-positions>Limpar seleção</button>
+          <button type="button" data-restore-overall hidden>Restaurar tabelas removidas</button>
           <span id="global-position-count" role="status" aria-live="polite">${selected.size} ${selected.size === 1 ? 'posto selecionado' : 'postos selecionados'}</span>
         </div>
       </fieldset>
