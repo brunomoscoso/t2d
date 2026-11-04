@@ -155,4 +155,14 @@ export const POSITIONS: PositionDefinition[] = [
       defectFixing: [],
     },
   },
+  {
+    name: 'Automação',
+    testPlanPrit: '',
+    executions: {
+      smoke: [],
+      regression: [],
+      certification: [],
+      defectFixing: [],
+    },
+  },
 ];
