@@ -15,13 +15,16 @@ const GLOBAL_STATUSES = [
 function getDefaultSelection(positions: PositionReport[]): Set<string> {
   return new Set(
     positions
-      .filter((position) => position.testPlanPrit.trim() || position.reports.length)
+      .filter((position) => position.testPlanPrit.trim())
       .map((position) => position.position),
   );
 }
 
 export function createPositionPicker(positions: PositionReport[]): string {
   const selected = getDefaultSelection(positions);
+  const selectionKey = JSON.stringify(
+    positions.map((position) => [position.position, position.testPlanPrit.trim()]),
+  );
   const choices = positions
     .map((position) => position.position)
     .map(
@@ -36,7 +39,7 @@ export function createPositionPicker(positions: PositionReport[]): string {
     .join('');
 
   return `
-    <div id="position-picker-section" data-editor-only>
+    <div id="position-picker-section" data-selection-key="${escapeHtml(selectionKey)}" data-editor-only>
       <fieldset class="global-position-picker" data-editor-only>
         <legend>Selecione os Postos</legend>
         <p>Marque os postos que pretende incluir em todas as áreas do relatório.</p>

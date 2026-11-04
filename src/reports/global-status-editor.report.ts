@@ -172,7 +172,8 @@ export const globalStatusScript = `
                 rows.forEach(row => rowsByPosition.set(row.dataset.position, {
                     position: row.dataset.position,
                     selected: toggles.get(row.dataset.position).checked,
-                    selectionVersion: 2,
+                    selectionVersion: 3,
+                    selectionKey: picker.dataset.selectionKey,
                     status: row.querySelector('[data-status-select]').value,
                     installation: row.querySelector('[data-installation-select]').value,
                     installationVersion: row.querySelector('[data-installation-version]').value,
@@ -222,9 +223,10 @@ export const globalStatusScript = `
             const saved = savedRows.find(item => item && item.position === row.dataset.position);
 
             if (saved) {
-                // A seleção antiga marcava todos os postos; preserva as notas e os estados,
-                // mas só restaura escolhas guardadas com a regra atual de seleção inicial.
-                if (saved.selectionVersion === 2 && typeof saved.selected === 'boolean') {
+                // Restaura escolhas apenas para a mesma configuração de Test Plans.
+                // Notas e estados continuam disponíveis quando a configuração muda.
+                if (saved.selectionVersion === 3 && saved.selectionKey === picker.dataset.selectionKey
+                    && typeof saved.selected === 'boolean') {
                     toggle.checked = saved.selected;
                 }
                 if (Array.from(select.options).some(option => option.value === saved.status)) {

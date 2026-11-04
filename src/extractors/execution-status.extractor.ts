@@ -1,10 +1,10 @@
-import { Page } from 'playwright';
+import { errors, Page } from 'playwright';
 
 import { SELECTORS } from '../config/selectors';
 
 import { ExecutionStatus } from '../types/report.types';
 
-// Extrai as quantidades por status; não retorna uma lista vazia se a secção estiver incompleta.
+// A ausência da secção não impede a coleta dos demais dados da execução.
 export async function extractExecutionStatuses(page: Page): Promise<ExecutionStatus[]> {
   console.log('Procurando Overall Execution Status...');
 
@@ -20,6 +20,12 @@ export async function extractExecutionStatuses(page: Page): Promise<ExecutionSta
       timeout: 20000,
     });
   } catch (error) {
+    if (error instanceof errors.TimeoutError) {
+      console.log(
+        '⚠️ Nenhum status de testes encontrado: Overall Execution Status não ficou visível após 20 segundos. Continuando a coleta dos demais dados.',
+      );
+      return [];
+    }
     throw new Error('Overall Execution Status não encontrado após 20 segundos.', { cause: error });
   }
 
