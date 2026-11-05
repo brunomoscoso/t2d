@@ -185,15 +185,15 @@ export function writeReports(
 
   console.log('✅ Relatórios gerados:');
 
-  console.log('output/report.json');
+  console.log(path.join(outputDirectory, 'report.json'));
 
-  console.log('output/report.txt');
+  console.log(path.join(outputDirectory, 'report.txt'));
 
-  console.log('output/report.html');
+  console.log(path.join(outputDirectory, 'report.html'));
 
-  console.log('output/email.html');
+  console.log(path.join(outputDirectory, 'email.html'));
 
   if (dashboard) {
-    console.log('output/dashboard.json');
+    console.log(path.join(outputDirectory, 'dashboard.json'));
   }
 }

@@ -17,21 +17,21 @@ export async function extractExecutionStatuses(page: Page): Promise<ExecutionSta
   try {
     await overallStatus.waitFor({
       state: 'visible',
-      timeout: 20000,
+      timeout: 40000,
     });
   } catch (error) {
     if (error instanceof errors.TimeoutError) {
       console.log(
-        '⚠️ Nenhum status de testes encontrado: Overall Execution Status não ficou visível após 20 segundos. Continuando a coleta dos demais dados.',
+        '⚠️ Nenhum status de testes encontrado: Overall Execution Status não ficou visível após 40 segundos. Continuando a coleta dos demais dados.',
       );
       return [];
     }
-    throw new Error('Overall Execution Status não encontrado após 20 segundos.', { cause: error });
+    throw new Error('Overall Execution Status não encontrado após 40 segundos.', { cause: error });
   }
 
   await overallStatus.scrollIntoViewIfNeeded();
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
 
   // Primeiro tenta ler os elementos estruturados do Xray.
   const countsLocator = page.locator(SELECTORS.executionStatusCount);
@@ -81,17 +81,26 @@ export async function extractExecutionStatuses(page: Page): Promise<ExecutionSta
 
   const summaryText = await overallStatus.evaluate((element) => {
     let parent = element.parentElement;
-
     while (parent) {
-      const text = parent.innerText;
-
-      if (/Total Tests:\s*\d+/i.test(text)) {
-        return text;
+      // innerText pode concatenar spans adjacentes: 112PASS38FAIL9TODO.
+      // Separa os nós de texto visíveis sem alterar nomes como PENDING_3RD.
+      const walker = document.createTreeWalker(parent, NodeFilter.SHOW_TEXT);
+      const parts: string[] = [];
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const owner = node.parentElement;
+        if (!owner || !owner.getClientRects().length) continue;
+        const style = getComputedStyle(owner);
+        if (style.visibility === 'hidden' || style.display === 'none') continue;
+        const text = node.textContent?.trim();
+        if (text) parts.push(text);
       }
-
+      const text = parts.join(' ');
+      const start = text.indexOf('Overall Execution Status');
+      const summary = start >= 0 ? text.slice(start) : '';
+      if (/Total Tests:\s*\d+/i.test(summary)) return summary;
       parent = parent.parentElement;
     }
-
     return '';
   });
 

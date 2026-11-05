@@ -10,7 +10,8 @@ export function createTxtReport(positions: PositionReport[]): string {
     txt += '==================================================\n';
 
     txt += `${position.position}\n`;
-    txt += `Test Plan: ${position.testPlanPrit ? `${position.testPlanPrit} — ${JIRA_URL}/browse/${position.testPlanPrit}` : 'Não informado'}\n`;
+    if (!position.testPlans)
+      txt += `Test Plan: ${position.testPlanPrit ? `${position.testPlanPrit} — ${JIRA_URL}/browse/${position.testPlanPrit}` : 'Não informado'}\n`;
 
     txt += '==================================================\n\n';
 
@@ -18,7 +19,7 @@ export function createTxtReport(positions: PositionReport[]): string {
     for (const report of position.reports) {
       if (currentType !== report.testType) {
         currentType = report.testType;
-        txt += `\nGrupo de Testes: ${TEST_TYPE_LABELS[report.testType]}\n\n`;
+        txt += `\n${position.testPlans ? 'País' : 'Grupo de Testes'}: ${TEST_TYPE_LABELS[report.testType]}\n\n`;
       }
       txt += `--------------------------------------------------\n`;
 

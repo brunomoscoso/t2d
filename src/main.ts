@@ -34,7 +34,7 @@ async function extractPritWithRetry(page: Page, prit: string): Promise<Execution
       );
 
       if (attempt < MAX_PRIT_ATTEMPTS) {
-        await page.waitForTimeout(1000 * attempt);
+        await page.waitForTimeout(2000 * attempt);
       }
     }
   }
@@ -71,7 +71,7 @@ async function main() {
 
     const positions = groupReportsByPosition(reports);
 
-    // Os Test Plans fornecem apenas títulos/links; não definem o escopo da coleta.
+    // Os links enriquecem os títulos; os planos por país também são fontes da coleta de Automação.
     const releaseLinks = await extractReleaseLinks(page.request);
 
     // O dashboard é complementar: se falhar, os relatórios dos PRITs continuam disponíveis.

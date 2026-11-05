@@ -2,11 +2,44 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ExecutionData, PositionDefinition } from '../src/types/report.types';
 import { getConfiguredExecutions } from '../src/utils/position.utils';
-import { groupReportsByPosition } from '../src/utils/groupReports.utils';
+import { groupReportsByPosition, groupReportsByTestType } from '../src/utils/groupReports.utils';
 import { aggregateOverallResults } from '../src/utils/overall-results.utils';
 import { getConfiguredReleaseLinks } from '../src/utils/release-links.utils';
 import { extractReleaseLinks } from '../src/extractors/release-links.extractor';
 import type { APIRequestContext } from 'playwright';
+import { createReleaseLinksSection } from '../src/reports/release-links.report';
+import { createPositionPicker } from '../src/reports/global-status.report';
+
+test('automação é uma posição com planos por país e sem tipos de execução', () => {
+  const configured: PositionDefinition[] = [
+    { name: 'Automação', testPlans: { portugal: '100', espanha: 'PRIT-200' } },
+  ];
+  const links = getConfiguredReleaseLinks(configured);
+  assert.deepEqual(links.testPlans, [
+    { position: 'Automação', label: 'Automação — Portugal', prit: 'PRIT-100' },
+    { position: 'Automação', label: 'Automação — Espanha', prit: 'PRIT-200' },
+  ]);
+  const html = createReleaseLinksSection(links);
+  assert.equal((html.match(/data-report-position="Automação"/g) || []).length, 2);
+  assert.deepEqual(getConfiguredExecutions(configured), [
+    { prit: 'PRIT-100', position: configured[0].name, testType: 'portugal' },
+    { prit: 'PRIT-200', position: configured[0].name, testType: 'espanha' },
+  ]);
+  const grouped = groupReportsByPosition([], configured);
+  assert.equal(grouped[0].position, 'Automação');
+  assert.deepEqual(
+    groupReportsByTestType(grouped[0]).map((group) => group.testType),
+    ['portugal', 'espanha'],
+  );
+  const plan = aggregateOverallResults(grouped, links.testPlans, configured).plans[0];
+  assert.equal(plan.types.length, 2);
+  assert.ok(plan.types.every((type) => !type.available));
+  assert.match(createPositionPicker(grouped), /value="Automação" checked/);
+  assert.throws(
+    () => getConfiguredExecutions([...configured, position('COCO PT', '', ['100'])]),
+    /usado como execução/,
+  );
+});
 
 function position(name: string, testPlanPrit = '', smoke: string[] = []): PositionDefinition {
   return {

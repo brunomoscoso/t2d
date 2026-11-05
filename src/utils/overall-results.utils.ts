@@ -4,14 +4,14 @@ import type {
   PositionDefinition,
   PositionReport,
   TestPlanLink,
-  TestType,
+  ReportGroup,
 } from '../types/report.types';
 import { normalizeStatus } from './html.utils';
 import { groupReportsByPosition } from './groupReports.utils';
-import { resolvePositions } from './position.utils';
+import { getConfiguredExecutions, resolvePositions } from './position.utils';
 
 export type OverallTypeResults = {
-  testType: TestType;
+  testType: ReportGroup;
   counts: Record<string, number>;
   total: number;
   executions: number;
@@ -22,6 +22,7 @@ export type OverallPlanResults = {
   prit: string;
   label: string;
   title: string;
+  countryGroups?: boolean;
   statuses: string[];
   types: OverallTypeResults[];
   warnings: string[];
@@ -60,8 +61,10 @@ export function aggregateOverallResults(
   );
   const plans = definitions.map((position): OverallPlanResults => {
     const warnings: string[] = [];
-    const statuses = new Set(standardStatuses);
-    const types = TEST_TYPES.map((testType): OverallTypeResults => {
+    const statuses = new Set<string>(position.testPlans ? [] : standardStatuses);
+    const sources = getConfiguredExecutions([position]);
+    const groups = position.testPlans ? (['portugal', 'espanha'] as const) : TEST_TYPES;
+    const types = groups.map((testType): OverallTypeResults => {
       const result: OverallTypeResults = {
         testType,
         counts: Object.create(null),
@@ -69,7 +72,10 @@ export function aggregateOverallResults(
         executions: 0,
         available: true,
       };
-      const expected = position.executions[testType];
+      const expected = sources
+        .filter((source) => source.testType === testType)
+        .map((source) => source.prit);
+      if (position.testPlans && !expected.length) result.available = false;
       const missing = expected.filter((prit) => !reports.has(prit));
       if (missing.length) {
         result.available = false;
@@ -112,12 +118,13 @@ export function aggregateOverallResults(
       (link) => link.position === position.name && link.prit === position.testPlanPrit,
     )?.title;
     return {
+      countryGroups: !!position.testPlans,
       key: position.name,
       prit: position.testPlanPrit,
       label: position.name,
       title: title?.trim() || position.name,
       statuses: [
-        ...standardStatuses,
+        ...standardStatuses.filter((status) => statuses.has(status)),
         ...[...statuses].filter((status) => !standardStatuses.includes(status)).sort(),
       ],
       types,

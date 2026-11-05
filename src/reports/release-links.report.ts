@@ -29,16 +29,17 @@ export function createReleaseLinksSection(
   }
 
   const rows = links.testPlans.map((plan, index) => {
-    const label = `Test Plan — ${plan.position}`;
+    const label = `Test Plan — ${plan.label ?? plan.position}`;
     const prit = plan.prit.trim() ? normalizePrit(plan.prit) : '';
-    if (!prit) return row(label, '', '', index, plan.position);
+    const position = plan.position;
+    if (!prit) return row(label, '', '', index, position);
     const title = plan.title?.trim();
     return row(
       label,
       `${baseUrl}/browse/${encodeURIComponent(prit)}`,
       title ? `[${prit}] ${title}` : `[${prit}]`,
       index,
-      plan.position,
+      position,
     );
   });
 

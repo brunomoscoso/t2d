@@ -15,7 +15,11 @@ const GLOBAL_STATUSES = [
 function getDefaultSelection(positions: PositionReport[]): Set<string> {
   return new Set(
     positions
-      .filter((position) => position.testPlanPrit.trim())
+      .filter(
+        (position) =>
+          position.testPlanPrit.trim() ||
+          Object.values(position.testPlans ?? {}).some((prit) => prit.trim()),
+      )
       .map((position) => position.position),
   );
 }
@@ -23,7 +27,11 @@ function getDefaultSelection(positions: PositionReport[]): Set<string> {
 export function createPositionPicker(positions: PositionReport[]): string {
   const selected = getDefaultSelection(positions);
   const selectionKey = JSON.stringify(
-    positions.map((position) => [position.position, position.testPlanPrit.trim()]),
+    positions.map((position) => [
+      position.position,
+      position.testPlanPrit.trim(),
+      position.testPlans,
+    ]),
   );
   const choices = positions
     .map((position) => position.position)

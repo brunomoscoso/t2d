@@ -1,7 +1,17 @@
 export type TestType = 'smoke' | 'regression' | 'certification' | 'defectFixing';
 
+export type ReportGroup = TestType | 'portugal' | 'espanha';
+
+export type CountryTestPlans = { portugal: string; espanha: string };
+
 export type PositionDefinition = {
   name: string;
+  testPlanPrit?: string;
+  executions?: Record<TestType, string[]>;
+  testPlans?: CountryTestPlans;
+};
+
+export type ResolvedPositionDefinition = PositionDefinition & {
   testPlanPrit: string;
   executions: Record<TestType, string[]>;
 };
@@ -9,11 +19,12 @@ export type PositionDefinition = {
 export type ConfiguredExecution = {
   prit: string;
   position: string;
-  testType: TestType;
+  testType: ReportGroup;
 };
 
 export type TestPlanLink = {
   position: string;
+  label?: string;
   prit: string;
   title?: string;
 };
@@ -75,6 +86,7 @@ export type Report = ExecutionData & ConfiguredExecution;
 export type PositionReport = {
   position: string;
   testPlanPrit: string;
+  testPlans?: CountryTestPlans;
   reports: Report[];
 };
 

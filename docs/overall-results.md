@@ -82,3 +82,7 @@ Após distribuir os PRITs no novo formato, atualizar e executar:
 | Saídas e integração                                                                                                                       | Conferir agrupamento e links em HTML/TXT/e-mail, o novo contrato JSON e seus consumidores, falhas/tentativas de coleta, dashboard e autenticação.                                                                                                                                                                                                                                                                                                                                                               |
 
 Depois dessas adaptações, executar `npm test`, `npx tsc --noEmit` e `npm run format:check`; aplicar `npm run format` na etapa de validação. O projeto não possui comando de build ou lint dedicado no `package.json`. A coleta real deve ser conferida com a configuração confirmada, acesso ao Jira e MFA manual.
+
+### Automação por país
+
+Automação aparece por último entre as posições. Os PRITs em `testPlans.portugal` e `testPlans.espanha` são coletados com os mesmos seletores de status e defects das execuções. A tabela apresenta Portugal e Espanha, com os status encontrados no Overall Execution Status, quantidades e percentuais, em vez dos quatro grupos de testes. Os defects seguem as mesmas regras das outras posições.

@@ -39,17 +39,17 @@ export function groupReportsByPosition(
   return positions.map((position) => ({
     position: position.name,
     testPlanPrit: position.testPlanPrit,
-    reports: TEST_TYPES.flatMap((type) =>
-      position.executions[type].flatMap((prit) => {
-        const report = collected.get(prit);
-        return report ? [report] : [];
-      }),
-    ),
+    ...(position.testPlans ? { testPlans: position.testPlans } : {}),
+    reports: getConfiguredExecutions([position]).flatMap(({ prit }) => {
+      const report = collected.get(prit);
+      return report ? [report] : [];
+    }),
   }));
 }
 
 export function groupReportsByTestType(position: PositionReport) {
-  return TEST_TYPES.map((testType) => ({
+  const groups = position.testPlans ? (['portugal', 'espanha'] as const) : TEST_TYPES;
+  return groups.map((testType) => ({
     testType,
     reports: position.reports.filter((report) => report.testType === testType),
   }));

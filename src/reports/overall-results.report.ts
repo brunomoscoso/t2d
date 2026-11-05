@@ -50,14 +50,16 @@ export function createOverallResultsSection(overall: OverallResults): string {
         .join('');
       const reference = plan.prit
         ? `<a href="${escapeHtml(`${JIRA_URL.replace(/\/+$/, '')}/browse/${encodeURIComponent(plan.prit)}`)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;">${escapeHtml(plan.prit)}</a>`
-        : 'PRIT não configurado';
+        : plan.countryGroups
+          ? ''
+          : 'PRIT não configurado';
       return `<div id="overall-position-${encodeURIComponent(plan.key)}" data-overall-position="${escapeHtml(plan.key)}" data-report-position="${escapeHtml(plan.key)}" style="margin:0 0 20px;">
-      <h3 id="overall-position-title-${index}" style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)} — ${reference}<button type="button" class="remove-overall-table" data-remove-overall data-editor-only aria-label="Remover tabela de resultados de ${escapeHtml(plan.label)}" title="Remover apenas esta tabela de resultados"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg></button></h3>
+      <h3 id="overall-position-title-${index}" style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#142e57;">${escapeHtml(plan.label)}${reference ? ` — ${reference}` : ''}<button type="button" class="remove-overall-table" data-remove-overall data-editor-only aria-label="Remover tabela de resultados de ${escapeHtml(plan.label)}" title="Remover apenas esta tabela de resultados"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg></button></h3>
       ${plan.title !== plan.label ? `<p style="font-size:11px;color:#5e6c84;">${escapeHtml(plan.title)}</p>` : ''}
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-position-title-${index}" width="100%" cellpadding="0" cellspacing="0"
           style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;">
-          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Grupo de Testes</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
+          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">${plan.countryGroups ? 'País' : 'Grupo de Testes'}</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>

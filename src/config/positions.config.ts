@@ -1,9 +1,6 @@
 import type { PositionDefinition } from '../types/report.types';
 export const DASHBOARD_PAGE_ID = '24360';
-// Fonte de verdade da coleta e dos agrupamentos.
-// A ordem das posições e dos arrays de execução é preservada nos relatórios.
-// Test Plans são apenas links.
-// Preencha o plano e os PRITs de execução diretamente em cada posição/tipo.
+
 export const POSITIONS: PositionDefinition[] = [
   {
     name: 'COCO PT',
@@ -157,12 +154,9 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'Automação',
-    testPlanPrit: '',
-    executions: {
-      smoke: [],
-      regression: [],
-      certification: [],
-      defectFixing: [],
+    testPlans: {
+      portugal: 'PRIT-5525',
+      espanha: 'PRIT-5573',
     },
   },
 ];

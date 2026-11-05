@@ -31,13 +31,14 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
 
     {
       waitUntil: 'domcontentloaded',
+      timeout: 60000,
     },
   );
 
   await page.locator(SELECTORS.title).waitFor({
     state: 'visible',
 
-    timeout: 60000,
+    timeout: 90000,
   });
 
   const title = (await page.locator(SELECTORS.title).innerText()).trim();
@@ -58,7 +59,7 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
     window.scrollTo(0, document.body.scrollHeight);
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
 
   const issueLinks = await extractIssueLinks(page);
 
