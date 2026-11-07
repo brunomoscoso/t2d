@@ -1,7 +1,5 @@
 # Automação de relatórios do Jira
 
-**Instalação web:** este repositório publica a interface em https://brunomoscoso.github.io/t2d/. As execuções e os relatórios ficam no repositório privado `brunomoscoso/t2d-automation`. Configure os secrets do Jira nesse repositório privado. Consulte [a configuração dos dois repositórios](docs/web-actions.md#instalação-atual-interface-pública-e-automação-privada).
-
 Esta automação recolhe dados de execuções PRIT e de um dashboard do Jira e gera relatórios por posto e tipo de teste. Os relatórios podem ser consultados no navegador, copiados para e-mail ou usados como ficheiros JSON e texto.
 
 ## Tecnologias
@@ -69,23 +67,13 @@ O NVM permite alternar entre diferentes versões do Node.js. A instalação e a 
 
 ## Executar a automação
 
-### Interface web e GitHub Actions
-
-A pasta `web/` contém a interface responsiva para configurar PRITs, posições e ordem, com gravação automática neste navegador. O botão **Preparar execução** gera o JSON para colar no **Run workflow** do GitHub. Não requer tokens no frontend nem um backend adicional.
-
-Consulte [Publicar e utilizar a interface](docs/web-actions.md) para configurar Pages, secrets, MFA e relatórios. Esta primeira versão acompanha progresso e histórico no GitHub Actions; os relatórios são descarregados como artefactos e mantêm os editores HTML existentes.
-
-Para migrar a configuração atual, execute `npm run config:export` e importe `output/positions.json` na interface. Para pré-visualizar localmente, execute `npm run web:preview` e abra `http://127.0.0.1:4173`.
-
-### Execução local
-
 Na pasta do projeto, execute:
 
 ```powershell
 npm run report
 ```
 
-O Microsoft Edge abre numa issue configurada. Conclua a autenticação e o MFA na janela do navegador. A recolha começa automaticamente quando o título e o estado da issue estiverem visíveis na origem do Jira. Não é necessário pressionar Enter. O tempo limite é de cinco minutos, configurável por `T2D_AUTH_TIMEOUT_MS`.
+O Microsoft Edge abre numa issue configurada. Conclua a autenticação e o MFA na janela do navegador. Quando o Jira estiver carregado, volte ao terminal e pressione **Enter** para iniciar a recolha.
 
 No fim, os ficheiros são gravados em `output/`:
 

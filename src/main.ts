@@ -1,6 +1,6 @@
 import type { Page } from 'playwright';
 
-import { DASHBOARD_PAGE_ID } from './config/runtime.config';
+import { DASHBOARD_PAGE_ID } from './config/positions.config';
 
 import type { DashboardData, ExecutionData } from './types/report.types';
 
@@ -16,7 +16,6 @@ import { groupReportsByPosition } from './utils/groupReports.utils';
 import { getConfiguredExecutions } from './utils/position.utils';
 
 import { writeReports } from './reports/report.writer';
-import { reportProgress } from './services/progress.service';
 
 const MAX_PRIT_ATTEMPTS = 3;
 
@@ -47,7 +46,6 @@ async function extractPritWithRetry(page: Page, prit: string): Promise<Execution
 }
 
 async function main() {
-  reportProgress('initializing', 'A validar a configuração e a preparar o navegador.');
   const executions = getConfiguredExecutions();
   if (executions.length === 0) {
     throw new Error(
@@ -63,13 +61,11 @@ async function main() {
 
   try {
     const reports: ExecutionData[] = [];
-    reportProgress('extraction', `A extrair ${executions.length} PRITs.`);
 
     // A falha num PRIT interrompe a coleta para evitar um relatório parcial.
     for (const execution of executions) {
       const report = await extractPritWithRetry(page, execution.prit);
       reports.push(report);
-      reportProgress('extraction', `${reports.length}/${executions.length}: ${execution.prit}`);
       console.log(`✅ ${execution.prit} → ${execution.position} / ${execution.testType}`);
     }
 
@@ -92,19 +88,13 @@ async function main() {
       await dashboardPage.close();
     }
 
-    reportProgress('report', 'A gerar os relatórios HTML, e-mail, JSON e texto.');
     writeReports(positions, dashboard, releaseLinks);
-    reportProgress(
-      'complete',
-      'Relatórios gerados. No Actions, aguarde a publicação do artefacto.',
-    );
   } finally {
     await browser.close();
   }
 }
 
 main().catch((error: unknown) => {
-  reportProgress('failed', 'A execução falhou. Consulte os detalhes no log do Actions.');
   console.error('❌ Erro fatal na execução:');
   console.error(error);
   process.exit(1);
