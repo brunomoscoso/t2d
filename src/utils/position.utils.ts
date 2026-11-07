@@ -1,4 +1,4 @@
-import { POSITIONS } from '../config/positions.config';
+import { POSITIONS } from '../config/runtime.config';
 import { TEST_TYPES } from '../config/test-types.config';
 import type {
   ConfiguredExecution,

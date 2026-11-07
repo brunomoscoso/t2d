@@ -1,4 +1,4 @@
-import { DASHBOARD_PAGE_ID, POSITIONS } from '../config/positions.config';
+import { DASHBOARD_PAGE_ID, POSITIONS } from '../config/runtime.config';
 import type { PositionDefinition, ReleaseLinks, TestPlanLink } from '../types/report.types';
 import { resolvePositions } from './position.utils';
 

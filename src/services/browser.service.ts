@@ -1,164 +1,60 @@
 import { Browser, Page, chromium } from 'playwright';
-
-import readline from 'node:readline/promises';
-
-import { stdin as input, stdout as output } from 'node:process';
-
 import { JIRA_URL, JIRA_LOGIN_EMAIL } from '../config/jira.config';
+import { waitForJiraAuthentication } from './jira-auth.service';
+import { reportProgress } from './progress.service';
 
-type BrowserSession = {
-  browser: Browser;
-  page: Page;
-};
-
-/* =========================================================
-    LOGIN MICROSOFT
-    ========================================================= */
+type BrowserSession = { browser: Browser; page: Page };
 
 async function fillMicrosoftEmail(page: Page): Promise<void> {
-  console.log('\nProcurando tela de login...');
-
-  /*
-   * O campo padrão da Microsoft normalmente é:
-   *
-   * name="loginfmt"
-   *
-   * Mantemos também alguns fallbacks.
-   */
-
   const emailInput = page
-    .locator(
-      ['input[name="loginfmt"]', 'input[type="email"]', 'input[autocomplete="username"]'].join(','),
-    )
+    .locator('input[name="loginfmt"], input[type="email"], input[autocomplete="username"]')
     .first();
-
-  const emailVisible = await emailInput
-    .waitFor({
-      state: 'visible',
-      timeout: 30000,
-    })
+  const visible = await emailInput
+    .waitFor({ state: 'visible', timeout: 30000 })
     .then(() => true)
     .catch(() => false);
-
-  if (!emailVisible) {
-    console.log('ℹ️ Campo de e-mail não encontrado.');
-
-    console.log('O Jira pode já estar autenticado ou a página de login pode ser diferente.');
-
-    return;
-  }
-
-  /*
-   * Preenche o e-mail.
-   */
-
+  if (!visible) return;
   await emailInput.fill(JIRA_LOGIN_EMAIL);
-
-  console.log(`✅ E-mail preenchido: ${JIRA_LOGIN_EMAIL}`);
-
-  /*
-   * Botão padrão da Microsoft:
-   *
-   * id="idSIButton9"
-   *
-   * Geralmente representa:
-   *
-   * Next
-   * Avançar
-   * Entrar
-   */
-
-  const submitButton = page
-    .locator(['#idSIButton9', 'input[type="submit"]', 'button[type="submit"]'].join(','))
-    .first();
-
-  const buttonVisible = await submitButton.isVisible().catch(() => false);
-
-  if (!buttonVisible) {
-    console.log('⚠️ Botão para continuar não encontrado.');
-
-    return;
-  }
-
-  await submitButton.click();
-
-  console.log('✅ Login iniciado.');
+  const submit = page.locator('#idSIButton9, input[type="submit"], button[type="submit"]').first();
+  if (await submit.isVisible()) await submit.click();
 }
 
-/* =========================================================
-    CRIA SESSÃO
-    ========================================================= */
-
 export async function createBrowserSession(firstPrit: string): Promise<BrowserSession> {
+  const cloud = process.env.GITHUB_ACTIONS === 'true' || process.env.CI === 'true';
+  const headless = process.env.T2D_HEADLESS ? process.env.T2D_HEADLESS === 'true' : cloud;
+  const timeoutMs = Number(process.env.T2D_AUTH_TIMEOUT_MS ?? 300000);
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 1000 || timeoutMs > 900000) {
+    throw new Error('T2D_AUTH_TIMEOUT_MS deve estar entre 1000 e 900000.');
+  }
   const browser = await chromium.launch({
-    channel: 'msedge',
-
-    headless: false,
+    channel: process.env.T2D_BROWSER_CHANNEL || (cloud ? undefined : 'msedge'),
+    headless,
   });
-
-  const context = await browser.newContext();
-
-  let contextClosed = false;
-  context.once('close', () => {
-    contextClosed = true;
-  });
-
-  const page = await context.newPage();
-
-  console.log('\nAbrindo Jira...');
-
-  await page.goto(`${JIRA_URL}/browse/${firstPrit}`, {
-    waitUntil: 'domcontentloaded',
-  });
-
-  /*
-   * Espera possíveis redirects:
-   *
-   * Jira
-   * ↓
-   * Microsoft Login
-   */
-
-  await page.waitForTimeout(2000);
-
-  /*
-   * Preenche automaticamente
-   * e-mail e inicia o login.
-   */
-
-  await fillMicrosoftEmail(page);
-
-  console.log('\n');
-
-  console.log('Conclua agora a autenticação corporativa / MFA / Authenticator.');
-
-  const rl = readline.createInterface({
-    input,
-    output,
-  });
-
-  await rl.question('\nQuando o Jira estiver completamente aberto, pressione ENTER... ');
-
-  rl.close();
-
-  if (!browser.isConnected() || contextClosed) {
-    throw new Error(
-      'O navegador ou o contexto autenticado foi fechado. Não é possível iniciar a extração.',
-    );
-  }
-
-  let extractionPage: Page;
   try {
-    extractionPage = await context.newPage();
-  } catch (error) {
-    throw new Error(
-      'Não foi possível abrir a página de extração no contexto autenticado. Verifique se o navegador e o contexto continuam abertos.',
-      { cause: error },
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    reportProgress(
+      'authentication',
+      'A abrir o Jira. Confirme a autenticação corporativa no telemóvel.',
     );
+    await page.goto(`${JIRA_URL}/browse/${encodeURIComponent(firstPrit)}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await fillMicrosoftEmail(page);
+    await waitForJiraAuthentication(page, {
+      jiraUrl: JIRA_URL,
+      timeoutMs,
+      headless,
+      onMfaNumber: (number) =>
+        console.log(
+          `MFA desta execução: confirme o número ${number} no Authenticator apenas se iniciou este acesso.`,
+        ),
+    });
+    reportProgress('authentication', 'Jira autenticado e elementos da issue disponíveis.');
+    return { browser, page };
+  } catch (error) {
+    await browser.close();
+    throw error;
   }
-
-  return {
-    browser,
-    page: extractionPage,
-  };
 }
