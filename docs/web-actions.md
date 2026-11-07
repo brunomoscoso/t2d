@@ -1,5 +1,17 @@
 # T2D na web com GitHub Pages e Actions
 
+## Instalação atual: interface pública e automação privada
+
+- `brunomoscoso/t2d` publica a interface em https://brunomoscoso.github.io/t2d/ com `pages.yml`.
+- `brunomoscoso/t2d-automation` executa o workflow `t2d.yml` na branch `main` e guarda os relatórios. Este repositório deve permanecer privado.
+- Os secrets `JIRA_URL` e `JIRA_LOGIN_EMAIL` devem ser criados em **Settings → Secrets and variables → Actions** do **t2d-automation**. Os secrets do repositório público não são transferidos.
+- A interface usa `brunomoscoso/t2d-automation` por omissão e migra o destino antigo guardado no navegador, preservando todas as PRITs.
+- Não se publica Pages a partir do repositório privado. Alterações futuras na extração ou no workflow de execução devem ser enviadas para `t2d-automation`; alterações da interface são publicadas por `t2d`.
+
+Após criar os secrets, abra a interface, copie a configuração e inicie **Run workflow** em https://github.com/brunomoscoso/t2d-automation/actions/workflows/t2d.yml. O teste real de MFA ainda é necessário.
+
+As instruções de instalação abaixo descrevem também o modo alternativo de um único repositório privado com um plano que suporte Pages. Na instalação atual, Pages é configurado apenas no repositório público e os secrets apenas no privado.
+
 Esta versão usa apenas GitHub. A página configura PRITs e prepara o JSON; o utilizador confirma a execução na interface autenticada do Actions. GitHub Pages não executa código de servidor e não pode guardar um segredo para disparar workflows. Por isso, não há token, e-mail corporativo, sessão Jira ou palavra-passe no frontend.
 
 ## O que fica disponível

@@ -1,5 +1,7 @@
 # Automação de relatórios do Jira
 
+**Instalação web:** este repositório publica a interface em https://brunomoscoso.github.io/t2d/. As execuções e os relatórios ficam no repositório privado `brunomoscoso/t2d-automation`. Configure os secrets do Jira nesse repositório privado. Consulte [a configuração dos dois repositórios](docs/web-actions.md#instalação-atual-interface-pública-e-automação-privada).
+
 Esta automação recolhe dados de execuções PRIT e de um dashboard do Jira e gera relatórios por posto e tipo de teste. Os relatórios podem ser consultados no navegador, copiados para e-mail ou usados como ficheiros JSON e texto.
 
 ## Tecnologias

@@ -16,7 +16,8 @@ const escape = (value) =>
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
 let config = { dashboardPageId: '', positions: [] };
-let repository = 'brunomoscoso/t2d';
+let repository = 'brunomoscoso/t2d-automation';
+let migratedRepository = false;
 let damagedStorage = false;
 let storageConflict = false;
 let originalStorage = '';
@@ -51,6 +52,11 @@ try {
       throw new Error('Rascunho inválido');
     config = stored.config;
     repository = typeof stored.repository === 'string' ? stored.repository : repository;
+    // Atualiza o destino antigo sem alterar as PRITs ou outros repositórios escolhidos.
+    if (repository === 'brunomoscoso/t2d') {
+      repository = 'brunomoscoso/t2d-automation';
+      migratedRepository = true;
+    }
   }
 } catch {
   damagedStorage = true;
@@ -304,4 +310,5 @@ window.addEventListener('storage', (event) => {
   $('#save-status').textContent = 'Recarregue para sincronizar';
 });
 render();
+if (migratedRepository) save();
 if (damagedStorage) $('#save-status').textContent = 'Armazenamento indisponível';

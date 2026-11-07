@@ -23,13 +23,26 @@ test('interface persiste, reordena, exclui e prepara o workflow sem expor tokens
       await route.fulfill({ contentType, body: await readFile(resolve('web', filename)) });
     });
     await page.goto('http://t2d.test/');
+    assert.equal(await page.locator('#repository').inputValue(), 'brunomoscoso/t2d-automation');
     await page.locator('#dashboard').fill('12345');
     await page.locator('#add-position').click();
     await page.locator('[data-field="name"]').fill('Loja Portugal');
     await page.locator('[data-add-prit="smoke"]').fill('11, 12');
     await page.locator('[data-type="smoke"] [data-action="prit-add"]').click();
     await page.locator('[data-action="prit-down"]').first().click();
+    // Simula o rascunho guardado antes de separar a automação privada.
+    await page.evaluate(() => {
+      const key = 't2d.workspace.v1';
+      const saved = JSON.parse(localStorage.getItem(key)!);
+      saved.repository = 'brunomoscoso/t2d';
+      localStorage.setItem(key, JSON.stringify(saved));
+    });
     await page.reload();
+    assert.equal(await page.locator('#repository').inputValue(), 'brunomoscoso/t2d-automation');
+    assert.equal(
+      await page.evaluate(() => JSON.parse(localStorage.getItem('t2d.workspace.v1')!).repository),
+      'brunomoscoso/t2d-automation',
+    );
     assert.equal(await page.locator('#prit-count').textContent(), '2');
     assert.equal(await page.locator('[data-field="name"]').inputValue(), 'Loja Portugal');
     await page.locator('#prepare').click();
@@ -37,7 +50,7 @@ test('interface persiste, reordena, exclui e prepara o workflow sem expor tokens
     assert.deepEqual(prepared.positions[0].executions.smoke, ['PRIT-12', 'PRIT-11']);
     assert.equal(
       await page.locator('#open-actions').getAttribute('href'),
-      'https://github.com/brunomoscoso/t2d/actions/workflows/t2d.yml',
+      'https://github.com/brunomoscoso/t2d-automation/actions/workflows/t2d.yml',
     );
     assert.match((await page.locator('#run-dialog').textContent()) || '', /ainda não foi iniciada/);
     await page.locator('#close-dialog').click();
@@ -76,13 +89,11 @@ test('interface persiste, reordena, exclui e prepara o workflow sem expor tokens
       ],
     };
     page.on('dialog', (dialog) => dialog.accept());
-    await page
-      .locator('#import-file')
-      .setInputFiles({
-        name: 'config.json',
-        mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(imported)),
-      });
+    await page.locator('#import-file').setInputFiles({
+      name: 'config.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(imported)),
+    });
     await page.waitForFunction(() => document.querySelectorAll('[data-country]').length === 2);
     assert.equal(await page.locator('#positions img').count(), 0);
     await page.locator('#prepare').click();
@@ -91,6 +102,10 @@ test('interface persiste, reordena, exclui e prepara o workflow sem expor tokens
       'PRIT-100',
     );
     assert.deepEqual(errors, []);
+    await page.locator('#close-dialog').click();
+    await page.locator('#repository').fill('outra-equipa/automacao');
+    await page.reload();
+    assert.equal(await page.locator('#repository').inputValue(), 'outra-equipa/automacao');
   } finally {
     await browser.close();
   }
