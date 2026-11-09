@@ -8,7 +8,7 @@ export const POSITIONS: PositionDefinition[] = [
     executions: {
       smoke: ['PRIT-8422'],
       regression: ['PRIT-8420','PRIT-8421'],
-      certification: [],
+      certification: ['PRIT-8549','PRIT-8547','PRIT-8545'],
       defectFixing: ['PRIT-8423'],
     },
   },
