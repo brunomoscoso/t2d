@@ -7,7 +7,7 @@ export const POSITIONS: PositionDefinition[] = [
     testPlanPrit: 'PRIT-8419',
     executions: {
       smoke: ['PRIT-8422'],
-      regression: ['PRIT-8420','PRIT-8421'],
+      regression: ['PRIT-8420','PRIT-8421', 'PRIT-8576'],
       certification: ['PRIT-8549','PRIT-8547','PRIT-8545'],
       defectFixing: ['PRIT-8423'],
     },
@@ -18,7 +18,7 @@ export const POSITIONS: PositionDefinition[] = [
     executions: {
       smoke: ['PRIT-8426'],
       regression: ['PRIT-8425'],
-      certification: [],
+      certification: ['PRIT-8567'],
       defectFixing: ['PRIT-8427'],
     },
   },
@@ -47,8 +47,8 @@ export const POSITIONS: PositionDefinition[] = [
     testPlanPrit: 'PRIT-8428',
     executions: {
       smoke: ['PRIT-8431'],
-      regression: ['PRIT-8429', 'PRIT-8430'],
-      certification: [],
+      regression: ['PRIT-8429', 'PRIT-8430', 'PRIT-8578'],
+      certification: ['PRIT-8572', 'PRIT-8571', 'PRIT-8550'],
       defectFixing: ['PRIT-8432'],
     },
   },

@@ -1,10 +1,7 @@
 import { Browser, Page, chromium } from 'playwright';
 
-import readline from 'node:readline/promises';
-
-import { stdin as input, stdout as output } from 'node:process';
-
 import { JIRA_URL, JIRA_LOGIN_EMAIL } from '../config/jira.config';
+import { SELECTORS } from '../config/selectors';
 
 type BrowserSession = {
   browser: Browser;
@@ -132,14 +129,24 @@ export async function createBrowserSession(firstPrit: string): Promise<BrowserSe
 
   console.log('Conclua agora a autenticação corporativa / MFA / Authenticator.');
 
-  const rl = readline.createInterface({
-    input,
-    output,
-  });
+  console.log('Aguardando o Jira carregar para iniciar a recolha automaticamente...');
 
-  await rl.question('\nQuando o Jira estiver completamente aberto, pressione ENTER... ');
+  try {
+    const issueUrl = new URL(`${JIRA_URL}/browse/${firstPrit}`);
+    await page.waitForURL(
+      (url) => url.origin === issueUrl.origin && url.pathname === issueUrl.pathname,
+      { waitUntil: 'domcontentloaded', timeout: 10 * 60 * 1000 },
+    );
+    await page.locator(SELECTORS.title).waitFor({ state: 'visible', timeout: 90000 });
+  } catch (error) {
+    await browser.close();
+    throw new Error(
+      'Não foi possível confirmar o carregamento do Jira após o login. Conclua a autenticação e verifique o acesso à issue configurada.',
+      { cause: error },
+    );
+  }
 
-  rl.close();
+  console.log('✅ Jira carregado. A iniciar a recolha automaticamente.');
 
   if (!browser.isConnected() || contextClosed) {
     throw new Error(

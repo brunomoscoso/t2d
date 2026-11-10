@@ -67,13 +67,20 @@ O NVM permite alternar entre diferentes versões do Node.js. A instalação e a 
 
 ## Executar a automação
 
-Na pasta do projeto, execute:
+No Windows, depois de concluir a instalação e configuração, dê duplo clique em
+`executar.bat`. Também pode iniciá-lo pelo PowerShell com `./executar.bat`.
+O ficheiro usa a pasta do projeto mesmo quando aberto a partir de outra pasta e
+mantém a janela aberta no final para consultar o resultado ou eventuais erros.
+O Node.js, o npm e o Microsoft Edge continuam a ser necessários; o `.bat` não
+instala dependências nem configura o `.env` automaticamente.
+
+Como alternativa, na pasta do projeto, execute:
 
 ```powershell
 npm run report
 ```
 
-O Microsoft Edge abre numa issue configurada. Conclua a autenticação e o MFA na janela do navegador. Quando o Jira estiver carregado, volte ao terminal e pressione **Enter** para iniciar a recolha.
+O Microsoft Edge abre numa issue configurada. Conclua a autenticação e o MFA na janela do navegador. A automação aguarda até 10 minutos pelo regresso à issue do Jira e até 90 segundos pelo título visível antes de iniciar a recolha automaticamente, sem precisar de pressionar **Enter** no terminal.
 
 No fim, os ficheiros são gravados em `output/`:
 
