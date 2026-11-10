@@ -236,7 +236,9 @@ test('edita, restaura e exporta apenas os planos selecionados, preservando o edi
     const pt = smokes.locator('[data-overall-market="PT"]');
     assert.equal(await pt.locator('[data-overall-status="PASS"] strong').innerText(), '9');
     assert.equal(await pt.locator('[data-overall-status="PASS"] span').innerText(), '75%');
-    assert.equal(await pt.locator('[data-overall-total] span').innerText(), '100%');
+    assert.equal(await pt.locator('[data-overall-total]').innerText(), '12');
+    assert.equal(await smokes.locator('[data-overall-total] span').count(), 0);
+    assert.equal(await smokes.locator('thead th').last().innerText(), 'Total de Testes');
     assert.equal(await smokes.locator('thead th').count(), 11);
     await page.reload();
     assert.equal(await selected.count(), 1);

@@ -38,8 +38,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
             .map((status) => {
               const count = status === null ? result.total : (result.counts[status] ?? 0);
               return `<td ${status === null ? 'data-overall-total' : `data-overall-status="${escapeHtml(status)}"`} style="${cellStyle}background:${status === null ? '#edf3fc' : '#ffffff'};">
-          <strong style="font-size:14px;line-height:1.3;color:#172b4d;">${result.available ? count : '—'}</strong><br />
-          <span style="font-size:11px;line-height:1.3;color:#5e6c84;">${result.available ? overallPercentage(count, result.total) : '—'}</span>
+          <strong style="font-size:14px;line-height:1.3;color:#172b4d;">${result.available ? count : '—'}</strong>${status === null ? '' : `<br /><span style="font-size:11px;line-height:1.3;color:#5e6c84;">${result.available ? overallPercentage(count, result.total) : '—'}</span>`}
         </td>`;
             })
             .join('');
@@ -59,7 +58,7 @@ export function createOverallResultsSection(overall: OverallResults): string {
       <div class="report-table-scroll" data-report-scroll tabindex="0" role="region" aria-label="${escapeHtml(plan.label)}; desloque para ver todas as colunas">
         <table class="report-summary-table overall-results-table" aria-labelledby="overall-position-title-${index}" width="100%" cellpadding="0" cellspacing="0"
           style="width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.35;">
-          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">${plan.countryGroups ? 'País' : 'Grupo de Testes'}</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total</th></tr></thead>
+          <thead><tr><th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">${plan.countryGroups ? 'País' : 'Grupo de Testes'}</th>${headers}<th scope="col" style="${cellStyle}background:#244779;color:#ffffff;">Total de Testes</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
