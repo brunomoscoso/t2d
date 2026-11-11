@@ -55,6 +55,10 @@ export function resolvePositions(
     }
     for (const testType of TEST_TYPES) {
       const values = position.executions?.[testType];
+      if (values === undefined) {
+        executions[testType] = [];
+        continue;
+      }
       if (!Array.isArray(values)) {
         errors.push(`${name}/${testType}: configure um array de PRITs.`);
         continue;

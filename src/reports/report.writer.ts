@@ -2,7 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { aggregateOverallResults } from '../utils/overall-results.utils';
 
-import { DashboardData, ReleaseLinks, PositionReport } from '../types/report.types';
+import {
+  DashboardData,
+  PositionDefinition,
+  ReleaseLinks,
+  PositionReport,
+} from '../types/report.types';
 
 import { createTxtReport } from './txt.report';
 
@@ -65,8 +70,9 @@ export function writeReports(
   positions: PositionReport[],
   dashboard?: DashboardData,
   releaseLinks?: ReleaseLinks,
+  configured?: PositionDefinition[],
 ): void {
-  const overall = aggregateOverallResults(positions, releaseLinks?.testPlans);
+  const overall = aggregateOverallResults(positions, releaseLinks?.testPlans, configured);
   for (const warning of new Set(
     overall.plans.flatMap((plan) => plan.warnings.map((warning) => `${plan.label}: ${warning}`)),
   )) {

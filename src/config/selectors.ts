@@ -5,6 +5,12 @@ export const SELECTORS = {
 
   title: '#summary-val',
 
+  testPlanExecutions: {
+    table: '#testplan-testexecs-entries-table',
+    prit: '.link-title',
+    summary: '.issue-link',
+  },
+
   /* =====================================================
         STATUS PRINCIPAL DO PRIT
         ===================================================== */

@@ -14,11 +14,11 @@ Em `email.html`, o botão **Baixar relatório completo** salva uma cópia HTML p
 
 ## Origem e cálculo
 
-- `POSITIONS`, em `src/config/positions.config.ts`, define o Test Plan de cada posição e os arrays de PRITs por tipo. O mesmo arquivo configura `DASHBOARD_PAGE_ID`. A ordem das posições segue esse arquivo, a ordem dos tipos segue `TEST_TYPES` e a ordem das execuções segue cada array.
-- Somente os PRITs desses arrays são coletados. `testPlanPrit` é referência/link, nunca execução. O extrator de títulos usa a sessão autenticada e mantém o identificador como alternativa quando o Jira não retorna um título.
-- Não se consultam vínculos Xray para determinar o agrupamento. Títulos, labels, aliases e palavras como PT/SP não atribuem posição ou tipo, nem alteram a ordem. Os dados do Jira continuam disponíveis para exibição, status, atividades e ligações com defeitos.
+- `POSITIONS`, em `src/config/positions.config.ts`, define o Test Plan de cada posição e o mesmo arquivo configura `DASHBOARD_PAGE_ID`. A ordem das posições segue esse arquivo, a ordem dos tipos segue `TEST_TYPES` e a ordem das execuções segue a tabela do Test Plan.
+- Para posições com `testPlanPrit`, a aplicação lê na tabela do Test Plan o PRIT e o título de cada execução. O título deve conter exatamente um dos tipos `Smoke`, `Regression`, `Certification` ou `Defect Fixing`; execuções sem tipo reconhecido ou com mais de um tipo interrompem a geração, para evitar agrupamentos incompletos/incorretos. O título completo de cada execução continua sendo recolhido na própria issue.
+- A posição Automação conserva os seus `testPlans` por país e o comportamento atual. Os dados do Jira continuam disponíveis para exibição, status, atividades e ligações com defeitos.
 - A coluna **Grupo de Testes** do Overall identifica Smoke, Regressão, Certificação e Defect Fixing, com uma linha para cada grupo dentro da posição. Não há um segundo nível de mercado PT/SP: essas informações podem fazer parte do nome da posição.
-- Uma execução repetida em qualquer array, inclusive no mesmo tipo/posição, torna a configuração inválida. A mensagem identifica o PRIT normalizado e os locais em conflito; não há deduplicação silenciosa. Dados de coleta repetidos ou sem configuração também são rejeitados. Um Test Plan não pode constar como execução em nenhuma posição.
+- Uma execução repetida entre Test Plans, inclusive no mesmo tipo/posição, torna a configuração inválida. Dados de coleta repetidos ou sem configuração também são rejeitados. Um Test Plan não pode constar como execução em nenhuma posição.
 - `testPlanPrit` é opcional, inclusive em posições com execuções. Postos sem plano e/ou execuções, incluindo OPT PT e OPT SP, não bloqueiam a coleta das outras posições nem geram avisos de plano ausente. Os relatórios mantêm essas posições disponíveis no seletor e mostram os links ainda não informados quando selecionadas.
 - As quantidades dos status são somadas por posição e tipo. O percentual é `quantidade / soma dos status daquele tipo na posição × 100`, arredondado para uma casa decimal quando necessário. O Total é 100% quando positivo e 0% quando zerado. Não há média de percentuais das execuções.
 - Os oito status padrão são apresentados, além dos adicionais encontrados naquela posição. Espaços e hífens nos nomes são normalizados para underscore; `TO DO` e `TODO` são somados juntos.
@@ -27,7 +27,7 @@ Em `email.html`, o botão **Baixar relatório completo** salva uma cópia HTML p
 
 ## Configuração e demais relatórios
 
-Configure cada execução em exatamente um array de `POSITIONS`, após confirmar a posição e o tipo. Confirme separadamente o Test Plan da posição: os planos antigos eram organizados por tipo e podem não representar as novas posições. A aplicação usa somente `POSITIONS`, sem inventário de pendências ou avisos de migração. Sem execuções atribuídas, encerra antes de abrir o navegador ou escrever arquivos; relatórios antigos podem continuar em `output/`.
+Configure o PRIT do Test Plan em cada posição que deve participar da coleta. Não é necessário enumerar PRITs de execução: eles são descobertos dinamicamente e agrupados pelo tipo no título. Posições sem Test Plan padrão continuam disponíveis no seletor e não são percorridas para descoberta dinâmica. Sem Test Plans ou execuções configurados, a aplicação encerra antes de escrever arquivos; relatórios antigos podem continuar em `output/`.
 
 HTML, e-mail e TXT mostram posição, plano e tipo; os blocos detalhados preservam os títulos, os status e os vínculos. O TXT também inclui as labels. A tabela Atividades por posto foi removida dos relatórios; estado global, instalação, notas e bloqueadores manuais permanecem editáveis. A identificação do relatório para persistência inclui posição, plano e tipo, além dos PRITs.
 
@@ -35,7 +35,7 @@ Os defects da sprint são identificados pela relação `created` e a tabela incl
 
 `report.json` passa a ser um objeto com:
 
-- `positions`: lista de posições com `position`, `testPlanPrit` e `reports`; cada execução tem `position`, `testType` e os dados do Jira. A lista está ordenada por tipo e pela ordem configurada dos PRITs.
+- `positions`: lista de posições com `position`, `testPlanPrit` e `reports`; cada execução tem `position`, `testType` e os dados do Jira. As posições seguem `POSITIONS`; dentro de cada posição, as execuções são agrupadas por tipo e preservam a ordem da tabela do Test Plan.
 - `overall`: posições/Test Plans com resultados em `types`, incluindo `testType`, `counts`, `total`, `executions` e `available`, além de status e avisos. Consumidores devem respeitar `available` ao apresentar valores.
 
 Consumidores do antigo array na raiz do JSON precisam passar a ler `positions`. TXT e JSON não refletem edições posteriores feitas no navegador.

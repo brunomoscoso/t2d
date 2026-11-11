@@ -63,7 +63,7 @@ O NVM permite alternar entre diferentes versões do Node.js. A instalação e a 
 
    Use a URL base, sem `/browse` no final. O `.env` contém dados locais e não deve ser partilhado nem enviado para o repositório.
 
-5. Abra `src/config/positions.config.ts` e configure o ID do dashboard, os postos e os PRITs de execução que pretende recolher. Cada PRIT deve estar associado ao posto e ao tipo de teste corretos.
+5. Abra `src/config/positions.config.ts` e configure o ID do dashboard, os postos e o PRIT do Test Plan de cada posto. As execuções são descobertas na tabela do Test Plan; o título de cada uma deve conter `Smoke`, `Regression`, `Certification` ou `Defect Fixing` para ser classificado automaticamente.
 
 ## Executar a automação
 
@@ -80,7 +80,7 @@ Como alternativa, na pasta do projeto, execute:
 npm run report
 ```
 
-O Microsoft Edge abre numa issue configurada. Conclua a autenticação e o MFA na janela do navegador. A automação aguarda até 10 minutos pelo regresso à issue do Jira e até 90 segundos pelo título visível antes de iniciar a recolha automaticamente, sem precisar de pressionar **Enter** no terminal.
+O Microsoft Edge abre no primeiro Test Plan configurado (ou numa execução, se não houver Test Plan padrão). Conclua a autenticação e o MFA na janela do navegador. A automação aguarda até 10 minutos pelo regresso à issue do Jira e até 90 segundos pelo título visível, descobre e classifica as execuções dos Test Plans e só então inicia a recolha, sem precisar de pressionar **Enter** no terminal.
 
 No fim, os ficheiros são gravados em `output/`:
 
@@ -105,6 +105,6 @@ As edições das tabelas **Estado global** e **Principais Bloqueadores** são gu
 ## Problemas comuns
 
 - **Erro de configuração:** confirme se `JIRA_URL` e `JIRA_LOGIN_EMAIL` estão preenchidos no `.env`.
-- **Nenhuma execução configurada:** adicione PRITs de execução em `src/config/positions.config.ts`.
+- **Nenhuma execução encontrada:** confirme que o Test Plan está configurado e que a tabela de execuções está visível. Os títulos das execuções precisam incluir um dos tipos aceitos.
 - **Edge ou Jira não abre:** confirme que o Microsoft Edge está instalado, que tem acesso à rede corporativa e que a URL do Jira está correta.
 - **Dashboard indisponível:** os relatórios das execuções ainda podem ser gerados; o ficheiro `dashboard.json` só é criado quando a recolha do dashboard tem sucesso.
