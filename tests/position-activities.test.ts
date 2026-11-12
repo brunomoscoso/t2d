@@ -80,7 +80,6 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), [
       'Postos',
       'Status de instalação',
-      'Estado Global',
     ]);
     assert.equal(await page.locator('#position-defects-table [data-sprint-defect]').count(), 1);
     assert.ok(
@@ -160,20 +159,10 @@ test('acrescenta a tabela de atividades e guarda/copia a última coluna editáve
     assert.equal(await first.locator('td').last().locator('textarea').count(), 1);
 
     await page.getByRole('checkbox', { name: 'COCO PT', exact: true }).check();
-    await page.getByLabel('Estado global de COCO PT', { exact: true }).selectOption('completed');
-    await page.getByLabel('Nota de COCO PT', { exact: true }).fill('Nota do estado global');
     const note = 'A aguardar TPA\n\nValidar <img src=x onerror=alert(1)> & "certificação" $&';
     await page.getByLabel('ON HOLD de COCO PT', { exact: true }).fill(note);
     await page.reload();
     assert.equal(await page.getByLabel('ON HOLD de COCO PT', { exact: true }).inputValue(), note);
-    assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
-      'Nota do estado global',
-    );
-    assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      'completed',
-    );
     assert.equal(await page.getByLabel('ON HOLD de Marinas', { exact: true }).inputValue(), '');
 
     await page.evaluate(() => {

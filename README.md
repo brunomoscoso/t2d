@@ -1,5 +1,15 @@
 # Automação de relatórios do Jira
 
+Cada execution PRIT também fornece o campo **Fix Version/s**: a recolha confirma o texto de
+`label[for="fixVersions"]` e lê os links de `#fixfor-val a`. As versões preenchem
+“Versão instalada” de cada posto e atualizam a versão no texto inicial do e-mail.
+As versões de todas as executions do respetivo posto são incluídas, incluindo as
+execuções de Portugal e Espanha da posição Automação.
+Versões repetidas são removidas; versões diferentes aparecem juntas. Um campo sem
+versões deixa a caixa vazia; se nenhum plano fornecer uma versão, o texto inicial
+mostra “versão não informada”. A versão recolhida tem prioridade sobre valores
+antigos guardados no navegador. O estado OK/NOK continua a ser definido manualmente.
+
 Esta automação recolhe dados de execuções PRIT e de um dashboard do Jira e gera relatórios por posto e tipo de teste. Os relatórios podem ser consultados no navegador, copiados para e-mail ou usados como ficheiros JSON e texto.
 
 ## Tecnologias

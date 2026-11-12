@@ -63,6 +63,8 @@ export type IssueLink = {
 export type ExecutionData = {
   prit: string;
 
+  fixVersions?: string[];
+
   title: string;
 
   mainStatus: string;
@@ -86,6 +88,7 @@ export type Report = ExecutionData & ConfiguredExecution;
 export type PositionReport = {
   position: string;
   testPlanPrit: string;
+  fixVersions?: string[];
   testPlans?: CountryTestPlans;
   reports: Report[];
 };

@@ -88,7 +88,7 @@ test('compacta os campos de bloqueadores e as linhas das tabelas do email', asyn
   }
 });
 
-test('status de instalação migra dados anteriores, guarda OK/NOK e copia as três colunas', async () => {
+test('status de instalação migra dados anteriores, guarda OK/NOK e copia as duas colunas', async () => {
   const browser = await chromium.launch({
     channel: process.platform === 'win32' ? 'msedge' : undefined,
     headless: true,
@@ -110,14 +110,6 @@ test('status de instalação migra dados anteriores, guarda OK/NOK e copia as tr
     const installation = page.getByLabel('Status de instalação de COCO PT', { exact: true });
     assert.deepEqual(await installation.locator('option').allTextContents(), ['--', 'OK', 'NOK']);
     assert.equal(await installation.inputValue(), '');
-    assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      'completed',
-    );
-    assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
-      'Nota anterior',
-    );
     await installation.selectOption('ok');
     await page.getByRole('checkbox', { name: 'Marinas', exact: true }).check();
     await page.getByLabel('Status de instalação de Marinas', { exact: true }).selectOption('nok');
@@ -139,20 +131,12 @@ test('status de instalação migra dados anteriores, guarda OK/NOK e copia as tr
         .evaluate((element) => getComputedStyle(element).color),
       'rgb(222, 53, 11)',
     );
-    assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
-      'Nota anterior',
-    );
-    await page
-      .getByLabel('Nota de COCO PT', { exact: true })
-      .fill('Nota <img src=x onerror=alert(1)>');
     await captureClipboard(page);
     const preview = await browser.newPage();
     await preview.setContent(await copyAndCheckDom(page));
     assert.deepEqual(await preview.locator('#global-status-table thead th').allTextContents(), [
       'Postos',
       'Status de instalação',
-      'Estado Global',
     ]);
     const rows = preview.locator('[data-global-status-row]');
     assert.equal(await rows.count(), 2);
@@ -176,7 +160,7 @@ test('status de instalação migra dados anteriores, guarda OK/NOK e copia as tr
         .evaluate((element) => getComputedStyle(element).color),
       'rgb(222, 53, 11)',
     );
-    assert.match(await rows.nth(0).locator('td').last().innerText(), /Concluído.*Nota <img/);
+    assert.equal(await preview.locator('[data-status-select], [data-status-note]').count(), 0);
     assert.equal(await preview.locator('input, textarea, select, [data-editor-only]').count(), 0);
     assert.equal(await preview.locator('img').count(), 0);
     for (const throws of [false, true]) {
@@ -404,32 +388,14 @@ test('preserva tabelas entre execuções e limpa os dados quando solicitado', as
     });
     await page.reload();
     assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      'completed',
-    );
-    assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
-      'Estado migrado',
-    );
-    assert.equal(
       await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
       'Bloqueador migrado',
     );
 
-    await page.getByLabel('Estado global de COCO PT', { exact: true }).selectOption('blocked');
-    await page.getByLabel('Nota de COCO PT', { exact: true }).fill('Nota da sprint');
     await page.getByLabel('Tema do bloqueador 1', { exact: true }).fill('Bloqueador da sprint');
 
     reportKey = 'PRIT-TEST-2';
     await page.reload();
-    assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      'blocked',
-    );
-    assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
-      'Nota da sprint',
-    );
     assert.equal(
       await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
       'Bloqueador da sprint',
@@ -443,11 +409,6 @@ test('preserva tabelas entre execuções e limpa os dados quando solicitado', as
       })
       .click();
 
-    assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      '',
-    );
-    assert.equal(await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(), '');
     assert.equal(await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(), '');
     assert.equal(await page.locator('#main-blockers-table [data-blocker-row]').count(), 1);
   } finally {

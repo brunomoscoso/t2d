@@ -243,14 +243,8 @@ test('copia HTML fluido e mantém todas as colunas dentro de um editor de email 
     for (const name of ['COCO PT', 'Cyber SP', 'Cyber PT']) {
       await page.getByRole('checkbox', { name, exact: true }).check();
     }
-    await page.getByLabel('Estado global de COCO PT', { exact: true }).selectOption('completed');
-    await page.getByLabel('Nota de COCO PT', { exact: true }).fill('Estado preservado');
     await page.getByLabel('ON HOLD de COCO PT', { exact: true }).fill(`A aguardar\n${longText}`);
     await page.locator('#observations').fill('Comentário antes da cópia');
-    const statusColor = await page
-      .locator('[data-status-dot]')
-      .first()
-      .evaluate((element) => getComputedStyle(element).color);
     await page.evaluate(() => {
       // Captura os formatos enviados ao clipboard, sem usar o clipboard partilhado
       // pelos outros testes. O payload deve funcionar sem o CSS da página original.
@@ -312,13 +306,6 @@ test('copia HTML fluido e mantém todas as colunas dentro de um editor de email 
         0,
       );
       assert.match(await preview.locator('#observations').innerText(), /Comentário antes da cópia/);
-      assert.equal(
-        await preview
-          .locator('[data-status-dot]')
-          .first()
-          .evaluate((element) => getComputedStyle(element).color),
-        statusColor,
-      );
 
       for (const destinationWidth of [800, 600, 390, 320]) {
         const layout = await preview.locator('#email-editor').evaluate((editor, width) => {

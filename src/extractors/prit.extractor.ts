@@ -16,6 +16,8 @@ import { extractLabels } from './labels.extractor';
 
 import { extractMainStatus } from './mainStatus.extractor';
 
+import { extractFixVersions } from './fix-versions.extractor';
+
 // Extrai os dados usados pelos relatórios a partir de uma issue de execução.
 export async function extractPrit(page: Page, prit: string): Promise<ExecutionData> {
   console.log('\n');
@@ -51,6 +53,10 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
 
   console.log('Labels:', labels);
 
+  const fixVersions = await extractFixVersions(page);
+
+  console.log('Fix Version/s:', fixVersions);
+
   const executionStatuses = await extractExecutionStatuses(page);
 
   const totalTests = await extractTotalTests(page);
@@ -65,6 +71,8 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
 
   return {
     prit,
+
+    fixVersions,
 
     title,
 

@@ -36,15 +36,28 @@ export function groupReportsByPosition(
       })),
     });
   }
-  return positions.map((position) => ({
-    position: position.name,
-    testPlanPrit: position.testPlanPrit,
-    ...(position.testPlans ? { testPlans: position.testPlans } : {}),
-    reports: getConfiguredExecutions([position]).flatMap(({ prit }) => {
+  return positions.map((position) => {
+    const positionReports = getConfiguredExecutions([position]).flatMap(({ prit }) => {
       const report = collected.get(prit);
       return report ? [report] : [];
-    }),
-  }));
+    });
+    const hasExtractedFixVersions = positionReports.some(
+      (report) => report.fixVersions !== undefined,
+    );
+    return {
+      position: position.name,
+      testPlanPrit: position.testPlanPrit,
+      ...(position.testPlans ? { testPlans: position.testPlans } : {}),
+      ...(hasExtractedFixVersions
+        ? {
+            fixVersions: [
+              ...new Set(positionReports.flatMap((report) => report.fixVersions ?? [])),
+            ],
+          }
+        : {}),
+      reports: positionReports,
+    };
+  });
 }
 
 export function groupReportsByTestType(position: PositionReport) {

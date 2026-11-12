@@ -201,14 +201,23 @@ test('download abre offline apenas com os postos selecionados e valores editados
     // Em Lisboa já é dia 20, embora ainda seja dia 19 em UTC.
     await page.clock.setFixedTime(new Date('2026-10-19T23:30:00Z'));
     await page.goto('http://download.test/email.html');
+    assert.equal(
+      await page.locator('#observations').innerText(),
+      'Boa tarde,\nSegue o ponto de situação Diário das execuções dos testes para o “Test Plan P23002 - Retail 4.0 - Certification for Passport X (versão não informada) (Ambiente Qualidade)”.',
+    );
+    assert.equal(
+      await page.locator('#observations strong').innerText(),
+      'Test Plan P23002 - Retail 4.0 - Certification for Passport X (versão não informada) (Ambiente Qualidade)',
+    );
+    assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), [
+      'Postos',
+      'Status de instalação',
+    ]);
+    assert.equal(await page.locator('[data-status-select], [data-status-note]').count(), 0);
     await page.locator('#observations').fill('Observações com acentos & <texto>');
-    await page
-      .getByLabel(`Estado global de ${names[0]}`, { exact: true })
-      .selectOption('completed');
     await page
       .getByLabel(`Status de instalação de ${names[0]}`, { exact: true })
       .selectOption('ok');
-    await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).fill('Nota do posto selecionado');
     await page
       .getByLabel(`Versão instalada de ${names[0]}`, { exact: true })
       .fill('2.4.1 <QA> & build');
@@ -231,10 +240,6 @@ test('download abre offline apenas com os postos selecionados e valores editados
       before,
     );
     assert.equal(await page.locator('[data-position-toggle]:checked').count(), 1);
-    assert.equal(
-      await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).inputValue(),
-      'Nota do posto selecionado',
-    );
 
     const context = await browser.newContext({ offline: true });
     const saved = await context.newPage();
@@ -253,18 +258,10 @@ test('download abre offline apenas com os postos selecionados e valores editados
       await saved.locator('#observations').innerText(),
       'Observações com acentos & <texto>',
     );
-    assert.match(
-      await saved.locator('[data-global-status-row]').first().innerText(),
-      /Concluído.*Nota do posto selecionado/s,
-    );
     assert.match(await saved.locator('[data-global-status-row]').first().innerText(), /OK/);
     assert.match(
       await saved.locator('[data-global-status-row]').first().innerText(),
       /Versão: 2\.4\.1 <QA> & build/,
-    );
-    assert.equal(
-      await saved.locator('[data-global-status-row]').first().locator('[data-status-dot]').count(),
-      0,
     );
     assert.match(
       await saved.locator('#main-blockers-section').innerText(),
@@ -409,10 +406,6 @@ for (const kind of ['email', 'html'] as const) {
       }, names);
       await page.reload();
       await checkSelection(page, names.slice(0, 2), kind);
-      assert.equal(
-        await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).inputValue(),
-        'Nota anterior',
-      );
       const version = page.getByLabel(`Versão instalada de ${names[0]}`, { exact: true });
       assert.equal(await version.inputValue(), '', 'Dados anteriores sem versão continuam válidos');
       await version.fill('3.2.0-rc1');
@@ -438,19 +431,7 @@ for (const kind of ['email', 'html'] as const) {
           'global-status-section',
         ],
       );
-      await page
-        .getByLabel(`Estado global de ${names[0]}`, { exact: true })
-        .selectOption('completed');
-      assert.equal(
-        await page
-          .locator('[data-global-status-row]')
-          .first()
-          .locator('[data-status-dot]')
-          .isVisible(),
-        false,
-      );
       await page.getByLabel('Tema do bloqueador 1', { exact: true }).fill('Bloqueador preservado');
-      await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).fill('Nota preservada');
       await page
         .getByLabel(`Status de instalação de ${names[0]}`, { exact: true })
         .selectOption('ok');
@@ -486,14 +467,6 @@ for (const kind of ['email', 'html'] as const) {
           [names[0]],
         );
         assert.equal(await preview.locator('[data-sprint-defect]').count(), 2);
-        assert.equal(
-          await preview
-            .locator('[data-global-status-row]')
-            .first()
-            .locator('[data-status-dot]')
-            .count(),
-          0,
-        );
         assert.match(
           await preview
             .locator('[data-global-status-row]')
@@ -501,7 +474,7 @@ for (const kind of ['email', 'html'] as const) {
             .locator('td')
             .last()
             .innerText(),
-          /^Concluído/,
+          /^OK/,
         );
         assert.equal(await preview.locator('#position-activities-section').count(), 0);
         await preview.close();
@@ -513,10 +486,6 @@ for (const kind of ['email', 'html'] as const) {
       assert.equal(
         await page.getByLabel('Tema do bloqueador 1', { exact: true }).inputValue(),
         'Bloqueador preservado',
-      );
-      assert.equal(
-        await page.getByLabel(`Nota de ${names[0]}`, { exact: true }).inputValue(),
-        'Nota preservada',
       );
       assert.equal(
         await page.getByLabel(`Status de instalação de ${names[0]}`, { exact: true }).inputValue(),

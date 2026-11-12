@@ -2,16 +2,6 @@ import type { PositionReport } from '../types/report.types';
 import { escapeHtml } from '../utils/html.utils';
 import { getPositionReportKey } from '../utils/position.utils';
 
-const GLOBAL_STATUSES = [
-  { value: 'completed', label: 'Concluído', color: '#22a06b' },
-  { value: 'final-phase', label: 'Fase final', color: '#d9a400' },
-  { value: 'in-progress', label: 'Em evolução', color: '#d9a400' },
-  { value: 'regression', label: 'Regressão em curso', color: '#d9a400' },
-  { value: 'awaiting-execution', label: 'A aguardar condições para execução', color: '#de350b' },
-  { value: 'awaiting-installation', label: 'A aguardar instalação/execução', color: '#de350b' },
-  { value: 'blocked', label: 'Bloqueado', color: '#de350b' },
-];
-
 function getDefaultSelection(positions: PositionReport[]): Set<string> {
   return new Set(
     positions
@@ -66,10 +56,6 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
   const availablePositions = positions.map((position) => position.position);
   const selected = getDefaultSelection(positions);
   const reportKey = getPositionReportKey(positions);
-  const options = GLOBAL_STATUSES.map(
-    (status) =>
-      `<option value="${status.value}" data-color="${status.color}">${escapeHtml(status.label)}</option>`,
-  ).join('');
   const rows = availablePositions
     .map(
       (position, index) => `
@@ -86,20 +72,10 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
             <option value="nok" data-color="#de350b">NOK</option>
           </select>
           <input data-installation-version type="text" maxlength="100"
+            ${positions[index].fixVersions !== undefined ? 'data-version-from-plan' : ''}
+            value="${escapeHtml(positions[index].fixVersions?.join(', ') ?? '')}"
             aria-label="Versão instalada de ${escapeHtml(position)}"
             placeholder="Versão instalada" title="Versão instalada (opcional)" />
-        </div>
-      </td>
-      <td style="padding:10px 12px;border:1px solid #dce5f0;background:#ffffff;">
-        <div class="global-status-fields">
-          <span data-status-dot aria-hidden="true" style="color:#8993a4;font-size:14px;line-height:1;vertical-align:middle;">●</span>
-          <select data-status-select aria-label="Estado global de ${escapeHtml(position)}">
-            <option value="" data-color="#8993a4">Selecionar estado</option>
-            ${options}
-          </select>
-          <input data-status-note type="text" maxlength="200"
-            aria-label="Nota de ${escapeHtml(position)}"
-            placeholder="Adicionar nota curta..." />
         </div>
       </td>
     </tr>
@@ -116,8 +92,7 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
         <thead>
           <tr>
             <th scope="col" width="16%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:16%;text-align:left;overflow-wrap:anywhere;">Postos</th>
-            <th scope="col" width="34%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:34%;text-align:left;overflow-wrap:anywhere;">Status de instalação</th>
-            <th scope="col" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;text-align:left;">Estado Global</th>
+            <th scope="col" width="84%" style="padding:13px 12px;border:1px solid #244779;background:#244779;color:#ffffff;width:84%;text-align:left;overflow-wrap:anywhere;">Status de instalação</th>
           </tr>
         </thead>
         <tbody>

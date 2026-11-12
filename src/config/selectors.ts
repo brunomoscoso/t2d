@@ -4,6 +4,11 @@ export const SELECTORS = {
         ===================================================== */
 
   title: '#summary-val',
+  fixVersions: {
+    label: 'label[for="fixVersions"]',
+    value: '#fixfor-val',
+    links: '#fixfor-val a',
+  },
 
   testPlanExecutions: {
     table: '#testplan-testexecs-entries-table',

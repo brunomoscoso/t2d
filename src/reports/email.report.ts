@@ -529,6 +529,13 @@ export function createEmailReport(
   }
 
   return template
+    .replace('<!-- FIX VERSIONS -->', () => {
+      const versions = [...new Set(positions.flatMap((position) => position.fixVersions ?? []))];
+      return escapeHtml(
+        versions.map((version) => version.replace(/^PPX\s+/i, '')).join(' / ') ||
+          '(versão não informada)',
+      );
+    })
     .replace('<!-- REPORT DATE -->', reportDate)
     .replace('<!-- POSITION PICKER -->', () => createPositionPicker(positions))
     .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))

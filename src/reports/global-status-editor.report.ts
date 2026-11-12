@@ -60,17 +60,6 @@ export const globalStatusStyles = `
         font-size: 11px;
         font-weight: bold;
     }
-    .global-status-fields {
-        display: grid;
-        grid-template-columns: 16px minmax(0, 240px) minmax(0, 1fr);
-        align-items: center;
-        gap: 8px;
-    }
-    .global-status-fields:has([data-status-dot][hidden]) {
-        grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
-    }
-    .global-status-fields select,
-    .global-status-fields input,
     .installation-status-fields select,
     .installation-status-fields input {
         width: 100%;
@@ -83,7 +72,6 @@ export const globalStatusStyles = `
         color: #172b4d;
         font: inherit;
     }
-    .global-status-fields select,
     .installation-status-fields select { font-weight: bold; cursor: pointer; }
     .installation-status-fields {
         display: grid;
@@ -101,9 +89,6 @@ export const globalStatusStyles = `
         #global-status-table thead th:first-child { width: 20% !important; }
         #global-status-table th,
         #global-status-table td { padding: 8px 6px !important; }
-        .global-status-fields { grid-template-columns: 16px minmax(0, 1fr); }
-        .global-status-fields:has([data-status-dot][hidden]) { grid-template-columns: minmax(0, 1fr); }
-        .global-status-fields input { grid-column: 1 / -1; }
         .installation-status-fields { grid-template-columns: 12px minmax(0, 68px); }
         .installation-status-fields input { grid-column: 1 / -1; }
     }
@@ -177,10 +162,8 @@ export const globalStatusScript = `
                     selectionVersion: 3,
                     selectionKey: picker.dataset.selectionKey,
                     overallExcluded: excludedOverall.has(row.dataset.position),
-                    status: row.querySelector('[data-status-select]').value,
                     installation: row.querySelector('[data-installation-select]').value,
                     installationVersion: row.querySelector('[data-installation-version]').value,
-                    note: row.querySelector('[data-status-note]').value,
                 }));
                 savedRows = Array.from(rowsByPosition.values());
                 localStorage.setItem(storageKey, JSON.stringify(savedRows));
@@ -220,9 +203,6 @@ export const globalStatusScript = `
 
         rows.forEach(row => {
             const toggle = toggles.get(row.dataset.position);
-            const select = row.querySelector('[data-status-select]');
-            const note = row.querySelector('[data-status-note]');
-            const dot = row.querySelector('[data-status-dot]');
             const installation = row.querySelector('[data-installation-select]');
             const installationVersion = row.querySelector('[data-installation-version]');
             const installationDot = row.querySelector('[data-installation-dot]');
@@ -233,16 +213,13 @@ export const globalStatusScript = `
                     excludedOverall.add(row.dataset.position);
                 }
                 // Restaura escolhas apenas para a mesma configuração de Test Plans.
-                // Notas e estados continuam disponíveis quando a configuração muda.
+                // Os dados de instalação continuam disponíveis quando a configuração muda.
                 if (saved.selectionVersion === 3 && saved.selectionKey === picker.dataset.selectionKey
                     && typeof saved.selected === 'boolean') {
                     toggle.checked = saved.selected;
                 }
-                if (Array.from(select.options).some(option => option.value === saved.status)) {
-                    select.value = saved.status;
-                }
-                if (typeof saved.note === 'string') note.value = saved.note.slice(0, note.maxLength);
-                if (typeof saved.installationVersion === 'string') {
+                if (!installationVersion.hasAttribute('data-version-from-plan')
+                    && typeof saved.installationVersion === 'string') {
                     installationVersion.value = saved.installationVersion.slice(0, installationVersion.maxLength);
                 }
                 if (Array.from(installation.options).some(option => option.value === saved.installation)) {
@@ -250,17 +227,12 @@ export const globalStatusScript = `
                 }
             }
 
-            function updateDot() {
-                dot.hidden = select.value === 'completed';
-                dot.style.color = select.selectedOptions[0].dataset.color;
-            }
             function updateInstallation() {
                 const color = installation.selectedOptions[0].dataset.color;
                 installation.style.color = color;
                 installationDot.style.color = color;
             }
 
-            updateDot();
             updateInstallation();
             installation.addEventListener('change', () => {
                 updateInstallation();
@@ -270,11 +242,6 @@ export const globalStatusScript = `
                 updateSelection();
                 save();
             });
-            select.addEventListener('change', () => {
-                updateDot();
-                save();
-            });
-            note.addEventListener('input', save);
             installationVersion.addEventListener('input', save);
         });
 

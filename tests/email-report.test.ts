@@ -60,7 +60,6 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
     assert.deepEqual(await page.locator('#global-status-table thead th').allTextContents(), [
       'Postos',
       'Status de instalação',
-      'Estado Global',
     ]);
 
     await page.evaluate(() => {
@@ -69,7 +68,9 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
       // Formato anterior: sem a propriedade selected.
       localStorage.setItem(
         key,
-        JSON.stringify([{ position: 'COCO PT', status: 'completed', note: 'Observação anterior' }]),
+        JSON.stringify([
+          { position: 'COCO PT', installation: 'ok', installationVersion: 'Observação anterior' },
+        ]),
       );
     });
     await page.reload();
@@ -84,11 +85,11 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
       'A seleção substitui a linha de orientação',
     );
     assert.equal(
-      await page.getByLabel('Estado global de COCO PT', { exact: true }).inputValue(),
-      'completed',
+      await page.getByLabel('Status de instalação de COCO PT', { exact: true }).inputValue(),
+      'ok',
     );
     assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
+      await page.getByLabel('Versão instalada de COCO PT', { exact: true }).inputValue(),
       'Observação anterior',
     );
     await page.getByRole('checkbox', { name: 'COCO PT', exact: true }).uncheck();
@@ -139,7 +140,7 @@ test('disponibiliza o catálogo sem dados do Jira, migra estados guardados e omi
     );
     await selectPositions(page, ['COCO PT']);
     assert.equal(
-      await page.getByLabel('Nota de COCO PT', { exact: true }).inputValue(),
+      await page.getByLabel('Versão instalada de COCO PT', { exact: true }).inputValue(),
       'Observação anterior',
     );
     assert.deepEqual(errors, []);
@@ -158,8 +159,8 @@ test('mantém conteúdo copiável nas observações vazias e restaura a caixa ap
     const page = await browser.newPage();
     await page.setContent(createEmailReport(fixture()));
     await selectPositions(page, ['COCO PT']);
-    await page.locator('[data-status-select]').first().selectOption('completed');
-    await page.locator('[data-status-note]').first().fill('Nota do posto');
+    await page.locator('[data-installation-select]').first().selectOption('ok');
+    await page.locator('[data-installation-version]').first().fill('Nota do posto');
     await page.evaluate(() => {
       document.addEventListener('copy', (event) => {
         const fragment = window.getSelection()!.getRangeAt(0).cloneContents();
@@ -208,7 +209,7 @@ test('mantém conteúdo copiável nas observações vazias e restaura a caixa ap
       assert.equal(copied.editable, false);
       assert.equal(copied.placeholder, false);
       assert.equal(copied.height, before.height);
-      assert.ok(String(copied.statusText).includes('Concluído'));
+      assert.ok(String(copied.statusText).includes('OK'));
       assert.ok(String(copied.statusText).includes('Nota do posto'));
       assert.equal(await observations.evaluate((element) => element.outerHTML), before.html);
       assert.ok(
@@ -279,9 +280,9 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     await page.goto('http://report.test/email.html');
 
     const rows = page.locator('[data-global-status-row]:visible');
-    const selects = rows.locator('[data-status-select]');
-    const notes = rows.locator('[data-status-note]');
-    const dots = rows.locator('[data-status-dot]');
+    const selects = rows.locator('[data-installation-select]');
+    const notes = rows.locator('[data-installation-version]');
+    const dots = rows.locator('[data-installation-dot]');
     assert.equal(await rows.count(), 0, 'Primeiro escolhe os postos, depois define os estados');
     assert.equal(await page.locator('#global-status-empty').isVisible(), true);
     const catalog = [...POSITIONS.map((position) => position.name), fixture()[3].position];
@@ -299,19 +300,21 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
 
     // Um posto sem dados do Jira pode ser incluído; desmarcar não apaga o rascunho.
     await selectPositions(page, ['Olivais']);
-    await page.getByLabel('Estado global de Olivais', { exact: true }).selectOption('blocked');
-    await page.getByLabel('Nota de Olivais', { exact: true }).fill('Nota de posto não selecionado');
+    await page.getByLabel('Status de instalação de Olivais', { exact: true }).selectOption('nok');
+    await page
+      .getByLabel('Versão instalada de Olivais', { exact: true })
+      .fill('Versão instalada de posto não selecionado');
     await page.getByRole('checkbox', { name: 'Olivais', exact: true }).uncheck();
     await page.reload();
     assert.equal(await rows.count(), 0, 'Uma seleção vazia também é guardada');
     await selectPositions(page, ['Olivais']);
     assert.equal(
-      await page.getByLabel('Estado global de Olivais', { exact: true }).inputValue(),
-      'blocked',
+      await page.getByLabel('Status de instalação de Olivais', { exact: true }).inputValue(),
+      'nok',
     );
     assert.equal(
-      await page.getByLabel('Nota de Olivais', { exact: true }).inputValue(),
-      'Nota de posto não selecionado',
+      await page.getByLabel('Versão instalada de Olivais', { exact: true }).inputValue(),
+      'Versão instalada de posto não selecionado',
     );
     await page.getByRole('checkbox', { name: 'Olivais', exact: true }).uncheck();
 
@@ -334,8 +337,8 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     );
     assert.equal(await selects.nth(0).inputValue(), '');
 
-    const chosen = ['completed', 'regression', 'awaiting-installation'];
-    const colors = ['rgb(34, 160, 107)', 'rgb(217, 164, 0)', 'rgb(222, 53, 11)'];
+    const chosen = ['ok', 'ok', 'nok'];
+    const colors = ['rgb(34, 160, 107)', 'rgb(34, 160, 107)', 'rgb(222, 53, 11)'];
     for (let index = 0; index < chosen.length; index++) {
       await selects.nth(index).selectOption(chosen[index]);
       assert.equal(
@@ -346,7 +349,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     const note = 'TPA pendente <img src=x onerror=alert(1)> & "certificação"';
     await notes.nth(1).fill(note);
     assert.equal(await notes.nth(0).inputValue(), '');
-    assert.equal(await notes.nth(1).getAttribute('maxlength'), '200');
+    assert.equal(await notes.nth(1).getAttribute('maxlength'), '100');
 
     await page.reload();
     for (let index = 0; index < chosen.length; index++) {
@@ -439,7 +442,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
       (await copiedRows.locator('th').allTextContents()).map((text) => text.trim()),
       fixture().map((item) => item.position),
     );
-    assert.ok(!copiedHtml.includes('Nota de posto não selecionado'));
+    assert.ok(!copiedHtml.includes('Versão instalada de posto não selecionado'));
     assert.equal(
       await preview.locator('.position-block a[href*="/browse/PRIT-"]').count(),
       4,
@@ -447,13 +450,13 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     );
     assert.ok((await copiedRows.nth(1).innerText()).includes(note));
     assert.equal(await copiedRows.nth(1).locator('img').count(), 0, 'A nota é texto, não HTML');
-    assert.ok((await copiedRows.nth(3).innerText()).includes('Não definido'));
+    assert.ok((await copiedRows.nth(3).innerText()).includes('--'));
     assert.ok((await preview.locator('body').innerText()).includes('Observação geral de teste.'));
     for (let index = 0; index < colors.length; index++) {
       assert.equal(
         await copiedRows
           .nth(index)
-          .locator('span')
+          .locator('strong')
           .evaluate((element) => getComputedStyle(element).color),
         colors[index],
       );
@@ -490,10 +493,10 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     );
 
     // Os mesmos campos e respetivos listeners são restaurados, inclusive em caso de erro.
-    await selects.nth(0).selectOption('blocked');
+    await selects.nth(0).selectOption('nok');
     await notes.nth(0).fill('Nota após copiar');
     await page.reload();
-    assert.equal(await selects.nth(0).inputValue(), 'blocked');
+    assert.equal(await selects.nth(0).inputValue(), 'nok');
     assert.equal(await notes.nth(0).inputValue(), 'Nota após copiar');
 
     // Os estados editoriais são independentes dos PRITs recolhidos pelo Jira.
@@ -501,7 +504,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     otherReport[0].reports[0].prit = 'PRIT-99';
     html = createEmailReport(otherReport);
     await page.reload();
-    assert.equal(await selects.nth(0).inputValue(), 'blocked');
+    assert.equal(await selects.nth(0).inputValue(), 'nok');
     assert.equal(await notes.nth(0).inputValue(), 'Nota após copiar');
 
     // Armazenamento corrompido ou indisponível não impede a edição.
@@ -521,7 +524,7 @@ test('edita, guarda e copia os estados globais no relatório de e-mail', async (
     });
     await page.reload();
     await selectPositions(page, ['COCO PT']);
-    await selects.nth(0).selectOption('completed');
+    await selects.nth(0).selectOption('ok');
     await notes.nth(0).fill('Funciona sem armazenamento');
     assert.equal(
       await dots.nth(0).evaluate((element) => getComputedStyle(element).color),
