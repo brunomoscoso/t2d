@@ -17,7 +17,9 @@ test('status oculto não interrompe a execução e preserva dados anteriores e p
       route.fulfill({
         contentType: 'text/html; charset=utf-8',
         body: `<h1 id="summary-val">Execução sem testes</h1>
-        <span id="status-val">OPEN</span><div id="labels-wrap"><a>release</a></div>
+        <span id="status-val">OPEN</span>
+        <label for="fixVersions">Fix Version/s:</label>
+        <span id="fixfor-val"><a>PPX v5.6.0.20</a></span>
         <h5 hidden>Overall Execution Status</h5>
         <div id="linkingmodule"><ul><li>
           <a class="issue-link link-title">BUG-1</a>
@@ -30,7 +32,7 @@ test('status oculto não interrompe a execução e preserva dados anteriores e p
     const report = await extractPrit(page, 'PRIT-123');
     assert.equal(report.title, 'Execução sem testes');
     assert.equal(report.mainStatus, 'OPEN');
-    assert.deepEqual(report.labels, ['release']);
+    assert.deepEqual(report.fixVersions, ['PPX v5.6.0.20']);
     assert.deepEqual(report.executionStatuses, []);
     assert.equal(report.totalTests, null);
     assert.deepEqual(report.issueLinks, [

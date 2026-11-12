@@ -49,7 +49,6 @@ function fixture(kind: 'email' | 'html', empty = false, planOnly = false): strin
           prit: `PRIT-${index + 1}`,
           title: `Execução ${index + 1}`,
           mainStatus: index ? 'PAUSED' : 'OPEN',
-          labels: [],
           totalTests: 1,
           executionStatuses: [{ status: 'PASS', quantidade: 1 }],
           issueLinks: [

@@ -12,7 +12,6 @@ const fixture = (): PositionReport[] => [
         prit: 'PRIT-1',
         title: '[COCO PT] Smoke',
         mainStatus: 'OPEN',
-        labels: [],
         position: 'COCO PT',
         totalTests: 1,
         executionStatuses: [{ status: 'PASS', quantidade: 1 }],

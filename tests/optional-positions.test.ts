@@ -53,7 +53,6 @@ const report: ExecutionData = {
   prit: 'PRIT-1',
   title: 'Smoke',
   mainStatus: 'OPEN',
-  labels: [],
   totalTests: 2,
   executionStatuses: [{ status: 'PASS', quantidade: 2 }],
   issueLinks: [],

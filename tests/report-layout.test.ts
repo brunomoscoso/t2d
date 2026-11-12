@@ -16,7 +16,6 @@ const positions: PositionReport[] = [
         prit: 'PRIT-1234',
         title: `[COCO PT] Certification ${longText}`,
         mainStatus: 'IN PROGRESS',
-        labels: [],
         position: 'COCO PT',
         totalTests: 90,
         executionStatuses: [

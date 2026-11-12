@@ -65,22 +65,6 @@ export const SELECTORS = {
   ],
 
   /* =====================================================
-        LABELS
-        ===================================================== */
-
-  labelCandidates: [
-    '#labels-wrap a',
-
-    '#labels-wrap .value',
-
-    '#labels-wrap span',
-
-    '[data-field-id="labels"] a',
-
-    '[data-field-id="labels"] span',
-  ],
-
-  /* =====================================================
         DASHBOARD
         ===================================================== */
 

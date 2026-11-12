@@ -69,8 +69,6 @@ export type ExecutionData = {
 
   mainStatus: string;
 
-  labels: string[];
-
   totalTests: number | null;
 
   executionStatuses: ExecutionStatus[];

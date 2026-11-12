@@ -20,7 +20,6 @@ function execution(prit: string, title: string, counts: Record<string, number>):
     title,
     mainStatus: 'OPEN',
     position: 'COCO PT',
-    labels: ['SP'],
     issueLinks: [],
     totalTests: Object.values(counts).reduce((total, count) => total + count, 0),
     executionStatuses: Object.entries(counts).map(([status, quantidade]) => ({

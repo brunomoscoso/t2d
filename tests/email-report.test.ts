@@ -13,7 +13,6 @@ function fixture(): PositionReport[] {
         prit: `PRIT-${index + 1}`,
         title: `[${position}] Certification`,
         mainStatus: 'OPEN',
-        labels: [],
         position,
         totalTests: 10,
         executionStatuses: [{ status: 'PASS', quantidade: 10 }],

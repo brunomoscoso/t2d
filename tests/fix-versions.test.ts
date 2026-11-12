@@ -24,7 +24,6 @@ test('agrupa as Fix Version/s extraídas das executions pelo respetivo posto', (
     fixVersions,
     title: `Execution ${prit}`,
     mainStatus: 'OPEN',
-    labels: [],
     totalTests: 1,
     executionStatuses: [],
     issueLinks: [],
@@ -51,7 +50,6 @@ test('extrai Fix Version/s da execution e atualiza o relatório sem restaurar va
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.setContent(`<label for="fixVersions"> Fix Version/s: </label>
-      <div id="labels-wrap"><a>Outra label</a></div>
       <span id="fixfor-val"><span><a title="Descrição longa"> PPX v5.6.0.21 </a>
       <a>PPX v5.6.0.21</a><a>PPX v5.6.0.22</a></span>
       <span role="button" aria-label="Edit Fix Version/s">Editar</span></span>`);

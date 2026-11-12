@@ -12,8 +12,6 @@ import { extractExecutionStatuses } from './execution-status.extractor';
 
 import { extractIssueLinks } from './issueLinks.extractor';
 
-import { extractLabels } from './labels.extractor';
-
 import { extractMainStatus } from './mainStatus.extractor';
 
 import { extractFixVersions } from './fix-versions.extractor';
@@ -49,10 +47,6 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
 
   const mainStatus = await extractMainStatus(page);
 
-  const labels = await extractLabels(page);
-
-  console.log('Labels:', labels);
-
   const fixVersions = await extractFixVersions(page);
 
   console.log('Fix Version/s:', fixVersions);
@@ -77,8 +71,6 @@ export async function extractPrit(page: Page, prit: string): Promise<ExecutionDa
     title,
 
     mainStatus,
-
-    labels,
 
     totalTests,
 

@@ -23,7 +23,7 @@ import { groupReportsByPosition } from './utils/groupReports.utils';
 import { getConfiguredExecutions, resolvePositions } from './utils/position.utils';
 import { getConfiguredReleaseLinks } from './utils/release-links.utils';
 
-import { writeReports } from './reports/report.writer';
+import { openEmailReport, writeReports } from './reports/report.writer';
 import { TEST_TYPES } from './config/test-types.config';
 
 const MAX_PRIT_ATTEMPTS = 3;
@@ -72,6 +72,7 @@ async function main() {
   }
 
   const { browser, page } = await createBrowserSession(firstPrit);
+  let generatedEmailPath: string | undefined;
 
   try {
     const executionsByPlan = new Map<string, Record<TestType, string[]>>();
@@ -134,10 +135,12 @@ async function main() {
       await dashboardPage.close();
     }
 
-    writeReports(positions, dashboard, releaseLinks, dynamicPositions);
+    generatedEmailPath = writeReports(positions, dashboard, releaseLinks, dynamicPositions);
   } finally {
     await browser.close();
   }
+
+  if (generatedEmailPath) openEmailReport(generatedEmailPath);
 }
 
 main().catch((error: unknown) => {

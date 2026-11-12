@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { aggregateOverallResults } from '../utils/overall-results.utils';
 
 import {
@@ -71,7 +73,7 @@ export function writeReports(
   dashboard?: DashboardData,
   releaseLinks?: ReleaseLinks,
   configured?: PositionDefinition[],
-): void {
+): string {
   const overall = aggregateOverallResults(positions, releaseLinks?.testPlans, configured);
   for (const warning of new Set(
     overall.plans.flatMap((plan) => plan.warnings.map((warning) => `${plan.label}: ${warning}`)),
@@ -175,8 +177,10 @@ export function writeReports(
         SALVA EMAIL
         ===================================================== */
 
+  const emailPath = path.join(outputDirectory, 'email.html');
+
   fs.writeFileSync(
-    path.join(outputDirectory, 'email.html'),
+    emailPath,
 
     emailHtml,
 
@@ -197,9 +201,32 @@ export function writeReports(
 
   console.log(path.join(outputDirectory, 'report.html'));
 
-  console.log(path.join(outputDirectory, 'email.html'));
+  console.log(emailPath);
 
   if (dashboard) {
     console.log(path.join(outputDirectory, 'dashboard.json'));
   }
+
+  return emailPath;
+}
+
+export function openEmailReport(emailPath: string): void {
+  const url = pathToFileURL(path.resolve(emailPath)).href;
+  const command =
+    process.platform === 'win32'
+      ? 'rundll32.exe'
+      : process.platform === 'darwin'
+        ? 'open'
+        : 'xdg-open';
+  const args = process.platform === 'win32' ? ['url.dll,FileProtocolHandler', url] : [url];
+  const child = spawn(command, args, {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  child.on('error', (error) => {
+    console.warn(`⚠️ Não foi possível abrir o relatório no navegador: ${error.message}`);
+  });
+  child.unref();
+  console.log(`✅ Relatório aberto no navegador: ${emailPath}`);
 }

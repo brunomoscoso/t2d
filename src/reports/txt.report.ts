@@ -27,8 +27,6 @@ export function createTxtReport(positions: PositionReport[]): string {
 
       txt += `${report.title}\n`;
       txt += `Status: ${report.mainStatus}\n`;
-      txt += `Labels: ${report.labels.join(', ') || '—'}\n`;
-
       txt += `--------------------------------------------------\n`;
 
       txt += `Total Tests: ${report.totalTests ?? '-'}\n\n`;

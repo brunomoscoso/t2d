@@ -9,6 +9,8 @@ Versões repetidas são removidas; versões diferentes aparecem juntas. Um campo
 versões deixa a caixa vazia; se nenhum plano fornecer uma versão, o texto inicial
 mostra “versão não informada”. A versão recolhida tem prioridade sobre valores
 antigos guardados no navegador. O estado OK/NOK continua a ser definido manualmente.
+As labels genéricas das executions não são recolhidas. Quando a automação termina,
+o ficheiro `output/email.html` abre automaticamente no navegador padrão.
 
 Esta automação recolhe dados de execuções PRIT e de um dashboard do Jira e gera relatórios por posto e tipo de teste. Os relatórios podem ser consultados no navegador, copiados para e-mail ou usados como ficheiros JSON e texto.
 

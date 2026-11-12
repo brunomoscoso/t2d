@@ -10,7 +10,6 @@ function task(prit: string, mainStatus: string, title: string): Report {
     mainStatus,
     title,
     position: 'COCO PT',
-    labels: [],
     totalTests: 1,
     executionStatuses: [{ status: 'PASS', quantidade: 1 }],
     issueLinks: [

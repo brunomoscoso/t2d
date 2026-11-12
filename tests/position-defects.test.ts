@@ -28,7 +28,6 @@ const group = (position: string, issueLinks: IssueLink[]): PositionReport => ({
       position,
       title: `[${position}] Smoke`,
       mainStatus: 'DONE',
-      labels: [],
       totalTests: 1,
       executionStatuses: [{ status: 'PASS', quantidade: 1 }],
       issueLinks,
