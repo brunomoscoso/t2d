@@ -133,6 +133,7 @@
     }
     #clear-saved-report-data:hover { background: #ffedeb; }
     /* MAIN BLOCKERS STYLES */
+    /* DNRS STYLES */
     .report-summary-table thead th { letter-spacing: 0.3px; }
     .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
     .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
@@ -217,6 +218,7 @@
     <!-- RELEASE LINKS -->
 
     <!-- MAIN BLOCKERS -->
+<!-- DNRS -->
 
     <!-- OVERALL RESULTS -->
 
@@ -256,6 +258,7 @@
     /* GLOBAL STATUS SCRIPT */
 
     /* MAIN BLOCKERS SCRIPT */
+    /* DNRS SCRIPT */
 
     /* TABLE STRIPING SCRIPT */
 
@@ -329,6 +332,7 @@
         }
 
         prepareBlockersForCopy(report, restoreActions);
+        prepareDnrsForCopy(report, restoreActions);
 
         // A cópia inclui as tabelas completas, sem as áreas de deslocamento da página.
         report.querySelectorAll('[data-report-scroll]').forEach(wrapper => {

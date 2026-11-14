@@ -1,3 +1,4 @@
+import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
 import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
@@ -391,6 +392,7 @@ export function createHtmlReport(
     ${overallResultsStyles}
     ${globalStatusStyles}
     ${mainBlockersStyles}
+    ${dnrStyles}
 
 
     * {
@@ -905,6 +907,7 @@ export function createHtmlReport(
     ${createOverallResultsSection(overall)}
 
     ${createMainBlockersTable(positions)}
+    ${createDnrSection(positions)}
 
     ${createGlobalStatusTable(positions)}
 
@@ -913,7 +916,7 @@ export function createHtmlReport(
     </div>
 
 
-    <script>${globalStatusScript}\n${mainBlockersScript}\n${tableStripingScript}</script>
+    <script>${globalStatusScript}\n${mainBlockersScript}\n${tableStripingScript}\n${dnrScript}</script>
     </body>
 
 

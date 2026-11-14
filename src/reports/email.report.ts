@@ -1,3 +1,4 @@
+import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createGlobalStatusTable, createPositionPicker } from './global-status.report';
@@ -547,6 +548,9 @@ export function createEmailReport(
     .replace('/* TABLE STRIPING SCRIPT */', () => tableStripingScript)
     .replace('/* MAIN BLOCKERS STYLES */', () => mainBlockersStyles)
     .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
+    .replace('<!-- DNRS -->', () => createDnrSection(positions))
+    .replace('/* DNRS SCRIPT */', () => dnrScript)
+    .replace('/* DNRS STYLES */', () => dnrStyles)
     .replace('<!-- MAIN BLOCKERS -->', () => createMainBlockersTable(positions))
     .replace('<!-- RELEASE LINKS -->', () => createReleaseLinksSection(releaseLinks))
     .replace('<!-- REPORTS -->', () => reportsHtml);
