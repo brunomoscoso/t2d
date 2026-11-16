@@ -24,11 +24,11 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'Olivais',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8645',
   },
   {
     name: 'Badajoz',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8642',
   },
   {
     name: 'Reseller',
@@ -36,7 +36,7 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'Las Rosas',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8644',
   },
   {
     name: 'Cyber SP',
@@ -52,7 +52,7 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'Arco do Cego',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8646',
   },
   {
     name: 'VMPOS - ALGRAGIDE',

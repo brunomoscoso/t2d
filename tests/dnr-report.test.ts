@@ -176,13 +176,24 @@ test('DNRs: edição, persistência, linhas, cópia, download e remoção comple
     const rows = page.locator('[data-dnr-row]');
     await page.locator('[data-dnr-field="number"]').fill('DNR <123>');
     await page.locator('[data-dnr-field="url"]').fill('https://repo.test/doc?a=1&b=2');
+    await page.getByRole('button', { name: 'Concluir', exact: true }).click();
+    assert.equal(await page.locator('[data-dnr-field="url"]').isVisible(), false);
+    assert.equal(await page.locator('[data-uc-display] a').textContent(), 'DNR <123>');
+    assert.equal(
+      await page.locator('[data-uc-display] a').getAttribute('href'),
+      'https://repo.test/doc?a=1&b=2',
+    );
     await page.locator('[data-dnr-field="certification"]').selectOption('customer display');
     assert.equal(await page.locator('[data-dnr-defects] a').count(), 3);
-    await page.getByRole('button', { name: 'Adicionar DNR', exact: true }).click();
+    await page.getByRole('button', { name: 'Adicionar UC', exact: true }).click();
     await rows.nth(1).locator('select').selectOption('digital invoice sms');
     assert.equal(await rows.nth(1).locator('[data-dnr-defects] a').count(), 0);
     await page.reload();
     assert.equal(await rows.count(), 2);
+    assert.equal(
+      await rows.first().locator('[data-uc-display] a').getAttribute('href'),
+      'https://repo.test/doc?a=1&b=2',
+    );
     assert.equal(await rows.first().locator('input').first().inputValue(), 'DNR <123>');
     await rows.nth(1).locator('[data-remove-dnr]').click();
     assert.equal(await rows.count(), 1);
@@ -207,6 +218,11 @@ test('DNRs: edição, persistência, linhas, cópia, download e remoção comple
       0,
     );
     assert.match(await preview.locator('#dnr-section').innerText(), /DNR <123>/);
+    assert.equal(
+      await preview.locator('[data-uc-display] a').getAttribute('href'),
+      'https://repo.test/doc?a=1&b=2',
+    );
+    assert.doesNotMatch(await preview.locator('#dnr-section').innerText(), /https:\/\//);
     assert.equal(await preview.locator('[data-dnr-defects] a').count(), 3);
     async function download() {
       const pending = page.waitForEvent('download');
@@ -217,6 +233,11 @@ test('DNRs: edição, persistência, linhas, cópia, download e remoção comple
       return Buffer.concat(chunks).toString('utf8');
     }
     await preview.setContent(await download());
+    assert.equal(
+      await preview.locator('[data-uc-display] a').getAttribute('href'),
+      'https://repo.test/doc?a=1&b=2',
+    );
+    assert.doesNotMatch(await preview.locator('#dnr-section').innerText(), /https:\/\//);
     assert.match(await preview.locator('#dnr-section').innerText(), /DNR <123>/);
     assert.equal(
       await preview.locator('#dnr-section input, #dnr-section select, #dnr-section button').count(),
@@ -232,6 +253,10 @@ test('DNRs: edição, persistência, linhas, cópia, download e remoção comple
     assert.doesNotMatch(await download(), /id="dnr-section"/);
     await page.reload();
     assert.equal(await page.locator('#dnr-section').count(), 0);
+    await page.getByRole('button', { name: 'Restaurar tabela de UCs', exact: true }).click();
+    assert.equal(await page.locator('#dnr-section').count(), 1);
+    await page.reload();
+    assert.equal(await page.locator('#dnr-section').count(), 1);
     assert.equal(await page.locator('#main-blockers-table').count(), 1);
     assert.equal(await page.locator('.operation-card').count(), 6);
     assert.deepEqual(errors, []);

@@ -1,4 +1,5 @@
 import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
+import { sortReportPositions, positionOrderScript } from './position-order.report';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createGlobalStatusTable, createPositionPicker } from './global-status.report';
@@ -460,7 +461,7 @@ export function createEmailReport(
     timeZone: 'Europe/Lisbon',
   }).format(new Date());
 
-  const reportsHtml = positions
+  const reportsHtml = sortReportPositions(positions)
     .filter((position) => position.reports.length)
     .map((position) => {
       const positionReports = groupReportsByTestType(position)
@@ -546,6 +547,7 @@ export function createEmailReport(
     .replace('/* GLOBAL STATUS SCRIPT */', () => globalStatusScript)
     .replace('/* MAIN BLOCKERS SCRIPT */', () => mainBlockersScript)
     .replace('/* TABLE STRIPING SCRIPT */', () => tableStripingScript)
+    .replace('/* POSITION ORDER SCRIPT */', () => positionOrderScript)
     .replace('/* MAIN BLOCKERS STYLES */', () => mainBlockersStyles)
     .replace('<!-- POSITION DEFECTS -->', () => createPositionDefectsSection(positions))
     .replace('<!-- DNRS -->', () => createDnrSection(positions))

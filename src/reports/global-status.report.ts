@@ -1,6 +1,7 @@
 import type { PositionReport } from '../types/report.types';
 import { escapeHtml } from '../utils/html.utils';
 import { getPositionReportKey } from '../utils/position.utils';
+import { sortReportPositions } from './position-order.report';
 
 function getDefaultSelection(positions: PositionReport[]): Set<string> {
   return new Set(
@@ -53,12 +54,13 @@ export function createPositionPicker(positions: PositionReport[]): string {
 }
 
 export function createGlobalStatusTable(positions: PositionReport[]): string {
-  const availablePositions = positions.map((position) => position.position);
   const selected = getDefaultSelection(positions);
   const reportKey = getPositionReportKey(positions);
-  const rows = availablePositions
-    .map(
-      (position, index) => `
+  const rows = sortReportPositions(positions)
+    .map((report) => {
+      const position = report.position;
+      const index = positions.indexOf(report);
+      return `
     <tr id="global-status-row-${index}" data-global-status-row data-position="${escapeHtml(position)}" data-report-position="${escapeHtml(position)}" ${selected.has(position) ? '' : 'hidden'}>
       <th scope="row" style="padding:12px;border:1px solid #dce5f0;background:#edf3fc;text-align:left;font-size:11px;color:#0747a6;">
         ${escapeHtml(position)}
@@ -79,8 +81,8 @@ export function createGlobalStatusTable(positions: PositionReport[]): string {
         </div>
       </td>
     </tr>
-  `,
-    )
+  `;
+    })
     .join('');
 
   return `

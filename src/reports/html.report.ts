@@ -1,4 +1,5 @@
 import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
+import { sortReportPositions, positionOrderScript } from './position-order.report';
 import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
 import type { ReleaseLinks } from '../types/report.types';
@@ -332,7 +333,7 @@ export function createHtmlReport(
   releaseLinks?: ReleaseLinks,
   overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
 ): string {
-  const positionsHtml = positions
+  const positionsHtml = sortReportPositions(positions)
     .filter((position) => position.reports.length)
     .map((position) => {
       const reportsHtml = groupReportsByTestType(position)
@@ -902,9 +903,9 @@ export function createHtmlReport(
 
     ${createPositionPicker(positions)}
 
-    ${createReleaseLinksSection(releaseLinks)}
-
     ${createOverallResultsSection(overall)}
+
+    ${createReleaseLinksSection(releaseLinks)}
 
     ${createMainBlockersTable(positions)}
     ${createDnrSection(positions)}
@@ -916,7 +917,7 @@ export function createHtmlReport(
     </div>
 
 
-    <script>${globalStatusScript}\n${mainBlockersScript}\n${tableStripingScript}\n${dnrScript}</script>
+    <script>${globalStatusScript}\n${mainBlockersScript}\n${tableStripingScript}\n${dnrScript}\n${positionOrderScript}</script>
     </body>
 
 

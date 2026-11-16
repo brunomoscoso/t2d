@@ -423,12 +423,19 @@ for (const kind of ['email', 'html'] as const) {
             '#release-links-section, #overall-results-section, #main-blockers-section, #global-status-section',
           )
           .evaluateAll((elements) => elements.map((element) => element.id)),
-        [
-          'release-links-section',
-          'overall-results-section',
-          'main-blockers-section',
-          'global-status-section',
-        ],
+        kind === 'email'
+          ? [
+              'main-blockers-section',
+              'overall-results-section',
+              'release-links-section',
+              'global-status-section',
+            ]
+          : [
+              'overall-results-section',
+              'release-links-section',
+              'main-blockers-section',
+              'global-status-section',
+            ],
       );
       await page.getByLabel('Tema do bloqueador 1', { exact: true }).fill('Bloqueador preservado');
       await page
