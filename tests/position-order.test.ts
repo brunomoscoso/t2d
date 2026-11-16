@@ -5,6 +5,7 @@ import { createEmailReport } from '../src/reports/email.report';
 import { createHtmlReport } from '../src/reports/html.report';
 import { sortReportPositions } from '../src/reports/position-order.report';
 import type { PositionReport } from '../src/types/report.types';
+import type { OverallResults } from '../src/utils/overall-results.utils';
 
 const expected = [
   'COCO PT',
@@ -56,6 +57,26 @@ test('ordem das posições mantém entradas intactas e reconhece aliases', () =>
 });
 
 test('reordena blocos completos, persiste, restaura e exporta sem controlos', async () => {
+  const overall: OverallResults = {
+    plans: fixture().map((position, index) => ({
+      key: position.position,
+      label: position.position,
+      title: position.position,
+      prit: `PRIT-${index + 100}`,
+      statuses: ['PASS'],
+      warnings: [],
+      types: [
+        {
+          testType: 'smoke',
+          counts: { PASS: index + 1 },
+          total: index + 1,
+          executions: 1,
+          available: true,
+        },
+      ],
+    })),
+  };
+  const originalOverall = JSON.stringify(overall);
   const browser = await chromium.launch({
     channel: process.platform === 'win32' ? 'msedge' : undefined,
     headless: true,
@@ -71,7 +92,7 @@ test('reordena blocos completos, persiste, restaura e exporta sem controlos', as
       await page.route(`http://position-order.test/${kind}`, (route) =>
         route.fulfill({
           contentType: 'text/html',
-          body: render(fixture(), undefined, { plans: [] }),
+          body: render(fixture(), undefined, overall),
         }),
       );
       await page.goto(`http://position-order.test/${kind}`);
@@ -82,6 +103,27 @@ test('reordena blocos completos, persiste, restaura e exporta sem controlos', as
           .locator('.position-block')
           .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-report-position')));
       assert.deepEqual(await order(), expected);
+      assert.equal(JSON.stringify(overall), originalOverall);
+      assert.deepEqual(
+        await page
+          .locator('[data-overall-position]')
+          .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-overall-position'))),
+        expected,
+      );
+      for (const plan of overall.plans) {
+        const table = page
+          .locator('[data-overall-position]')
+          .filter({
+            has: page.getByRole('button', {
+              name: 'Remover tabela de resultados de ' + plan.label,
+              exact: true,
+            }),
+          });
+        assert.equal(
+          (await table.locator('[data-overall-total]').innerText()).trim(),
+          String(plan.types[0].total),
+        );
+      }
       assert.deepEqual(
         await page
           .locator('[data-global-status-row]')

@@ -27,7 +27,11 @@ function positionRank(name: string): number {
 }
 
 export function sortReportPositions(positions: PositionReport[]): PositionReport[] {
-  return [...positions].sort((a, b) => positionRank(a.position) - positionRank(b.position));
+  return [...positions].sort((a, b) => comparePositionNames(a.position, b.position));
+}
+
+export function comparePositionNames(a: string, b: string): number {
+  return positionRank(a) - positionRank(b);
 }
 
 export const positionOrderScript = `

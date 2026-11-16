@@ -2,6 +2,7 @@ import { JIRA_URL } from '../config/jira.config';
 import { TEST_TYPE_LABELS } from '../config/test-types.config';
 import { escapeHtml, getStatusColors } from '../utils/html.utils';
 import { overallPercentage, type OverallResults } from '../utils/overall-results.utils';
+import { comparePositionNames } from './position-order.report';
 
 export const overallResultsStyles = `
   .overall-results-table { min-width:720px; }
@@ -24,7 +25,8 @@ function renderWarnings(warnings: string[]): string {
 export function createOverallResultsSection(overall: OverallResults): string {
   const cellStyle =
     'padding:7px 6px;border:1px solid #dce5f0;text-align:center;vertical-align:middle;overflow-wrap:anywhere;';
-  const tables = overall.plans
+  const tables = [...overall.plans]
+    .sort((a, b) => comparePositionNames(a.key, b.key))
     .map((plan, index) => {
       const headers = plan.statuses
         .map((status) => {
