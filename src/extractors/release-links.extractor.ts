@@ -20,8 +20,12 @@ export async function extractReleaseLinks(
     plan.prit = plan.prit.trim() ? normalizePrit(plan.prit) : '';
     delete plan.title;
   });
-  links.dashboardPageId = links.dashboardPageId.trim();
+  links.dashboardPageId = links.dashboardPageId?.trim() ?? '';
   delete links.dashboardTitle;
+  links.dashboards?.forEach((dashboard) => {
+    dashboard.pageId = dashboard.pageId.trim();
+    delete dashboard.title;
+  });
 
   async function readTitle(
     path: string,
@@ -66,6 +70,14 @@ export async function extractReleaseLinks(
         );
       }
       plan.title = await titles.get(plan.prit);
+    }),
+    ...(links.dashboards ?? []).map(async (dashboard) => {
+      if (!dashboard.pageId) return;
+      dashboard.title = await readTitle(
+        `/rest/api/2/dashboard/${encodeURIComponent(dashboard.pageId)}`,
+        `Dashboard ${dashboard.pageId}`,
+        (data) => data?.name,
+      );
     }),
     (async () => {
       if (!links.dashboardPageId) return;

@@ -31,7 +31,8 @@ export type TestPlanLink = {
 
 export type ReleaseLinks = {
   testPlans: TestPlanLink[];
-  dashboardPageId: string;
+  dashboards?: { pageId: string; title?: string }[];
+  dashboardPageId?: string;
   dashboardTitle?: string;
 };
 

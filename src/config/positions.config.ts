@@ -1,5 +1,6 @@
 import type { PositionDefinition } from '../types/report.types';
-export const DASHBOARD_PAGE_ID = '24360';
+// Adicione os IDs dos dashboards que devem aparecer no relatório.
+export const DASHBOARD_PAGE_IDS: string[] = ['24360', '24701'];
 
 export const POSITIONS: PositionDefinition[] = [
   {

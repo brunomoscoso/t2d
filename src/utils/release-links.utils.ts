@@ -1,4 +1,4 @@
-import { DASHBOARD_PAGE_ID, POSITIONS } from '../config/positions.config';
+import { DASHBOARD_PAGE_IDS, POSITIONS } from '../config/positions.config';
 import type { PositionDefinition, ReleaseLinks, TestPlanLink } from '../types/report.types';
 import { resolvePositions } from './position.utils';
 
@@ -22,6 +22,8 @@ export function getConfiguredReleaseLinks(
           ]
         : [{ position: position.name, prit: position.testPlanPrit }],
     ),
-    dashboardPageId: DASHBOARD_PAGE_ID,
+    dashboards: [...new Set(DASHBOARD_PAGE_IDS.map((id) => id.trim()).filter(Boolean))].map(
+      (pageId) => ({ pageId }),
+    ),
   };
 }

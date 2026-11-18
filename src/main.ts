@@ -1,6 +1,6 @@
 import type { Page } from 'playwright';
 
-import { DASHBOARD_PAGE_ID } from './config/positions.config';
+import { DASHBOARD_PAGE_IDS } from './config/positions.config';
 
 import type {
   DashboardData,
@@ -67,7 +67,8 @@ async function main() {
     );
   }
 
-  if (!DASHBOARD_PAGE_ID) {
+  const dashboardIds = [...new Set(DASHBOARD_PAGE_IDS.map((id) => id.trim()).filter(Boolean))];
+  if (dashboardIds.length === 0) {
     throw new Error('Nenhum Dashboard configurado.');
   }
 
@@ -122,20 +123,23 @@ async function main() {
     );
 
     // O dashboard é complementar: se falhar, os relatórios dos PRITs continuam disponíveis.
-    let dashboard: DashboardData | undefined;
+    const dashboards: DashboardData[] = [];
     const dashboardPage = await page.context().newPage();
 
     try {
-      dashboard = await extractDashboard(dashboardPage, DASHBOARD_PAGE_ID);
-      console.log(`✅ Dashboard ${DASHBOARD_PAGE_ID} extraído`);
-    } catch (error) {
-      console.error('❌ Não foi possível extrair o Dashboard.');
-      console.error(error);
+      for (const dashboardId of dashboardIds) {
+        try {
+          dashboards.push(await extractDashboard(dashboardPage, dashboardId));
+          console.log(`✅ Dashboard ${dashboardId} extraído`);
+        } catch (error) {
+          console.error(`❌ Não foi possível extrair o Dashboard ${dashboardId}.`, error);
+        }
+      }
     } finally {
       await dashboardPage.close();
     }
 
-    generatedEmailPath = writeReports(positions, dashboard, releaseLinks, dynamicPositions);
+    generatedEmailPath = writeReports(positions, dashboards, releaseLinks, dynamicPositions);
   } finally {
     await browser.close();
   }

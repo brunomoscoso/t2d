@@ -166,7 +166,7 @@ async function findOpenDefectsGadget(page: Page): Promise<{
   rawTitle: string;
   title: string;
 }> {
-  console.log('Procurando Certification Open Defects...');
+  console.log('Procurando Open Defect ou Open Defects...');
 
   /* =====================================================
         1. TÍTULO CORRETO
@@ -175,7 +175,7 @@ async function findOpenDefectsGadget(page: Page): Promise<{
   const heading = page
     .locator(SELECTORS.dashboard.gadgetTitle)
     .filter({
-      hasText: /Certification\s+Open\s+Defects/i,
+      hasText: /\bOpen\s+Defects?\b/i,
     })
     .first();
 
@@ -191,8 +191,8 @@ async function findOpenDefectsGadget(page: Page): Promise<{
 
   const rawTitle = cleanText(await heading.innerText());
 
-  if (!/Certification\s+Open\s+Defects/i.test(rawTitle)) {
-    throw new Error('O título encontrado não corresponde a Certification Open Defects.');
+  if (!/\bOpen\s+Defects?\b/i.test(rawTitle)) {
+    throw new Error('O título encontrado não corresponde a Open Defect ou Open Defects.');
   }
 
   console.log(`✅ Título encontrado: ${rawTitle}`);
@@ -417,7 +417,7 @@ async function extractIssueType(cell: Locator): Promise<string> {
 
   /*
    * O gadget é especificamente
-   * Certification Open Defects.
+   * Open Defect / Open Defects.
    */
 
   return 'Defect';

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jira / Xray Report</title>
+
+<style>
+    /* OVERALL RESULTS STYLES */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: clamp(12px, 2vw, 30px);
+        font-family: Arial, Helvetica, sans-serif;
+        color: #172b4d;
+        background: #ffffff;
+        font-size: 11px;
+    }
+
+    .report-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin-bottom: 28px;
+        padding: clamp(22px, 3vw, 15px);
+        border-radius: 18px;
+        background: linear-gradient(115deg, #142e57, #0052cc);
+        color: #ffffff;
+        box-shadow: 0 10px 28px #172b4d14;
+    }
+
+    .report-toolbar-heading { flex: 1 1 280px; min-width: 0; }
+    .report-eyebrow {
+        margin: 0 0 10px;
+        color: #b9d6ff;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+    }
+    .report-toolbar h1 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0;
+        line-height: 1.2;
+    }
+    .report-toolbar-description {
+        margin: 10px 0 0;
+        color: #e0ecff;
+        font-size: 11px;
+        line-height: 1.5;
+    }
+    .report-toolbar-actions { max-width: 100%; }
+    .report-toolbar-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+    #copy-email-button,
+    #download-report-button {
+        max-width: 100%;
+        padding: 14px 20px;
+        border: 1px solid #ffffff;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #0747a6;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 12px #091e4233;
+    }
+    #copy-email-button:hover,
+    #download-report-button:hover { background: #eaf2ff; }
+    #copy-email-status {
+        margin-top: 10px;
+        min-height: 18px;
+        color: #ffffff;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .report-workspace {
+        --picker-width: clamp(240px, 18vw, 300px);
+        --picker-gap: clamp(16px, 1.5vw, 24px);
+        width: 100%;
+        padding-right: calc(var(--picker-width) + var(--picker-gap));
+    }
+    .email-container { width: 100%; min-width: 0; overflow-wrap: anywhere; }
+    .intro-text { margin-bottom: 14px; line-height: 1.5; }
+    .observation-title { font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+    #observations {
+        min-height: 80px;
+        padding: 12px;
+        border: 1px solid #b8c9e2;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 3px 12px #172b4d06;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+    #observations:empty::before { content: attr(data-placeholder); color: #5e6c84; }
+    #observations img { max-width: 100%; height: auto; }
+    .section-wrapper { width: 100%; margin: 0 auto 24px; }
+    .signature { margin-top: 30px; line-height: 1.5; }
+
+    /* GLOBAL STATUS STYLES */
+    .global-position-picker {
+        position: absolute;
+        top: 0;
+        left: calc(100% + var(--picker-gap));
+        width: var(--picker-width);
+        margin: 0;
+    }
+    [data-blocker-field]::placeholder { color: #5e6c84; }
+    [data-blocker-field]:focus-visible,
+    #observations:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    .report-table-scroll:focus-visible { outline: 2px solid #0052cc; outline-offset: 3px; }
+    #copy-email-button:focus-visible,
+    #download-report-button:focus-visible { outline-color: #ffffff; }
+    .installation-status-fields select:focus { outline: 2px solid #0052cc; outline-offset: 1px; }
+    .report-summary-table { box-shadow: 0 4px 16px #172b4d08; }
+    .email-container .report-summary-table th,
+    .email-container .report-summary-table td { padding: 6px 8px !important; }
+    #clear-saved-report-data {
+        padding: 10px 14px;
+        border: 1px solid #de350b;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #ae2e24;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    #clear-saved-report-data:hover { background: #ffedeb; }
+    /* MAIN BLOCKERS STYLES */
+    /* DNRS STYLES */
+    .report-summary-table thead th { letter-spacing: 0.3px; }
+    .report-summary-table thead th:first-child { border-top-left-radius: 10px; }
+    .report-summary-table thead th:last-child { border-top-right-radius: 10px; }
+    [data-position-defect]:hover { color: #0052cc !important; }
+    #release-links-table a:hover { color: #0747a6 !important; text-decoration: underline !important; }
+    #release-links-table tbody tr:last-child th { border-bottom-left-radius: 9px; }
+    #release-links-table tbody tr:last-child td { border-bottom-right-radius: 9px; }
+    .position-block,
+    .dashboard-block { box-shadow: 0 5px 20px #172b4d08; }
+    .operation-card:last-child { margin-bottom: 0 !important; }
+    .jira-issues-table tr:hover,
+    .dashboard-table tbody tr:hover { background: #f1f6ff; }
+    .report-table-scroll { max-width: 100%; overflow-x: auto; }
+    .jira-issues-table { min-width: 560px; }
+    .dashboard-table { min-width: 720px; }
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px 16px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 1099px) {
+        .report-workspace { padding-right: 0; }
+        .global-position-picker { position: static; width: 100%; margin-bottom: 16px; }
+    }
+    @media (max-width: 700px) {
+        .report-toolbar { gap: 18px; border-radius: 12px; }
+        .report-toolbar-actions,
+        #copy-email-button,
+        #download-report-button { width: 100%; }
+        #position-defects-table th,
+        #position-defects-table td { padding: 8px 6px !important; }
+        #release-links-table th,
+        #release-links-table td { padding: 10px 8px !important; }
+        #release-links-table thead th:first-child { width: 35% !important; }
+        .position-content,
+        .operation-card { padding: 10px !important; }
+    }
+</style>
+</head>
+
+<body>
+
+<!-- =========================================
+     BOTÃO DE CÓPIA
+     ========================================= -->
+
+<header class="report-toolbar">
+    <div class="report-toolbar-heading">
+        <p class="report-eyebrow">QA · JIRA / XRAY</p>
+        <h1>Relatório de testes</h1>
+    </div>
+    <div class="report-toolbar-actions">
+        <div class="report-toolbar-buttons">
+        <button id="copy-email-button" type="button" onclick="copyEmailReport()">
+            Copiar relatório para o e-mail
+        </button>
+        <button id="download-report-button" type="button" onclick="downloadReport()">
+            Baixar relatório completo
+        </button>
+        </div>
+        <div id="copy-email-status" role="status" aria-live="polite"></div>
+    </div>
+</header>
+
+<div class="report-workspace">
+<div class="email-container">
+
+    <div class="observation-title">Daily Status Report - <!-- REPORT DATE --></div>
+
+    <div
+    id="observations"
+    style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;color:#172b4d;line-height:1.5;text-align:left;overflow-wrap:anywhere;"
+    contenteditable="true"
+    data-placeholder="Clique aqui para adicionar comentários ou observações..."
+    >Boa tarde,<br>Segue o ponto de situação Diário das execuções dos testes para o “<strong>Test Plan P23002 - Retail 4.0 - Certification for Passport X <!-- FIX VERSIONS --> (Ambiente Qualidade)</strong>”.</div>
+
+    <!-- POSITION PICKER -->
+
+    <!-- MAIN BLOCKERS -->
+<!-- DNRS -->
+
+    <!-- OVERALL RESULTS -->
+
+    <!-- RELEASE LINKS -->
+
+    <!-- GLOBAL STATUS -->
+
+    <!-- POSITION DEFECTS -->
+
+    <!-- DASHBOARD -->
+
+    <!-- REPORTS -->
+
+
+    <!-- SIGNATURE -->
+    <div class="signature">
+    <p>
+        Cumprimentos,<br />
+        QA Team
+    </p>
+    </div>
+</div>
+
+
+</div>
+
+<div data-editor-only style="margin-top:24px;text-align:right;">
+    <button id="clear-saved-report-data" type="button" onclick="clearSavedReportData()">
+        Limpar dados de Estado global e Principais Bloqueadores
+    </button>
+    <div id="clear-saved-report-status" role="status" aria-live="polite"></div>
+</div>
+
+<!-- =========================================
+     SCRIPT DE CÓPIA
+     ========================================= -->
+
+<script>
+    /* GLOBAL STATUS SCRIPT */
+
+    /* MAIN BLOCKERS SCRIPT */
+    /* DNRS SCRIPT */
+
+    /* TABLE STRIPING SCRIPT */
+    /* POSITION ORDER SCRIPT */
+
+    function clearSavedReportData() {
+        if (!window.confirm('Apagar os dados guardados de Estado global e Principais Bloqueadores neste navegador?')) {
+            return;
+        }
+
+        const path = window.location.pathname;
+        const keysToClear = [
+            't2d:global-status:v2:' + path,
+            't2d:global-status:v1:' + path + ':',
+            't2d:main-blockers:v2:' + path,
+            't2d:main-blockers:v1:' + path + ':',
+        ];
+        const status = document.getElementById('clear-saved-report-status');
+
+        try {
+            const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+                .filter(key => key && (
+                    key === keysToClear[0]
+                    || key.startsWith(keysToClear[1])
+                    || key === keysToClear[2]
+                    || key.startsWith(keysToClear[3])
+                ));
+            keys.forEach(key => localStorage.removeItem(key));
+            window.location.reload();
+        } catch (error) {
+            console.error('Erro ao limpar dados guardados:', error);
+            status.textContent = 'Não foi possível limpar os dados guardados neste navegador.';
+        }
+    }
+
+    function prepareBlockersForCopy(report, restoreActions) {
+        report.querySelectorAll('[data-blocker-field]').forEach(field => {
+            const text = document.createElement('div');
+            text.style.cssText = 'line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
+            const value = field.value.trim() ? field.value : '--';
+            value.split('\n').forEach((line, index) => {
+                if (index) text.appendChild(document.createElement('br'));
+                text.appendChild(document.createTextNode(line || '\u00a0'));
+            });
+            restoreActions.push(() => text.replaceWith(field));
+            field.replaceWith(text);
+        });
+    }
+
+    function prepareReportForCopy(report, restoreActions, omitMissingReleaseLinks = false) {
+        // Substitui os controlos por texto durante a cópia síncrona.
+        function removeDuringCopy(element) {
+            const placeholder = document.createComment('editor-only');
+            restoreActions.push(() => placeholder.replaceWith(element));
+            element.replaceWith(placeholder);
+        }
+
+        // Remove conteúdos desmarcados, incluindo secções que ficaram vazias.
+        report.querySelectorAll('[hidden]').forEach(element => {
+            if (!element.parentElement.closest('[hidden]')) removeDuringCopy(element);
+        });
+
+        if (omitMissingReleaseLinks) {
+            const releaseLinks = report.querySelector('#release-links-section');
+            if (releaseLinks) {
+                releaseLinks.querySelectorAll('tbody tr').forEach(row => {
+                    const hasLink = Array.from(row.querySelectorAll('a[href]'))
+                        .some(link => link.getAttribute('href').trim());
+                    if (!hasLink) removeDuringCopy(row);
+                });
+                if (!releaseLinks.querySelector('tbody tr')) removeDuringCopy(releaseLinks);
+            }
+        }
+
+        prepareBlockersForCopy(report, restoreActions);
+        prepareDnrsForCopy(report, restoreActions);
+
+        // A cópia inclui as tabelas completas, sem as áreas de deslocamento da página.
+        report.querySelectorAll('[data-report-scroll]').forEach(wrapper => {
+            const placeholder = document.createComment('report-table-scroll');
+            const contents = Array.from(wrapper.childNodes);
+            restoreActions.push(() => {
+                wrapper.replaceChildren(...contents);
+                placeholder.replaceWith(wrapper);
+            });
+            wrapper.replaceWith(placeholder, ...contents);
+        });
+
+        const observations = report.querySelector('#observations');
+        if (observations
+            && !observations.textContent.replace(/[\s\u200b-\u200d\u2060\ufeff]/g, '')
+            && !observations.querySelector('img, svg, canvas, video, audio, iframe, object, embed, hr, table')) {
+            // Um espaço não separável evita enviar um bloco sem conteúdo ao Outlook.
+            // Preserva também os nós que o editor deixa depois de apagar o texto (ex.: <br>).
+            const originalNodes = Array.from(observations.childNodes);
+            const originalStyle = observations.getAttribute('style');
+            const originalHeight = observations.getBoundingClientRect().height;
+            restoreActions.push(() => {
+                observations.replaceChildren(...originalNodes);
+                if (originalStyle === null) observations.removeAttribute('style');
+                else observations.setAttribute('style', originalStyle);
+            });
+            observations.style.minHeight = originalHeight + 'px';
+            observations.replaceChildren(document.createTextNode('\u00a0'));
+        }
+
+        report.querySelectorAll('[data-global-status-row]').forEach(row => {
+            const installationFields = row.querySelector('.installation-status-fields');
+            const installationSelect = row.querySelector('[data-installation-select]');
+            const installationLabel = document.createElement('strong');
+            installationLabel.style.color = installationSelect.selectedOptions[0].dataset.color;
+            installationLabel.textContent = installationSelect.selectedOptions[0].textContent;
+            const installationSummary = document.createElement('div');
+            installationSummary.appendChild(installationLabel);
+            const version = row.querySelector('[data-installation-version]').value.trim();
+            if (version) installationSummary.appendChild(document.createTextNode(' — Versão: ' + version));
+            restoreActions.push(() => installationSummary.replaceWith(installationFields));
+            installationFields.replaceWith(installationSummary);
+        });
+
+        report.querySelectorAll('[data-editor-only]').forEach(removeDuringCopy);
+
+        report.querySelectorAll('[contenteditable]').forEach(element => {
+            const attributes = ['contenteditable', 'data-placeholder']
+                .filter(attribute => element.hasAttribute(attribute))
+                .map(attribute => [attribute, element.getAttribute(attribute)]);
+            restoreActions.push(() => {
+                attributes.forEach(([attribute, value]) => element.setAttribute(attribute, value));
+            });
+            attributes.forEach(([attribute]) => element.removeAttribute(attribute));
+        });
+    }
+
+    function preserveReportSpacing(report) {
+        // O Outlook pode ignorar margens de section/div/h2. Células com altura
+        // explícita mantêm os intervalos mesmo ao colar o HTML no e-mail.
+        function spacer(height) {
+            const table = document.createElement('table');
+            table.setAttribute('role', 'presentation');
+            table.setAttribute('aria-hidden', 'true');
+            table.setAttribute('data-report-spacer', '');
+            table.setAttribute('width', '100%');
+            table.setAttribute('cellpadding', '0');
+            table.setAttribute('cellspacing', '0');
+            table.style.cssText = 'width:100%;border:0;border-collapse:collapse;margin:0;';
+            const cell = table.insertRow().insertCell();
+            cell.setAttribute('height', String(height));
+            cell.style.cssText = 'height:' + height + 'px;line-height:' + height + 'px;mso-line-height-rule:exactly;font-size:1px;padding:0;border:0;';
+            cell.textContent = '\u00a0';
+            return table;
+        }
+        report.querySelectorAll('h2, h3, [data-report-heading]').forEach(title => {
+            title.style.margin = '0';
+            if (title.dataset.reportHeading === 'execution') title.before(spacer(16));
+            title.after(spacer(10));
+        });
+        report.querySelectorAll('.operation-card').forEach(card => {
+            card.style.margin = '0';
+            if (card.nextElementSibling) card.after(spacer(20));
+        });
+        report.querySelectorAll('[data-overall-position]').forEach(group => {
+            group.style.margin = '0';
+            if (group.nextElementSibling?.matches('[data-overall-position]')) group.after(spacer(20));
+        });
+        report.querySelectorAll('#release-links-section, #overall-results-section, #main-blockers-section, #global-status-section, #position-defects-section, .position-block, .dashboard-block').forEach(section => {
+            section.style.margin = '0';
+            section.after(spacer(20));
+        });
+        const signature = report.querySelector('.signature');
+        if (signature) signature.style.marginTop = '0';
+    }
+
+    function createEmailClipboardHtml(report) {
+        const clone = report.cloneNode(true);
+        const sourceElements = [report, ...report.querySelectorAll('*')];
+        const clonedElements = [clone, ...clone.querySelectorAll('*')];
+        // Preserva a aparência sem converter as larguras percentuais em pixels,
+        // como acontece na serialização nativa do navegador para o clipboard.
+        const visualProperties = [
+            'box-sizing', 'font-family', 'font-size', 'font-weight', 'font-style',
+            'color', 'background-color', 'line-height', 'text-align',
+            'text-decoration', 'vertical-align', 'white-space', 'overflow-wrap',
+            'word-break', 'padding', 'margin', 'border', 'border-radius',
+            'border-collapse', 'border-spacing', 'table-layout',
+        ];
+        sourceElements.forEach((element, index) => {
+            const computed = getComputedStyle(element);
+            const target = clonedElements[index];
+            visualProperties.forEach(property => {
+                target.style.setProperty(property, computed.getPropertyValue(property));
+            });
+        });
+        clone.style.width = '100%';
+        clone.style.maxWidth = '100%';
+        clone.style.minWidth = '0';
+        clone.style.backgroundColor = '#ffffff';
+        clone.querySelectorAll('#position-defects-table, #main-blockers-table, #release-links-table, .overall-results-table').forEach(table => {
+            table.style.width = '100%';
+            table.style.maxWidth = '100%';
+            table.style.minWidth = '0';
+            const cellPadding = table.classList.contains('overall-results-table') ? '7px 6px' : '8px 6px';
+            table.querySelectorAll('th, td').forEach(cell => {
+                cell.style.padding = cellPadding;
+            });
+        });
+
+        const observations = clone.querySelector('#observations');
+        if (observations) {
+            const outlookWrapper = document.createElement('div');
+            outlookWrapper.setAttribute('data-olk-copy-source', 'MessageBody');
+            outlookWrapper.setAttribute(
+                'style',
+                'border:0;font-style:inherit;font-variant:inherit;font-weight:inherit;font-stretch:inherit;font-size:11px;line-height:inherit;font-family:Calibri,Helvetica,sans-serif;margin:0;padding:0;vertical-align:baseline;color:inherit;direction:ltr;'
+            );
+            outlookWrapper.append(...Array.from(observations.childNodes));
+            observations.appendChild(outlookWrapper);
+        }
+
+        preserveReportSpacing(clone);
+        applyTableStriping(clone);
+        return clone.outerHTML;
+    }
+
+    function downloadReport() {
+        const status = document.getElementById('copy-email-status');
+        let url;
+        let link;
+        try {
+            const source = document.querySelector('.email-container');
+            const report = source.cloneNode(true);
+            // cloneNode não preserva a seleção atual de todos os controlos.
+            const fields = source.querySelectorAll('input, select, textarea');
+            report.querySelectorAll('input, select, textarea').forEach((field, index) => {
+                field.value = fields[index].value;
+            });
+
+            // Respeita a seleção atual e converte os valores editados em texto
+            // apenas na cópia, sem alterar o editor.
+            prepareReportForCopy(report, [], true);
+            preserveReportSpacing(report);
+            applyTableStriping(report);
+            report.querySelectorAll('script').forEach(script => script.remove());
+            const snapshot = document.implementation.createHTMLDocument('Relatório de testes');
+            snapshot.documentElement.lang = 'pt';
+            const charset = snapshot.createElement('meta');
+            charset.setAttribute('charset', 'UTF-8');
+            snapshot.head.prepend(charset);
+            document.querySelectorAll('meta[name="viewport"], head style').forEach(element => {
+                snapshot.head.appendChild(element.cloneNode(true));
+            });
+            snapshot.body.appendChild(report);
+            const blob = new Blob(['<!DOCTYPE html>\n', snapshot.documentElement.outerHTML], {
+                type: 'text/html;charset=utf-8',
+            });
+            url = URL.createObjectURL(blob);
+            link = document.createElement('a');
+            link.href = url;
+            const dateParts = Object.fromEntries(new Intl.DateTimeFormat('pt-PT', {
+                timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit',
+            }).formatToParts(new Date()).map(part => [part.type, part.value]));
+            link.download = 'P23002 - Retail 4.0 - ' + dateParts.year + '-' + dateParts.month + '-' + dateParts.day + '.html';
+            document.body.appendChild(link);
+            link.click();
+            status.textContent = '✓ Download do relatório completo iniciado.';
+        } catch (error) {
+            console.error('Erro ao baixar relatório:', error);
+            status.textContent = 'Não foi possível baixar o relatório. Tente novamente.';
+        } finally {
+            if (link) link.remove();
+            if (url) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+    }
+
+    function copyEmailReport() {
+
+        const report =
+            document.querySelector(
+                '.email-container'
+            );
+
+        const status =
+            document.getElementById(
+                'copy-email-status'
+            );
+
+
+        if (!report) {
+
+            status.textContent =
+                'Não foi possível encontrar o relatório.';
+
+            return;
+        }
+
+
+        const range =
+            document.createRange();
+
+
+        const selection =
+            window.getSelection();
+
+
+        if (!selection) {
+
+            status.textContent =
+                'Não foi possível selecionar o relatório.';
+
+            return;
+        }
+
+
+        const restoreActions = [];
+
+        try {
+            prepareReportForCopy(report, restoreActions, true);
+            range.selectNodeContents(report);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            const html = createEmailClipboardHtml(report);
+            const plainText = report.innerText;
+            const writeClipboard = event => {
+                if (!event.clipboardData) return;
+                event.clipboardData.setData('text/html', html);
+                event.clipboardData.setData('text/plain', plainText);
+                event.preventDefault();
+            };
+            document.addEventListener('copy', writeClipboard, true);
+            restoreActions.push(() => document.removeEventListener('copy', writeClipboard, true));
+
+            const copied =
+                document.execCommand(
+                    'copy'
+                );
+
+
+            selection.removeAllRanges();
+
+
+            if (copied) {
+
+                status.textContent =
+                    '✓ Relatório copiado. Agora cole no Outlook com Ctrl + V.';
+
+            }
+
+            else {
+
+                status.textContent =
+                    'Não foi possível copiar o relatório.';
+
+            }
+
+        }
+
+        catch (error) {
+
+            selection.removeAllRanges();
+
+            console.error(
+                'Erro ao copiar:',
+                error
+            );
+
+
+            status.textContent =
+                'Não foi possível copiar o relatório.';
+
+        }
+
+
+        finally {
+            selection.removeAllRanges();
+            restoreActions.reverse().forEach(restore => restore());
+        }
+
+        setTimeout(
+            () => {
+
+                status.textContent =
+                    '';
+
+            },
+            5000
+        );
+
+    }
+
+</script>
+
+</body>
+</html>

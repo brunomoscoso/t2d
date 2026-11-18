@@ -70,10 +70,11 @@ function injectDashboardIntoEmail(emailHtml: string, dashboardHtml: string): str
 
 export function writeReports(
   positions: PositionReport[],
-  dashboard?: DashboardData,
+  dashboard?: DashboardData | DashboardData[],
   releaseLinks?: ReleaseLinks,
   configured?: PositionDefinition[],
 ): string {
+  const dashboards = dashboard ? (Array.isArray(dashboard) ? dashboard : [dashboard]) : [];
   const overall = aggregateOverallResults(positions, releaseLinks?.testPlans, configured);
   for (const warning of new Set(
     overall.plans.flatMap((plan) => plan.warnings.map((warning) => `${plan.label}: ${warning}`)),
@@ -127,7 +128,7 @@ export function writeReports(
         DASHBOARD
         ===================================================== */
 
-  if (dashboard) {
+  if (dashboards.length > 0) {
     /*
      * JSON separado para debug.
      */
@@ -147,17 +148,17 @@ export function writeReports(
     reportHtml = injectBeforeBodyEnd(
       reportHtml,
 
-      createDashboardHtml(dashboard),
+      dashboards.map(createDashboardHtml).join('\n'),
     );
 
     /*
-     * Dashboard após os defects criados na sprint, conforme o template.
+     * Dashboards como últimas tabelas, após todos os postos e antes da assinatura.
      */
 
     emailHtml = injectDashboardIntoEmail(
       emailHtml,
 
-      createDashboardEmailHtml(dashboard),
+      dashboards.map(createDashboardEmailHtml).join('\n'),
     );
   }
 
@@ -203,7 +204,7 @@ export function writeReports(
 
   console.log(emailPath);
 
-  if (dashboard) {
+  if (dashboards.length > 0) {
     console.log(path.join(outputDirectory, 'dashboard.json'));
   }
 

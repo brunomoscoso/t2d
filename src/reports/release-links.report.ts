@@ -43,17 +43,22 @@ export function createReleaseLinksSection(
     );
   });
 
-  const dashboardPageId = links.dashboardPageId.trim();
-  rows.push(
-    row(
-      'Dashboard da release',
-      dashboardPageId
-        ? `${baseUrl}/secure/Dashboard.jspa?selectPageId=${encodeURIComponent(dashboardPageId)}`
-        : '',
-      links.dashboardTitle?.trim() || `Dashboard ${dashboardPageId}`,
-      rows.length,
-    ),
-  );
+  const dashboards = links.dashboards ?? [
+    { pageId: links.dashboardPageId ?? '', title: links.dashboardTitle },
+  ];
+  for (const dashboard of dashboards) {
+    const dashboardPageId = dashboard.pageId.trim();
+    rows.push(
+      row(
+        'Dashboard da release',
+        dashboardPageId
+          ? `${baseUrl}/secure/Dashboard.jspa?selectPageId=${encodeURIComponent(dashboardPageId)}`
+          : '',
+        dashboard.title?.trim() || `Dashboard ${dashboardPageId}`,
+        rows.length,
+      ),
+    );
+  }
 
   return `<section id="release-links-section" data-position-section aria-labelledby="release-links-title" style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;color:#172b4d;">
     <h2 id="release-links-title" style="margin:0 0 10px;font-size:14px;line-height:1.3;color:#142e57;">Links da Release</h2>

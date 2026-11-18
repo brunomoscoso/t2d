@@ -1,5 +1,18 @@
 # Automação de relatórios do Jira
 
+Para incluir defects de vários dashboards, configure a lista em
+`src/config/positions.config.ts`:
+
+```ts
+export const DASHBOARD_PAGE_IDS: string[] = ['24360', 'ID_DO_SEGUNDO_DASHBOARD'];
+```
+
+Substitua o segundo valor pelo ID real. Cada dashboard aparece num bloco próprio
+no HTML e no email, com título, total e link. Defects presentes em dois dashboards
+aparecem nos dois blocos. IDs repetidos e vazios são ignorados. Se uma coleta
+falhar, o erro aparece no terminal e os restantes dashboards continuam.
+Na execução normal, `output/dashboard.json` contém uma lista de dashboards.
+
 Cada execution PRIT também fornece o campo **Fix Version/s**: a recolha confirma o texto de
 `label[for="fixVersions"]` e lê os links de `#fixfor-val a`. As versões preenchem
 “Versão instalada” de cada posto e atualizam a versão no texto inicial do e-mail.
