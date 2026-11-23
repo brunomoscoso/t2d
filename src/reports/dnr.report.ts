@@ -1,6 +1,6 @@
 import type { PositionReport } from '../types/report.types';
 import { JIRA_URL } from '../config/jira.config';
-import { escapeHtml } from '../utils/html.utils';
+import { escapeHtml, getPriorityMeta } from '../utils/html.utils';
 
 const clean = (value: string) => value.trim().replace(/\s+/g, ' ');
 const keyOf = (value: string) => clean(value).toLowerCase();
@@ -8,7 +8,13 @@ const keyOf = (value: string) => clean(value).toLowerCase();
 export function collectCertifications(positions: PositionReport[]) {
   const groups = new Map<
     string,
-    { key: string; title: string; defects: string[]; aliases: string[] }
+    {
+      key: string;
+      title: string;
+      defects: string[];
+      priorities: Record<string, ReturnType<typeof getPriorityMeta>>;
+      aliases: string[];
+    }
   >();
   for (const position of positions) {
     for (const report of position.reports) {
@@ -46,14 +52,27 @@ export function collectCertifications(positions: PositionReport[]) {
         title.replace(/^(?:\s*\[[^\]]+\])+\s*[-–—:]?\s*certification\b\s*[-–—:]?\s*/i, '').trim() ||
         title;
       const key = keyOf(title);
-      if (!groups.has(key)) groups.set(key, { key, title, defects: [], aliases: [] });
+      if (!groups.has(key))
+        groups.set(key, { key, title, defects: [], priorities: {}, aliases: [] });
       const group = groups.get(key)!;
       if (!group.aliases.includes(legacyKey)) group.aliases.push(legacyKey);
       for (const issue of report.issueLinks) {
         const prit = issue.prit.trim().toUpperCase();
-        if (/^PRIT-\d+$/.test(prit) && !group.defects.includes(prit)) group.defects.push(prit);
+        if (!/^PRIT-\d+$/.test(prit)) continue;
+        if (!group.defects.includes(prit)) group.defects.push(prit);
+        if (!group.priorities[prit] || group.priorities[prit].label === 'Unknown') {
+          group.priorities[prit] = getPriorityMeta(issue.priority);
+        }
       }
     }
+  }
+  const priorityOrder = ['Highest', 'High', 'Medium', 'Low', 'Lowest', 'Unknown'];
+  for (const group of groups.values()) {
+    group.defects.sort(
+      (a, b) =>
+        priorityOrder.indexOf(group.priorities[a].label) -
+        priorityOrder.indexOf(group.priorities[b].label),
+    );
   }
   return [...groups.values()];
 }
@@ -146,11 +165,20 @@ export const dnrScript = `
         cell.appendChild(links);
         const group = groups.find(group => group.key === select.value);
         (group ? group.defects : []).forEach(prit => {
+          const item = document.createElement('span');
+          item.style.cssText = 'display:inline-block;margin:0 6px 4px 0;padding:2px 7px;border:1px solid #dce5f0;border-radius:4px;background:#f4f7fc;';
           const link = document.createElement('a');
           link.href = table.dataset.jiraUrl + '/browse/' + encodeURIComponent(prit);
           link.textContent = prit;
-          link.style.cssText = 'display:inline-block;white-space:nowrap;margin:0 6px 4px 0;padding:2px 7px;border:1px solid #dce5f0;border-radius:4px;background:#f4f7fc;color:#0052cc;text-decoration:underline;';
-          links.appendChild(link);
+          link.style.cssText = 'white-space:nowrap;color:#0052cc;text-decoration:underline;';
+          const priority = group.priorities[prit];
+          const badge = document.createElement('span');
+          badge.dataset.dnrPriority = '';
+          badge.textContent = ' · ' + (priority.label === 'Unknown' ? 'Não definida' : priority.label);
+          badge.title = 'Grau de prioridade do defect';
+          badge.style.cssText = 'display:inline-block;font-weight:bold;color:' + priority.color + ';';
+          item.append(link, badge);
+          links.appendChild(item);
         });
       }
       row.querySelectorAll('[data-dnr-field]').forEach(field => {

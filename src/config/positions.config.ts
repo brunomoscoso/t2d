@@ -13,7 +13,7 @@ export const POSITIONS: PositionDefinition[] = [
   },
   {
     name: 'OPT PT',
-    testPlanPrit: '',
+    testPlanPrit: 'PRIT-8687',
   },
   {
     name: 'OPT SP',

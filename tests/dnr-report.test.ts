@@ -139,6 +139,44 @@ test('DNRs: merges position prefixes and migrates saved selections', async () =>
   assert.equal(collectCertifications(positions).length, 5);
 });
 
+test('DNRs: sorts defects by priority after merging certifications', () => {
+  const positions = fixture();
+  const priorities = ['Unknown', 'Low', 'High', 'Lowest', 'Medium', 'Highest', 'High'];
+  positions[0].reports[0].issueLinks = priorities.map((priority, index) => ({
+    prit: `PRIT-${100 + index}`,
+    titulo: '',
+    status: 'OPEN',
+    priority,
+    relation: 'related',
+  }));
+  positions[1].reports[0].issueLinks = [
+    {
+      prit: 'PRIT-100',
+      titulo: '',
+      status: 'OPEN',
+      priority: 'Highest',
+      relation: 'related',
+    },
+    {
+      prit: 'PRIT-107',
+      titulo: '',
+      status: 'OPEN',
+      priority: '',
+      relation: 'related',
+    },
+  ];
+  assert.deepEqual(collectCertifications(positions)[0].defects, [
+    'PRIT-100',
+    'PRIT-105',
+    'PRIT-102',
+    'PRIT-106',
+    'PRIT-104',
+    'PRIT-101',
+    'PRIT-103',
+    'PRIT-107',
+  ]);
+});
+
 test('DNRs: grupos dinâmicos, posições, duplicados e ausência de certificações', () => {
   const groups = collectCertifications(fixture());
   assert.deepEqual(
@@ -185,6 +223,11 @@ test('DNRs: edição, persistência, linhas, cópia, download e remoção comple
     );
     await page.locator('[data-dnr-field="certification"]').selectOption('customer display');
     assert.equal(await page.locator('[data-dnr-defects] a').count(), 3);
+    assert.deepEqual(await page.locator('[data-dnr-priority]').allTextContents(), [
+      ' · Low',
+      ' · Low',
+      ' · Low',
+    ]);
     await page.getByRole('button', { name: 'Adicionar UC', exact: true }).click();
     await rows.nth(1).locator('select').selectOption('digital invoice sms');
     assert.equal(await rows.nth(1).locator('[data-dnr-defects] a').count(), 0);
