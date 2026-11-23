@@ -95,7 +95,7 @@ export function writeReports(
   fs.writeFileSync(
     path.join(outputDirectory, 'report.json'),
 
-    JSON.stringify({ positions, overall }, null, 2),
+    JSON.stringify({ positions, overall, dashboards, releaseLinks }, null, 2),
 
     'utf-8',
   );

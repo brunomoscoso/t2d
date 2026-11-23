@@ -50,6 +50,12 @@ test('inclui os defects e links de dois dashboards no HTML, email e JSON', (t) =
       assert.equal((html.match(/class="dashboard-block"/g) ?? []).length, 2);
     }
     assert.deepEqual(JSON.parse(fs.readFileSync('output/dashboard.json', 'utf8')), dashboards);
+    const saved = JSON.parse(fs.readFileSync('output/report.json', 'utf8'));
+    assert.deepEqual(saved.dashboards, dashboards);
+    assert.deepEqual(
+      saved.releaseLinks.dashboards,
+      dashboards.map(({ pageId, title }) => ({ pageId, title })),
+    );
   } finally {
     process.chdir(root);
   }

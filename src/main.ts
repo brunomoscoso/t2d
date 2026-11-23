@@ -24,7 +24,14 @@ import { getConfiguredExecutions, resolvePositions } from './utils/position.util
 import { getConfiguredReleaseLinks } from './utils/release-links.utils';
 
 import { openEmailReport, writeReports } from './reports/report.writer';
-import { TEST_TYPES } from './config/test-types.config';
+import {
+  definitionsFromReports,
+  loadPreviousReport,
+  mergePositionReports,
+  parseReportArguments,
+  selectPosition,
+  validatePreviousPositions,
+} from './services/partial-report.service';
 
 const MAX_PRIT_ATTEMPTS = 3;
 
@@ -56,19 +63,37 @@ async function extractPritWithRetry(page: Page, prit: string): Promise<Execution
 
 async function main() {
   const configuredPositions = resolvePositions();
-  const planPositions = configuredPositions.filter(
+  const options = parseReportArguments(process.argv.slice(2));
+  if (options.list) {
+    console.log(configuredPositions.map((position) => position.name).join('\n'));
+    return;
+  }
+  const selected = options.position
+    ? selectPosition(configuredPositions, options.position)
+    : undefined;
+  const previous = selected
+    ? loadPreviousReport(getConfiguredReleaseLinks(configuredPositions))
+    : undefined;
+  if (previous && selected) {
+    validatePreviousPositions(previous.positions, configuredPositions, selected.name);
+    console.log(
+      `A atualizar apenas ${selected.name}. Restantes posições e dashboards: dados da extração anterior.`,
+    );
+  }
+  const positionsToExtract = selected ? resolvePositions([selected]) : configuredPositions;
+  const planPositions = positionsToExtract.filter(
     (position) => !position.testPlans && position.testPlanPrit,
   );
-  const configuredExecutions = getConfiguredExecutions(configuredPositions);
+  const configuredExecutions = getConfiguredExecutions(positionsToExtract);
   const firstPrit = planPositions[0]?.testPlanPrit ?? configuredExecutions[0]?.prit;
   if (!firstPrit) {
     throw new Error(
-      'Nenhum Test Plan ou PRIT de execução configurado em POSITIONS (positions.config.ts). Nenhum relatório novo foi gerado.',
+      `${selected ? selected.name + ': ' : ''}Nenhum Test Plan ou PRIT de execução configurado em POSITIONS (positions.config.ts). Nenhum relatório novo foi gerado.`,
     );
   }
 
   const dashboardIds = [...new Set(DASHBOARD_PAGE_IDS.map((id) => id.trim()).filter(Boolean))];
-  if (dashboardIds.length === 0) {
+  if (!previous && dashboardIds.length === 0) {
     throw new Error('Nenhum Dashboard configurado.');
   }
 
@@ -94,7 +119,7 @@ async function main() {
       executionsByPlan.set(position.name, executions);
     }
 
-    const dynamicPositions: PositionDefinition[] = configuredPositions.map((position) => {
+    const dynamicPositions: PositionDefinition[] = positionsToExtract.map((position) => {
       const discovered = executionsByPlan.get(position.name);
       return discovered ? { ...position, executions: discovered } : position;
     });
@@ -114,32 +139,53 @@ async function main() {
       console.log(`✅ ${execution.prit} → ${execution.position} / ${execution.testType}`);
     }
 
-    const positions = groupReportsByPosition(reports, dynamicPositions);
+    const extractedPositions = groupReportsByPosition(reports, dynamicPositions);
+    const positions = previous
+      ? mergePositionReports(previous.positions, extractedPositions, configuredPositions)
+      : extractedPositions;
 
     // Os links enriquecem os títulos; os planos por país também são fontes da coleta de Automação.
-    const releaseLinks = await extractReleaseLinks(
-      page.request,
-      getConfiguredReleaseLinks(configuredPositions),
-    );
+    const linksToExtract = getConfiguredReleaseLinks(positionsToExtract);
+    if (previous) linksToExtract.dashboards = [];
+    const extractedLinks = await extractReleaseLinks(page.request, linksToExtract);
+    const releaseLinks =
+      previous && selected
+        ? {
+            ...previous.releaseLinks,
+            testPlans: configuredPositions.flatMap((position) =>
+              (position.name === selected.name
+                ? extractedLinks
+                : previous.releaseLinks
+              ).testPlans.filter((plan) => plan.position === position.name),
+            ),
+          }
+        : extractedLinks;
 
     // O dashboard é complementar: se falhar, os relatórios dos PRITs continuam disponíveis.
-    const dashboards: DashboardData[] = [];
-    const dashboardPage = await page.context().newPage();
+    const dashboards: DashboardData[] = previous ? previous.dashboards : [];
+    if (!previous) {
+      const dashboardPage = await page.context().newPage();
 
-    try {
-      for (const dashboardId of dashboardIds) {
-        try {
-          dashboards.push(await extractDashboard(dashboardPage, dashboardId));
-          console.log(`✅ Dashboard ${dashboardId} extraído`);
-        } catch (error) {
-          console.error(`❌ Não foi possível extrair o Dashboard ${dashboardId}.`, error);
+      try {
+        for (const dashboardId of dashboardIds) {
+          try {
+            dashboards.push(await extractDashboard(dashboardPage, dashboardId));
+            console.log(`✅ Dashboard ${dashboardId} extraído`);
+          } catch (error) {
+            console.error(`❌ Não foi possível extrair o Dashboard ${dashboardId}.`, error);
+          }
         }
+      } finally {
+        await dashboardPage.close();
       }
-    } finally {
-      await dashboardPage.close();
     }
 
-    generatedEmailPath = writeReports(positions, dashboards, releaseLinks, dynamicPositions);
+    generatedEmailPath = writeReports(
+      positions,
+      dashboards,
+      releaseLinks,
+      previous ? definitionsFromReports(positions) : dynamicPositions,
+    );
   } finally {
     await browser.close();
   }

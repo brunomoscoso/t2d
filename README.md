@@ -117,15 +117,54 @@ No fim, os ficheiros são gravados em `output/`:
 
 Uma nova execução substitui os relatórios anteriores. A pasta `output/` não é incluída no repositório.
 
+### Atualizar apenas uma posição
+
+Para atualizar qualquer posição configurada e gerar novamente o relatório completo:
+
+```powershell
+npm run report -- --position "COCO PT"
+npm run report -- --position "Tangerina"
+npm run report -- --position "Automação"
+```
+
+Cada comando atualiza apenas a posição indicada. Para consultar todos os nomes disponíveis:
+
+```powershell
+npm run report -- --list-positions
+```
+
+Por exemplo, se já gerou o relatório completo e apenas Tangerina tem novos estados no
+Jira, execute `npm run report -- --position "Tangerina"`. Os detalhes de Tangerina e os
+seus resultados no **Overall** passam a refletir a nova extração. As restantes posições
+continuam no relatório com os dados guardados. Pode repetir este processo para qualquer
+outra posição que tenha um Test Plan ou execuções configuradas.
+
+Também pode usar `./executar.bat --position "COCO PT"`. Use aspas nos nomes com espaços.
+O comando sem argumentos continua a executar a recolha completa.
+
+É necessário manter `output/report.json` de uma execução anterior. A automação volta a
+descobrir as execuções e recolhe os dados apenas da posição escolhida, substitui os seus
+dados e recalcula o **Overall**. As outras posições e os dashboards mantêm os dados da
+extração anterior, sem novos acessos ao Jira. HTML, email, texto e JSON são regenerados.
+Para atualizar também os dashboards, execute a recolha completa.
+
+Relatórios antigos também são aceites: nesse caso, os dashboards são lidos de
+`output/dashboard.json`. Nos novos relatórios, os dashboards e os links ficam guardados
+no próprio `report.json`. Se faltar o relatório, estiver inválido ou a configuração de
+outras posições tiver mudado, o comando pede uma recolha completa antes de continuar.
+Uma falha na extração da posição não substitui os relatórios existentes.
+
 As edições das tabelas **Estado global** e **Principais Bloqueadores** são guardadas automaticamente no armazenamento local do navegador. Elas continuam disponíveis quando executar `npm run report` novamente, mesmo que os PRITs recolhidos mudem. No final de `email.html`, use **Limpar dados de Estado global e Principais Bloqueadores** para apagar essas edições no navegador atual, por exemplo, no início de uma nova release. Os dados ficam associados ao navegador/perfil e ao caminho do relatório; não são gravados nos ficheiros de saída nem partilhados com outros navegadores ou computadores.
 
 ## Comandos úteis
 
-| Comando                | Descrição                                                 |
-| ---------------------- | --------------------------------------------------------- |
-| `npm run report`       | Executa a recolha e gera os relatórios.                   |
-| `npm test`             | Executa os testes automatizados, sem aceder ao Jira real. |
-| `npm run format:check` | Verifica a formatação do código e da documentação.        |
+| Comando                                          | Descrição                                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `npm run report`                                 | Executa a recolha e gera os relatórios.                                                                    |
+| `npm run report -- --position "Nome da posição"` | Atualiza uma posição e recalcula o Overall, gerando o relatório completo com os restantes dados guardados. |
+| `npm run report -- --list-positions`             | Lista os nomes das posições disponíveis, sem aceder ao Jira.                                               |
+| `npm test`                                       | Executa os testes automatizados, sem aceder ao Jira real.                                                  |
+| `npm run format:check`                           | Verifica a formatação do código e da documentação.                                                         |
 
 ## Problemas comuns
 

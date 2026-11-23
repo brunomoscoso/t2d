@@ -30,7 +30,7 @@ if not exist "node_modules\.bin\tsx.cmd" (
 )
 
 echo A iniciar a automacao. Siga as instrucoes de autenticacao no navegador e no terminal.
-call npm.cmd run report
+call npm.cmd run report -- %*
 set "result=%errorlevel%"
 if not "%result%"=="0" (
     echo.
