@@ -73,6 +73,7 @@ export function writeReports(
   dashboard?: DashboardData | DashboardData[],
   releaseLinks?: ReleaseLinks,
   configured?: PositionDefinition[],
+  extractionWarnings: string[] = [],
 ): string {
   const dashboards = dashboard ? (Array.isArray(dashboard) ? dashboard : [dashboard]) : [];
   const overall = aggregateOverallResults(positions, releaseLinks?.testPlans, configured);
@@ -95,7 +96,7 @@ export function writeReports(
   fs.writeFileSync(
     path.join(outputDirectory, 'report.json'),
 
-    JSON.stringify({ positions, overall, dashboards, releaseLinks }, null, 2),
+    JSON.stringify({ positions, overall, dashboards, releaseLinks, extractionWarnings }, null, 2),
 
     'utf-8',
   );
@@ -107,7 +108,7 @@ export function writeReports(
   fs.writeFileSync(
     path.join(outputDirectory, 'report.txt'),
 
-    createTxtReport(positions),
+    createTxtReport(positions, extractionWarnings),
 
     'utf-8',
   );
@@ -116,13 +117,13 @@ export function writeReports(
         HTML ORIGINAL
         ===================================================== */
 
-  let reportHtml = createHtmlReport(positions, releaseLinks, overall);
+  let reportHtml = createHtmlReport(positions, releaseLinks, overall, extractionWarnings);
 
   /* =====================================================
         EMAIL ORIGINAL
         ===================================================== */
 
-  let emailHtml = createEmailReport(positions, releaseLinks, overall);
+  let emailHtml = createEmailReport(positions, releaseLinks, overall, extractionWarnings);
 
   /* =====================================================
         DASHBOARD

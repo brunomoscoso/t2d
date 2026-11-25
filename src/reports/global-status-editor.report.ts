@@ -189,6 +189,11 @@ export const globalStatusScript = `
                 if (label) label.textContent = names.join(', ');
             });
             // Oculta também o título e os cabeçalhos quando não há conteúdo selecionado.
+            const defectTotal = document.querySelector('[data-defect-total]');
+            if (defectTotal) {
+                const count = document.querySelectorAll('#position-defects-table [data-sprint-defect]:not([hidden])').length;
+                defectTotal.textContent = 'Total: ' + count + (count === 1 ? ' PRIT' : ' PRITs');
+            }
             document.querySelectorAll('[data-position-section]').forEach(section => {
                 const visible = section.querySelector(
                     '[data-report-position]:not([hidden]), [data-report-positions]:not([hidden]), [data-position-independent]'

@@ -1,4 +1,5 @@
 import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
+import { createExtractionWarningsSection } from './extraction-warnings.report';
 import { sortReportPositions, positionOrderScript } from './position-order.report';
 import { createOverallResultsSection, overallResultsStyles } from './overall-results.report';
 import { aggregateOverallResults, type OverallResults } from '../utils/overall-results.utils';
@@ -312,7 +313,7 @@ function createReportBlock(report: Report): string {
           `
             <div class="empty">
 
-                Nenhum Issue Link encontrado.
+                ${report.extractionWarnings?.some((warning) => ['issueLinks', 'verification'].includes(warning.field)) ? 'Issue Links indisponíveis ou não confirmados.' : 'Nenhum Issue Link encontrado.'}
 
             </div>
             `
@@ -332,6 +333,7 @@ export function createHtmlReport(
   positions: PositionReport[],
   releaseLinks?: ReleaseLinks,
   overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
+  extractionWarnings: string[] = [],
 ): string {
   const positionsHtml = sortReportPositions(positions)
     .filter((position) => position.reports.length)
@@ -897,6 +899,7 @@ export function createHtmlReport(
 
 
     <body>
+    ${createExtractionWarningsSection(positions, extractionWarnings)}
 
 
     <div class="page">

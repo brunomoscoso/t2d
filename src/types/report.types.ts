@@ -62,6 +62,8 @@ export type IssueLink = {
     ========================================================= */
 
 export type ExecutionData = {
+  extractionWarnings?: { field: string; message: string }[];
+  collectedAt?: string;
   prit: string;
 
   fixVersions?: string[];
@@ -85,6 +87,7 @@ export type Report = ExecutionData & ConfiguredExecution;
     ========================================================= */
 
 export type PositionReport = {
+  extractionWarnings?: string[];
   position: string;
   testPlanPrit: string;
   fixVersions?: string[];

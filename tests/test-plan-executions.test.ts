@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { chromium } from 'playwright';
+import { chromium, type APIResponse, type Page } from 'playwright';
+
+function mockPlan(page: Page, keys: string[]) {
+  page.request.get = async () =>
+    ({
+      ok: () => true,
+      json: async () => keys.map((key) => ({ key })),
+      dispose: async () => {},
+    }) as APIResponse;
+}
 
 async function loadExtractor() {
   process.env.JIRA_URL = 'https://jira.example.test';
@@ -38,6 +47,7 @@ test('descobre execuções na tabela e classifica pelo título', async () => {
       }),
     );
 
+    mockPlan(page, ['PRIT-101', 'PRIT-102', 'PRIT-103', 'PRIT-104']);
     assert.deepEqual(await extractTestPlanExecutions(page, '100'), [
       { prit: 'PRIT-101', title: 'Smoke - Checkout', testType: 'smoke' },
       { prit: 'PRIT-102', title: 'Regression - Payments', testType: 'regression' },
@@ -78,6 +88,7 @@ test('interrompe a descoberta se uma execução da tabela não tiver tipo no tí
       }),
     );
 
+    mockPlan(page, ['PRIT-201', 'PRIT-202']);
     await assert.rejects(
       extractTestPlanExecutions(page, 'PRIT-200'),
       /não contém Smoke, Regression, Certification ou Defect Fixing/,

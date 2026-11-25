@@ -3,7 +3,7 @@ import test from 'node:test';
 import { chromium } from 'playwright';
 import { extractExecutionStatuses } from '../src/extractors/execution-status.extractor';
 
-test('status oculto não interrompe a execução e preserva dados anteriores e posteriores ao timeout', async () => {
+test('status oculto preserva os outros dados e gera avisos de recolha parcial', async () => {
   process.env.JIRA_URL = 'https://jira.example.test';
   process.env.JIRA_LOGIN_EMAIL = 'test@example.test';
   const { extractPrit } = await import('../src/extractors/prit.extractor');
@@ -13,6 +13,9 @@ test('status oculto não interrompe a execução e preserva dados anteriores e p
   });
   try {
     const page = await browser.newPage();
+    page.request.get = async () => {
+      throw new Error('API indisponível no cenário de teste');
+    };
     await page.route('**/browse/PRIT-123', (route) =>
       route.fulfill({
         contentType: 'text/html; charset=utf-8',
@@ -35,6 +38,11 @@ test('status oculto não interrompe a execução e preserva dados anteriores e p
     assert.deepEqual(report.fixVersions, ['PPX v5.6.0.20']);
     assert.deepEqual(report.executionStatuses, []);
     assert.equal(report.totalTests, null);
+    assert.deepEqual(report.extractionWarnings?.map((warning) => warning.field).sort(), [
+      'executionStatuses',
+      'totalTests',
+      'verification',
+    ]);
     assert.deepEqual(report.issueLinks, [
       {
         relation: 'related',

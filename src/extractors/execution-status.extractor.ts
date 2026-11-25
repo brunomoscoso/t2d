@@ -31,7 +31,33 @@ export async function extractExecutionStatuses(page: Page): Promise<ExecutionSta
 
   await overallStatus.scrollIntoViewIfNeeded();
 
-  await page.waitForTimeout(3000);
+  // O título aparece antes dos resultados Xray. Aguarda os dados efetivos.
+  try {
+    const ready = await page.waitForFunction(
+      (selectors) => {
+        const counts = Array.from(document.querySelectorAll(selectors.executionStatusCount));
+        const names = Array.from(document.querySelectorAll(selectors.executionStatusName));
+        const totalReady = /Total Tests:\s*\d+/i.test(document.body.innerText);
+        if (counts.length || names.length) {
+          return (
+            totalReady &&
+            counts.length > 0 &&
+            counts.length === names.length &&
+            [...counts, ...names].every((element) => element.textContent?.trim())
+          );
+        }
+        return totalReady;
+      },
+      SELECTORS,
+      { timeout: 15000, polling: 100 },
+    );
+    await ready.dispose();
+  } catch (error) {
+    throw new Error(
+      'Overall Execution Status não contém dados completos após aguardar o carregamento.',
+      { cause: error },
+    );
+  }
 
   // Primeiro tenta ler os elementos estruturados do Xray.
   const countsLocator = page.locator(SELECTORS.executionStatusCount);

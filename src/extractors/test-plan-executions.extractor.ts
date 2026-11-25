@@ -3,6 +3,7 @@ import { JIRA_URL } from '../config/jira.config';
 import { SELECTORS } from '../config/selectors';
 import type { TestType } from '../types/report.types';
 import { normalizePrit } from '../utils/prit.utils';
+import { readExpectedPlanKeys } from '../services/extraction-verification.service';
 
 export type TestPlanExecution = {
   prit: string;
@@ -45,6 +46,27 @@ export async function extractTestPlanExecutions(
   await page.locator(SELECTORS.title).waitFor({ state: 'visible', timeout: 90000 });
   const table = page.locator(SELECTORS.testPlanExecutions.table);
   await table.waitFor({ state: 'visible', timeout: 30000 });
+  const expected = await readExpectedPlanKeys(page.request, baseUrl, plan);
+  const ready = await page.waitForFunction(
+    ({ expected, selectors }) => {
+      const keys = Array.from(
+        document.querySelectorAll(`${selectors.table} tbody tr ${selectors.prit}`),
+      ).map((element) =>
+        (
+          element.getAttribute('href') ??
+          element.getAttribute('data-issue-key') ??
+          element.textContent ??
+          ''
+        )
+          .match(/(?:\/browse\/)?(PRIT-\d+)/i)?.[1]
+          ?.toUpperCase(),
+      );
+      return JSON.stringify([...new Set(keys)].sort()) === JSON.stringify(expected);
+    },
+    { expected, selectors: SELECTORS.testPlanExecutions },
+    { timeout: 60000 },
+  );
+  await ready.dispose();
   const rows = await table.locator('tbody tr').evaluateAll(
     (elements, selectors) =>
       elements.flatMap((row) => {

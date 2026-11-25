@@ -1,4 +1,5 @@
 import { createDnrSection, dnrStyles, dnrScript } from './dnr.report';
+import { createExtractionWarningsSection } from './extraction-warnings.report';
 import { sortReportPositions, positionOrderScript } from './position-order.report';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -433,7 +434,7 @@ function createReportBlock(report: Report): string {
                 "
             >
 
-                Nenhum Issue Link encontrado.
+                ${report.extractionWarnings?.some((warning) => ['issueLinks', 'verification'].includes(warning.field)) ? 'Issue Links indisponíveis ou não confirmados.' : 'Nenhum Issue Link encontrado.'}
 
             </div>
             `
@@ -453,6 +454,7 @@ export function createEmailReport(
   positions: PositionReport[],
   releaseLinks?: ReleaseLinks,
   overall: OverallResults = aggregateOverallResults(positions, releaseLinks?.testPlans),
+  extractionWarnings: string[] = [],
 ): string {
   const reportDate = new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
@@ -539,7 +541,12 @@ export function createEmailReport(
       );
     })
     .replace('<!-- REPORT DATE -->', reportDate)
-    .replace('<!-- POSITION PICKER -->', () => createPositionPicker(positions))
+    .replace(
+      '<!-- POSITION PICKER -->',
+      () =>
+        createExtractionWarningsSection(positions, extractionWarnings) +
+        createPositionPicker(positions),
+    )
     .replace('<!-- GLOBAL STATUS -->', () => createGlobalStatusTable(positions))
     .replace('<!-- OVERALL RESULTS -->', () => createOverallResultsSection(overall))
     .replace('/* OVERALL RESULTS STYLES */', () => overallResultsStyles)

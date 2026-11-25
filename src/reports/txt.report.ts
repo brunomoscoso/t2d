@@ -1,9 +1,16 @@
 import { PositionReport } from '../types/report.types';
 import { JIRA_URL } from '../config/jira.config';
 import { TEST_TYPE_LABELS } from '../config/test-types.config';
+import { extractionWarningLines } from './extraction-warnings.report';
 
-export function createTxtReport(positions: PositionReport[]): string {
-  let txt = '';
+export function createTxtReport(
+  positions: PositionReport[],
+  extractionWarnings: string[] = [],
+): string {
+  const warnings = extractionWarningLines(positions, extractionWarnings);
+  let txt = warnings.length
+    ? `RELATÓRIO PARCIAL — DADOS NÃO EXTRAÍDOS OU NÃO CONFIRMADOS\n${warnings.join('\n')}\n\n`
+    : '';
 
   for (const position of positions) {
     if (!position.reports.length) continue;

@@ -32,6 +32,7 @@ export function selectPosition(configured: PositionDefinition[], name: string): 
 }
 
 export type PreviousReport = {
+  extractionWarnings?: string[];
   positions: PositionReport[];
   dashboards: DashboardData[];
   releaseLinks: ReleaseLinks;
@@ -95,7 +96,14 @@ export function loadPreviousReport(
       })),
     };
     if (!Array.isArray(releaseLinks.testPlans)) throw new Error('Links inválidos.');
-    return { positions: saved.positions, dashboards, releaseLinks };
+    return {
+      positions: saved.positions,
+      dashboards,
+      releaseLinks,
+      extractionWarnings: Array.isArray(saved.extractionWarnings)
+        ? saved.extractionWarnings.filter((warning: unknown) => typeof warning === 'string')
+        : [],
+    };
   } catch (error) {
     throw new Error(
       'Não foi possível reutilizar output/report.json. Execute primeiro uma recolha completa com npm run report.',

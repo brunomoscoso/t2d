@@ -152,11 +152,33 @@ Relatórios antigos também são aceites: nesse caso, os dashboards são lidos d
 `output/dashboard.json`. Nos novos relatórios, os dashboards e os links ficam guardados
 no próprio `report.json`. Se faltar o relatório, estiver inválido ou a configuração de
 outras posições tiver mudado, o comando pede uma recolha completa antes de continuar.
-Uma falha na extração da posição não substitui os relatórios existentes.
+Uma falha na extração gera um relatório parcial com avisos por posição, PRIT e campo.
+Na posição atualizada, dados em falta não são substituídos silenciosamente pelos antigos.
 
 As edições das tabelas **Estado global** e **Principais Bloqueadores** são guardadas automaticamente no armazenamento local do navegador. Elas continuam disponíveis quando executar `npm run report` novamente, mesmo que os PRITs recolhidos mudem. No final de `email.html`, use **Limpar dados de Estado global e Principais Bloqueadores** para apagar essas edições no navegador atual, por exemplo, no início de uma nova release. Os dados ficam associados ao navegador/perfil e ao caminho do relatório; não são gravados nos ficheiros de saída nem partilhados com outros navegadores ou computadores.
 
 ## Comandos úteis
+
+### Recolha com duas páginas
+
+As executions são recolhidas em até duas páginas em paralelo, na mesma sessão
+autenticada. A ordem dos resultados é preservada. Após as tentativas de recolha,
+o relatório é gerado mesmo com falhas, com os dados disponíveis e avisos explícitos.
+O terminal mostra o tempo total desta etapa.
+
+Os campos dos Issue Links são lidos numa única chamada ao navegador. A recolha
+confere os campos da página com a API autenticada do Jira e os testes paginados
+da API Xray Server/Data Center. A estabilidade durante 500 ms já não é usada
+como prova de completude. Também confirma a lista de execuções do Test Plan.
+APIs indisponíveis, diferenças, campos ausentes e alterações durante a recolha
+ficam identificados como dados não extraídos ou não confirmados.
+
+HTML, e-mail e TXT incluem a secção **Relatório parcial**, com o posto, PRIT,
+campo e motivo. O JSON guarda `extractionWarnings` e a data de recolha de cada
+execution. Falhas de descoberta e de dashboards também são indicadas. Totais e
+estados não confirmados deixam o respetivo Overall indisponível: nunca são
+convertidos em zero ou em ausência de defeitos. Dados lidos mas não confirmados
+podem continuar visíveis nos detalhes, acompanhados dos avisos.
 
 | Comando                                          | Descrição                                                                                                  |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |

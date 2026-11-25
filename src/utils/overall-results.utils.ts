@@ -61,6 +61,9 @@ export function aggregateOverallResults(
   );
   const plans = definitions.map((position): OverallPlanResults => {
     const warnings: string[] = [];
+    const discoveryWarnings =
+      positions.find((item) => item.position === position.name)?.extractionWarnings ?? [];
+    warnings.push(...discoveryWarnings);
     const statuses = new Set<string>(position.testPlans ? [] : standardStatuses);
     const sources = getConfiguredExecutions([position]);
     const groups = position.testPlans ? (['portugal', 'espanha'] as const) : TEST_TYPES;
@@ -70,7 +73,7 @@ export function aggregateOverallResults(
         counts: Object.create(null),
         total: 0,
         executions: 0,
-        available: true,
+        available: discoveryWarnings.length === 0,
       };
       const expected = sources
         .filter((source) => source.testType === testType)
@@ -86,6 +89,15 @@ export function aggregateOverallResults(
       }
       for (const prit of expected) {
         const report = reports.get(prit)!;
+        if (
+          report.extractionWarnings?.some((warning) =>
+            ['executionStatuses', 'totalTests', 'verification'].includes(warning.field),
+          )
+        ) {
+          result.available = false;
+          warnings.push(`${prit}: totais/estados não confirmados; agregado indisponível.`);
+          continue;
+        }
         result.executions++;
         let executionTotal = 0;
         for (const item of report.executionStatuses) {

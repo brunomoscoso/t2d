@@ -1,4 +1,5 @@
 import type { Page } from 'playwright';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import { DASHBOARD_PAGE_IDS } from './config/positions.config';
 
@@ -12,6 +13,8 @@ import type {
 import { createBrowserSession } from './services/browser.service';
 
 import { extractPrit } from './extractors/prit.extractor';
+import { collectWithPages } from './services/execution-pool.service';
+import { unavailableExecution } from './services/partial-extraction.service';
 
 import { extractTestPlanExecutions } from './extractors/test-plan-executions.extractor';
 
@@ -38,10 +41,13 @@ const MAX_PRIT_ATTEMPTS = 3;
 // Repete a coleta completa quando a página ainda não disponibilizou os dados esperados.
 async function extractPritWithRetry(page: Page, prit: string): Promise<ExecutionData> {
   let lastError: unknown;
+  let partial: ExecutionData | undefined;
 
   for (let attempt = 1; attempt <= MAX_PRIT_ATTEMPTS; attempt++) {
     try {
-      return await extractPrit(page, prit);
+      partial = await extractPrit(page, prit);
+      if (!partial.extractionWarnings?.length) return partial;
+      lastError = new Error('Alguns campos não foram extraídos ou confirmados.');
     } catch (error) {
       lastError = error;
       console.error(
@@ -50,14 +56,17 @@ async function extractPritWithRetry(page: Page, prit: string): Promise<Execution
       );
 
       if (attempt < MAX_PRIT_ATTEMPTS) {
-        await page.waitForTimeout(2000 * attempt);
+        await delay(2000 * attempt);
       }
     }
   }
 
-  throw new Error(
-    `Não foi possível extrair ${prit} após ${MAX_PRIT_ATTEMPTS} tentativas; o relatório não será gerado.`,
-    { cause: lastError },
+  return (
+    partial ??
+    unavailableExecution(
+      prit,
+      `Falha após ${MAX_PRIT_ATTEMPTS} tentativas: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    )
   );
 }
 
@@ -97,13 +106,48 @@ async function main() {
     throw new Error('Nenhum Dashboard configurado.');
   }
 
-  const { browser, page } = await createBrowserSession(firstPrit);
+  let session;
+  try {
+    session = await createBrowserSession(firstPrit);
+  } catch (error) {
+    const message = `Recolha não iniciada: ${error instanceof Error ? error.message : String(error)}`;
+    const unavailable = groupReportsByPosition(
+      getConfiguredExecutions(positionsToExtract).map((execution) =>
+        unavailableExecution(execution.prit, message),
+      ),
+      positionsToExtract,
+    );
+    for (const position of unavailable) position.extractionWarnings = [message];
+    const positions = previous
+      ? mergePositionReports(previous.positions, unavailable, configuredPositions)
+      : unavailable;
+    const email = writeReports(
+      positions,
+      previous?.dashboards ?? [],
+      previous?.releaseLinks ?? getConfiguredReleaseLinks(configuredPositions),
+      definitionsFromReports(positions),
+      [...(previous?.extractionWarnings ?? []), message],
+    );
+    openEmailReport(email);
+    return;
+  }
+  const { browser, page } = session;
   let generatedEmailPath: string | undefined;
+  const discoveryWarnings = new Map<string, string[]>();
+  const runWarnings: string[] = previous?.extractionWarnings ?? [];
 
   try {
     const executionsByPlan = new Map<string, Record<TestType, string[]>>();
     for (const position of planPositions) {
-      const discovered = await extractTestPlanExecutions(page, position.testPlanPrit);
+      let discovered;
+      try {
+        discovered = await extractTestPlanExecutions(page, position.testPlanPrit);
+      } catch (error) {
+        discoveryWarnings.set(position.name, [
+          `${position.testPlanPrit}: execuções não descobertas. ${error instanceof Error ? error.message : String(error)}`,
+        ]);
+        continue;
+      }
       const executions: Record<TestType, string[]> = {
         smoke: [],
         regression: [],
@@ -124,22 +168,37 @@ async function main() {
       return discovered ? { ...position, executions: discovered } : position;
     });
     const executions = getConfiguredExecutions(dynamicPositions);
-    if (executions.length === 0) {
+    if (executions.length === 0 && !discoveryWarnings.size) {
       throw new Error(
         'Nenhuma execução foi encontrada nos Test Plans configurados. Nenhum relatório novo foi gerado.',
       );
     }
 
-    const reports: ExecutionData[] = [];
-
-    // A falha num PRIT interrompe a coleta para evitar um relatório parcial.
-    for (const execution of executions) {
-      const report = await extractPritWithRetry(page, execution.prit);
-      reports.push(report);
-      console.log(`✅ ${execution.prit} → ${execution.position} / ${execution.testType}`);
-    }
+    const started = performance.now();
+    const reports = await collectWithPages(
+      page.context(),
+      executions,
+      async (workerPage, execution) => {
+        const report = await extractPritWithRetry(workerPage, execution.prit);
+        console.log(
+          `${report.extractionWarnings?.length ? '⚠️ Parcial' : '✅'} ${execution.prit} → ${execution.position} / ${execution.testType}`,
+        );
+        return report;
+      },
+      2,
+      (execution, error) =>
+        unavailableExecution(
+          execution.prit,
+          `Página de recolha indisponível: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+    );
+    console.log(
+      `Recolha de ${reports.length} PRITs em ${((performance.now() - started) / 1000).toFixed(1)} s (até 2 páginas).`,
+    );
 
     const extractedPositions = groupReportsByPosition(reports, dynamicPositions);
+    for (const position of extractedPositions)
+      position.extractionWarnings = discoveryWarnings.get(position.position);
     const positions = previous
       ? mergePositionReports(previous.positions, extractedPositions, configuredPositions)
       : extractedPositions;
@@ -164,19 +223,26 @@ async function main() {
     // O dashboard é complementar: se falhar, os relatórios dos PRITs continuam disponíveis.
     const dashboards: DashboardData[] = previous ? previous.dashboards : [];
     if (!previous) {
-      const dashboardPage = await page.context().newPage();
-
+      let dashboardPage: Page | undefined;
       try {
+        dashboardPage = await page.context().newPage();
         for (const dashboardId of dashboardIds) {
           try {
             dashboards.push(await extractDashboard(dashboardPage, dashboardId));
             console.log(`✅ Dashboard ${dashboardId} extraído`);
           } catch (error) {
             console.error(`❌ Não foi possível extrair o Dashboard ${dashboardId}.`, error);
+            runWarnings.push(
+              `Dashboard ${dashboardId}: não extraído. ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
         }
+      } catch (error) {
+        runWarnings.push(
+          `Dashboards ${dashboardIds.join(', ')} não extraídos: ${error instanceof Error ? error.message : String(error)}`,
+        );
       } finally {
-        await dashboardPage.close();
+        await dashboardPage?.close().catch(() => {});
       }
     }
 
@@ -185,9 +251,10 @@ async function main() {
       dashboards,
       releaseLinks,
       previous ? definitionsFromReports(positions) : dynamicPositions,
+      runWarnings,
     );
   } finally {
-    await browser.close();
+    await browser.close().catch(() => {});
   }
 
   if (generatedEmailPath) openEmailReport(generatedEmailPath);
