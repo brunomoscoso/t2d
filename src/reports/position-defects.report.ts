@@ -1,4 +1,5 @@
 import { JIRA_URL } from '../config/jira.config';
+import { createRemoveSectionButton } from './remove-section.report';
 import type { IssueLink, PositionReport } from '../types/report.types';
 import { escapeHtml, getIssueStatusColors } from '../utils/html.utils';
 
@@ -103,9 +104,10 @@ export function createPositionDefectsSection(positions: PositionReport[]): strin
     { label: 'Resumo', width: '41%' },
     { label: 'Estado', width: '13%' },
   ];
-  return `<section id="position-defects-section" data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-defects-title" style="margin:0 0 20px;">
+  return `<section id="position-defects-section" data-removable-section data-position-section ${rows ? '' : 'hidden'} aria-labelledby="position-defects-title" style="margin:0 0 20px;">
     <div style="display:table;width:100%;margin:0 0 10px;">
       <h2 id="position-defects-title" style="display:table-cell;margin:0;font-size:14px;line-height:1.3;color:#142e57;">Defects criados na sprint</h2>
+      <span data-editor-only style="display:table-cell;vertical-align:middle;">${createRemoveSectionButton('Defects criados na sprint')}</span>
       <span data-defect-total style="display:table-cell;text-align:right;vertical-align:middle;white-space:nowrap;padding-left:12px;font-size:11px;font-weight:normal;color:#5e6c84;">Total: ${sorted.length} ${sorted.length === 1 ? 'PRIT' : 'PRITs'}</span>
     </div>
     <table id="position-defects-table" class="report-summary-table" aria-label="Defects criados na sprint" width="100%" cellpadding="0" cellspacing="0"

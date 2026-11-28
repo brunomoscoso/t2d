@@ -1,4 +1,5 @@
 import { JIRA_URL } from '../config/jira.config';
+import { createRemoveSectionButton } from './remove-section.report';
 
 import { DashboardData } from '../types/report.types';
 
@@ -210,7 +211,7 @@ function createDashboardRows(dashboard: DashboardData): string {
 function createDashboardBlock(dashboard: DashboardData): string {
   return `
 
-        <div class="dashboard-block"
+        <div class="dashboard-block" data-removable-section
         style="
             margin-top:32px;
             margin-bottom:24px;
@@ -238,6 +239,7 @@ function createDashboardBlock(dashboard: DashboardData): string {
             "
         >
 
+            ${createRemoveSectionButton(dashboard.title)}
             ${escapeHtml(dashboard.title)}
 
 
