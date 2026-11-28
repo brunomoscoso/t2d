@@ -211,7 +211,7 @@ function createDashboardRows(dashboard: DashboardData): string {
 function createDashboardBlock(dashboard: DashboardData): string {
   return `
 
-        <div class="dashboard-block" data-removable-section
+        <div class="dashboard-block" data-removable-section data-dashboard-id="${escapeHtml(dashboard.pageId.trim())}"
         style="
             margin-top:32px;
             margin-bottom:24px;

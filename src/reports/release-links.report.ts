@@ -15,6 +15,7 @@ export function createReleaseLinksSection(
     text: string,
     index: number,
     position?: string,
+    dashboardId?: string,
   ): string {
     const cellStyle =
       'padding:14px 16px;text-align:left;vertical-align:middle;line-height:1.5;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere;';
@@ -22,7 +23,7 @@ export function createReleaseLinksSection(
     const content = href
       ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#0052cc;text-decoration:none;font-weight:500;">${escapeHtml(text)}</a>`
       : '<span style="color:#5e6c84;">Não informado</span>';
-    return `<tr ${position === undefined ? 'data-position-independent' : `data-report-position="${escapeHtml(position)}"`}>
+    return `<tr ${dashboardId === undefined ? '' : `data-dashboard-link-id="${escapeHtml(dashboardId)}"`} ${position === undefined ? 'data-position-independent' : `data-report-position="${escapeHtml(position)}"`}>
       <th scope="row" style="${cellStyle}${border}border-right:1px solid #dce5f0;background:#edf3fc;color:#0747a6;font-weight:bold;">${escapeHtml(label)}</th>
       <td style="${cellStyle}${border}background:${index % 2 ? '#f8faff' : '#ffffff'};">${content}</td>
     </tr>`;
@@ -56,6 +57,8 @@ export function createReleaseLinksSection(
           : '',
         dashboard.title?.trim() || `Dashboard ${dashboardPageId}`,
         rows.length,
+        undefined,
+        dashboardPageId,
       ),
     );
   }
